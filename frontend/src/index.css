@@ -1,0 +1,66 @@
+:root {
+  --color-bg-base: #F4F1FF;
+  --color-card-surface: #FFFFFF;
+  --color-brand: #6C4CF1;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background-color: #F4F1FF;
+}
+
+body {
+  background-color: #F4F1FF;
+  color: #22213A;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  user-select: none;
+}
+
+/* Clean subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8E4F2;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C7D2FE;
+}
+
+button, a {
+  transition-property: transform, background-color, border-color, box-shadow, color;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+button:active, a:active {
+  transform: scale(0.98);
+}
+
+/* Complete reset for Tailwind Forms default borders on embedded inputs */
+input[type="text"],
+input[type="search"],
+input[type="password"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="password"]:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Node (but keep the built SPA in frontend/dist)
+frontend/node_modules/
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local database artifacts (schema migrations ARE included)
+data/*.db
+data/*.db-*
+data/*.db-wal
+data/*.db-shm
+
+# Docker
+docker-compose*
+.dockerignore
+
+# Logs
+*.log
+
+# Tests / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+tests/__pycache__/
+
+# Docs (not needed at runtime)
+docs/
+*.md
+!README.md

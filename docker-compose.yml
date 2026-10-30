@@ -1,0 +1,84 @@
+﻿name: drishti
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 — findings, tenants, permission slips, CVE cache
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16
+    container_name: drishti_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: drishti
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d drishti"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # ---------------------------------------------------------------------------
+  # OWASP ZAP — runs as a daemon; the ZAP adapter talks to its REST API
+  # ---------------------------------------------------------------------------
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: drishti_zap
+    restart: unless-stopped
+    command: >
+      zap.sh -daemon -host 0.0.0.0 -port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./zap-config.xml:/home/zap/.ZAP/config.xml:ro
+
+  # ---------------------------------------------------------------------------
+  # DRISHTI application — FastAPI backend + built React SPA
+  # Bundled CLI scanners: nmap, httpx, nuclei, trivy
+  # ---------------------------------------------------------------------------
+  drishti:
+    build: .
+    container_name: drishti_platform
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      zap:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    # nmap SYN/OS-detection scans need raw-socket privileges
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      PYTHONUNBUFFERED: "1"
+      JWT_SECRET: ${JWT_SECRET:-drishti-local-dev-secret-key}
+      DRISHTI_DEV_MODE: ${DRISHTI_DEV_MODE:-true}
+      SANDBOX_ALLOWLIST: ${SANDBOX_ALLOWLIST:-scanme.nmap.org,example.com,localhost,127.0.0.1}
+      # Default: local Postgres defined above. Override with DOCKER_DATABASE_URL
+      # to point at Supabase (use the IPv4 pooler host, port 6543).
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgresql://postgres:devpass@postgres:5432/drishti}
+      # OWASP ZAP REST API
+      ZAP_API_URL: ${ZAP_API_URL:-http://zap:8080}
+      ZAP_API_KEY: ${ZAP_API_KEY:-drishti-zap-key}
+      # Optional LLM provider keys (pass through from host env)
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY:-}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  pgdata:

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://opencode.dev/schema.json",
+  "version": 1,
+  "project": {
+    "name": "DRISHTI",
+    "description": "Cyber Command & Threat Intelligence Platform"
+  },
+  "agent": {
+    "default": "drishti-orchestrator",
+    "primary": "drishti-orchestrator"
+  },
+  "agents": {
+    "drishti-orchestrator": {
+      "mode": "primary",
+      "path": ".opencode/agents/drishti-orchestrator.md"
+    },
+    "principal-architect": {
+      "mode": "subagent",
+      "path": ".opencode/agents/principal-architect.md"
+    },
+    "security-auditor": {
+      "mode": "subagent",
+      "path": ".opencode/agents/security-auditor.md"
+    },
+    "backend-engineer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/backend-engineer.md"
+    },
+    "frontend-engineer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/frontend-engineer.md"
+    },
+    "database-reviewer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/database-reviewer.md"
+    },
+    "devops-engineer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/devops-engineer.md"
+    },
+    "ai-engineer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/ai-engineer.md"
+    },
+    "product-designer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/product-designer.md"
+    },
+    "qa-reviewer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/qa-reviewer.md"
+    },
+    "documentation-writer": {
+      "mode": "subagent",
+      "path": ".opencode/agents/documentation-writer.md"
+    }
+  },
+  "skills": {
+    "reverse-skill": {
+      "path": ".opencode/skills/reverse-skill/SKILL.md",
+      "enabled": true
+    },
+    "ponytail": {
+      "path": ".opencode/skills/ponytail/SKILL.md",
+      "enabled": true
+    },
+    "impeccable": {
+      "path": ".opencode/skills/impeccable/SKILL.md",
+      "enabled": true
+    },
+    "ecc": {
+      "path": ".opencode/skills/ecc/SKILL.md",
+      "enabled": true
+    },
+    "agent-skills": {
+      "path": ".opencode/skills/agent-skills/SKILL.md",
+      "enabled": true
+    },
+    "designer-skills": {
+      "path": ".opencode/skills/designer-skills/SKILL.md",
+      "enabled": true
+    }
+  },
+  "commands": {
+    "orchestrate": ".opencode/commands/orchestrate.md",
+    "security-audit": ".opencode/commands/security-audit.md",
+    "code-review": ".opencode/commands/code-review.md",
+    "release-check": ".opencode/commands/release-check.md"
+  },
+  "permissions": {
+    "default": "read",
+    "agents": {
+      "principal-architect": ["read", "write", "edit", "bash"],
+      "security-auditor": ["read", "bash"],
+      "backend-engineer": ["read", "write", "edit", "bash"],
+      "frontend-engineer": ["read", "write", "edit", "bash"],
+      "database-reviewer": ["read", "bash"],
+      "devops-engineer": ["read", "write", "edit", "bash"],
+      "ai-engineer": ["read", "write", "edit", "bash"],
+      "product-designer": ["read", "write", "edit", "bash"],
+      "qa-reviewer": ["read", "write", "edit", "bash"],
+      "documentation-writer": ["read", "write", "edit", "bash"]
+    }
+  }
+}
