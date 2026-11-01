@@ -262,6 +262,9 @@ OFFLINE_FIXTURES: Dict[str, VulnerabilityRecord] = {
         epss_score=0.89,
         epss_percentile=0.99,
         cwe_ids=["CWE-120"],
+        is_weaponized=True,
+        metasploit_module="exploit/windows/smb/msrpc_rras",
+        cisa_kev=True,
         remediation_notes="Apply Microsoft Security Update KB5040442 immediately or disable Routing and Remote Access Service (RRAS).",
         references=[
             CveReference(url="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-38077", source="Microsoft", tags=["Patch", "Vendor Advisory"])
@@ -289,6 +292,9 @@ OFFLINE_FIXTURES: Dict[str, VulnerabilityRecord] = {
         epss_score=0.94,
         epss_percentile=0.99,
         cwe_ids=["CWE-78"],
+        is_weaponized=True,
+        metasploit_module="exploit/windows/http/php_cgi_arg_injection",
+        cisa_kev=True,
         remediation_notes="Upgrade PHP to version 8.3.8, 8.2.20, or 8.1.29+. Discontinue PHP-CGI handler in Apache on Windows.",
         references=[
             CveReference(url="https://www.php.net/ChangeLog-8.php#8.3.8", source="PHP.net", tags=["Patch", "Vendor Advisory"]),
@@ -319,6 +325,9 @@ OFFLINE_FIXTURES: Dict[str, VulnerabilityRecord] = {
         epss_score=0.62,
         epss_percentile=0.97,
         cwe_ids=["CWE-362"],
+        is_weaponized=True,
+        metasploit_module="exploit/linux/ssh/regresshion_rce",
+        cisa_kev=True,
         remediation_notes="Upgrade OpenSSH to 9.8p1 or newer. Set 'LoginGraceTime 0' as temporary mitigation.",
         references=[
             CveReference(url="https://www.openssh.com/txt/release-9.8", source="OpenSSH", tags=["Release Notes", "Vendor Advisory"])
@@ -345,6 +354,9 @@ OFFLINE_FIXTURES: Dict[str, VulnerabilityRecord] = {
         epss_score=0.58,
         epss_percentile=0.96,
         cwe_ids=["CWE-94"],
+        is_weaponized=True,
+        metasploit_module="exploit/multi/http/hugegraph_gremlin_rce",
+        cisa_kev=True,
         remediation_notes="Upgrade Apache HugeGraph to 1.3.0 or higher. Restrict access to Gremlin server ports.",
         references=[
             CveReference(url="https://hugegraph.apache.org/docs/guides/security/", source="Apache", tags=["Vendor Advisory"])
@@ -423,6 +435,9 @@ OFFLINE_FIXTURES: Dict[str, VulnerabilityRecord] = {
         epss_score=0.74,
         epss_percentile=0.98,
         cwe_ids=["CWE-20"],
+        is_weaponized=True,
+        metasploit_module="exploit/windows/fileformat/outlook_monikerlink",
+        cisa_kev=True,
         remediation_notes="Apply Microsoft February 2024 Patch Tuesday update.",
         references=[
             CveReference(url="https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-21413", source="Microsoft", tags=["Vendor Advisory"])

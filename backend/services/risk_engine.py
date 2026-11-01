@@ -14,6 +14,8 @@ def calculate_vulnerability_weight(
     applicability_status: str = "confirmed_applicability",
     confidence: float = 1.0,
     asset_criticality: float = 1.0,
+    is_weaponized: bool = False,
+    metasploit_module: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Computes deterministic edge cost and risk priority score for a vulnerability transition.
@@ -27,12 +29,14 @@ def calculate_vulnerability_weight(
           * insufficient_evidence: 0.35
           * not_affected: 0.0
       - Asset Criticality Factor: 1.0 + (asset_criticality - 1.0) * 0.15  (range 1.0 - 1.6)
+      - Metasploit Weaponization Multiplier:
+          * If weaponized or has metasploit_module: 1.35x priority, 0.40x traversal cost
 
       Priority Score (Higher is more dangerous, range 0.0 to 10.0):
-        priority = min(10.0, round(cvss_score * (1.0 + (epss or 0.1) * 0.3) * app_mult * (confidence or 0.8), 2))
+        priority = min(10.0, round(cvss_score * (1.0 + (epss or 0.1) * 0.35) * app_mult * conf * weapon_mult, 2))
 
       Traversal Cost for Dijkstra (Lower cost = path of least resistance / highest risk):
-        traversal_cost = max(0.1, round(11.0 - priority, 2))
+        traversal_cost = max(0.1, round((11.0 - priority) * weapon_friction, 2))
     """
     cvss = max(0.0, min(10.0, float(cvss_score or 0.0)))
     epss = max(0.0, min(1.0, float(epss_score or 0.0))) if epss_score is not None else 0.05
@@ -47,11 +51,15 @@ def calculate_vulnerability_weight(
     }
     app_mult = status_weights.get(applicability_status.lower(), 0.35)
 
+    has_metasploit = bool(is_weaponized or metasploit_module)
+    weapon_mult = 1.35 if has_metasploit else 1.0
+    weapon_friction = 0.40 if has_metasploit else 1.0
+
     # Priority score: Higher means higher exploit hazard
-    priority = min(10.0, round(cvss * (1.0 + epss * 0.35) * app_mult * conf, 2))
+    priority = min(10.0, round(cvss * (1.0 + epss * 0.35) * app_mult * conf * weapon_mult, 2))
     
     # Non-negative Dijkstra traversal cost: strictly > 0.0
-    traversal_cost = max(0.1, round(11.0 - priority, 2))
+    traversal_cost = max(0.1, round((11.0 - priority) * weapon_friction, 2))
 
     return {
         "priority_score": priority,
@@ -61,6 +69,8 @@ def calculate_vulnerability_weight(
         "app_mult": app_mult,
         "conf": conf,
         "crit": crit,
+        "is_weaponized": has_metasploit,
+        "metasploit_module": metasploit_module,
     }
 
 

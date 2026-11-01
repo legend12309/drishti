@@ -317,6 +317,15 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               <p className="text-xs text-[#77758E] leading-relaxed">
                 {selectedNode.desc}
               </p>
+              {selectedNode.type.includes('Vulnerability') && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-purple-100/80">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/30 flex items-center gap-1 animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#DC4655]"></span>
+                    <span>⚡ METASPLOIT WEAPONIZED (0.4x Traversal Cost)</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">Dijkstra Priority Vector</span>
+                </div>
+              )}
             </div>
           )}
         </div>

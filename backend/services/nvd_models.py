@@ -56,6 +56,9 @@ class VulnerabilityRecord(BaseModel):
     references: List[CveReference] = Field(default_factory=list)
     remediation_notes: Optional[str] = None
     cached_at: Optional[str] = None
+    is_weaponized: bool = False
+    metasploit_module: Optional[str] = None
+    cisa_kev: bool = False
 
 
 class AssetFingerprint(BaseModel):
@@ -99,3 +102,6 @@ class VulnerabilityFinding(BaseModel):
     references: List[Dict[str, Any]] = Field(default_factory=list)
     affected_product: Optional[str] = None
     observed_version: Optional[str] = None
+    is_weaponized: bool = False
+    metasploit_module: Optional[str] = None
+    cisa_kev: bool = False

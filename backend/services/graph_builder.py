@@ -200,18 +200,25 @@ class AttackGraphBuilder:
                     epss = float(v.get("epss_score")) if v.get("epss_score") is not None else None
                     conf = float(v.get("confidence_score") or 0.95)
 
+                    is_weaponized = bool(v.get("is_weaponized", False))
+                    msf_mod = v.get("metasploit_module")
+                    is_cisa_kev = bool(v.get("cisa_kev", False))
+
                     weight_info = calculate_vulnerability_weight(
                         cvss_score=cvss,
                         epss_score=epss,
                         applicability_status=app_status,
                         confidence=conf,
                         asset_criticality=crit,
+                        is_weaponized=is_weaponized,
+                        metasploit_module=msf_mod,
                     )
 
                     vuln_node_id = f"{cve_id} ({host})"
+                    node_label = f"⚡ {cve_id} [MSF] (CVSS {cvss})" if is_weaponized else f"{cve_id} (CVSS {cvss})"
                     vuln_node = GraphNode(
                         id=vuln_node_id,
-                        label=f"{cve_id} (CVSS {cvss})",
+                        label=node_label,
                         node_type=NodeType.VULNERABILITY,
                         provenance=ProvenanceClassification.OBSERVED if app_status == "confirmed_applicability" else ProvenanceClassification.INFERRED,
                         risk_score=weight_info["priority_score"],
@@ -225,6 +232,9 @@ class AttackGraphBuilder:
                             "cvss": cvss,
                             "epss": epss,
                             "rationale": v.get("match_rationale", ""),
+                            "is_weaponized": is_weaponized,
+                            "metasploit_module": msf_mod,
+                            "cisa_kev": is_cisa_kev,
                         },
                     )
                     self.add_node(vuln_node)
@@ -319,6 +329,17 @@ class AttackGraphBuilder:
             
             # If High or Critical severity vulnerability (CVSS >= 7.0)
             if cvss >= 7.0:
+                is_weaponized = bool(vn.metadata.get("is_weaponized", False))
+                msf_mod = vn.metadata.get("metasploit_module")
+                edge_weight = 0.4 if is_weaponized else 1.5
+                edge_priority = 9.9 if is_weaponized else 8.5
+                edge_rule = "INFER-LATERAL-METASPLOIT-WEAPONIZED-RCE" if is_weaponized else "INFER-LATERAL-RCE-TO-AUTH"
+                assumptions_list = [
+                    f"Weaponized Metasploit module ({msf_mod or 'Active Exploit'}) yields immediate interactive shell execution." if is_weaponized
+                    else "Assumes compromised service holds valid service-account token to internal authentication gateway.",
+                    "Assumes lack of egress micro-segmentation from DMZ to auth authority.",
+                ]
+
                 # Transition from Exploit Node -> InternalAuth (Inferred)
                 self.add_edge(
                     GraphEdge(
@@ -326,15 +347,12 @@ class AttackGraphBuilder:
                         target="InternalAuth",
                         relation=RelationType.POTENTIAL_TRANSITION,
                         provenance=ProvenanceClassification.INFERRED,
-                        weight=1.5,
-                        priority_score=8.5,
-                        confidence=0.70,
+                        weight=edge_weight,
+                        priority_score=edge_priority,
+                        confidence=0.85 if is_weaponized else 0.70,
                         is_hypothetical=True,
-                        rule_id="INFER-LATERAL-RCE-TO-AUTH",
-                        assumptions=[
-                            "Assumes compromised service holds valid service-account token to internal authentication gateway.",
-                            "Assumes lack of egress micro-segmentation from DMZ to auth authority.",
-                        ],
+                        rule_id=edge_rule,
+                        assumptions=assumptions_list,
                     )
                 )
 

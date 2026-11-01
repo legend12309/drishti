@@ -693,9 +693,19 @@ async def init_db():
                 configurations TEXT DEFAULT '[]',
                 references_json TEXT DEFAULT '[]',
                 remediation_notes TEXT,
-                cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_weaponized INTEGER DEFAULT 0,
+                metasploit_module TEXT,
+                cisa_kev INTEGER DEFAULT 0
             );
         """)
+
+        # Ensure Metasploit weaponization and CISA KEV columns exist on existing databases
+        for col_name, col_def in [("is_weaponized", "INTEGER DEFAULT 0"), ("metasploit_module", "TEXT"), ("cisa_kev", "INTEGER DEFAULT 0")]:
+            try:
+                await db.execute(f"ALTER TABLE vulnerabilities ADD COLUMN {col_name} {col_def}")
+            except Exception:
+                pass
 
         # 9. Normalized Asset Fingerprints Table
         await db.execute("""

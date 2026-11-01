@@ -28,6 +28,9 @@ export interface CveRecord {
   publishedAt?: string;
   cweIds?: string[];
   isCorrelated?: boolean;
+  isWeaponized?: boolean;
+  metasploitModule?: string;
+  cisaKev?: boolean;
 }
 
 interface ScanOption {
@@ -191,6 +194,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           provenance: 'Live Recon Correlation',
           publishedAt: sv.evaluated_at,
           isCorrelated: true,
+          isWeaponized: Boolean(sv.is_weaponized),
+          metasploitModule: sv.metasploit_module,
+          cisaKev: Boolean(sv.cisa_kev),
         });
       }
 
@@ -220,6 +226,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             publishedAt: cv.published_at,
             cweIds: cv.cwe_ids || [],
             isCorrelated: false,
+            isWeaponized: Boolean(cv.is_weaponized),
+            metasploitModule: cv.metasploit_module,
+            cisaKev: Boolean(cv.cisa_kev),
           });
         }
       }
@@ -600,6 +609,19 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                                 Catalog Baseline
                               </span>
                             )}
+
+                            {(cve.isWeaponized || cve.metasploitModule) && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/30 flex items-center gap-1 shadow-sm animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#DC4655]"></span>
+                                <span>⚡ MSF WEAPONIZED</span>
+                              </span>
+                            )}
+
+                            {cve.cisaKev && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-300">
+                                CISA KEV
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -764,6 +786,41 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     </div>
                   </div>
                 </div>
+
+                {/* Metasploit Weaponization Callout */}
+                {(selectedCve.isWeaponized || selectedCve.metasploitModule) && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-rose-50/80 via-white to-rose-50/40 border border-rose-300/80 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-rose-700 tracking-tight">
+                        <span className="material-symbols-outlined text-[16px] text-rose-600">bolt</span>
+                        <span>CONFIRMED METASPLOIT WEAPONIZATION</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-600 text-white">
+                        RED TEAM READY
+                      </span>
+                    </div>
+                    {selectedCve.metasploitModule && (
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Exploit Module Path:
+                        </div>
+                        <div className="font-mono text-xs font-bold text-rose-900 bg-white p-2 rounded-lg border border-rose-200 select-all flex items-center justify-between">
+                          <span>{selectedCve.metasploitModule}</span>
+                          <button
+                            onClick={() => handleCopy(selectedCve.metasploitModule || '', 'Module Path')}
+                            className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                            title="Copy Module Path"
+                          >
+                            <span className="material-symbols-outlined text-sm">content_copy</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-rose-700/90 leading-relaxed font-medium">
+                      An active Metasploit module exists in the public domain. Traversal friction for this vulnerability has been reduced by 60% in the topological Attack Graph.
+                    </p>
+                  </div>
+                )}
 
                 {/* CVSS Vector Semantic Breakdown */}
                 <div className="space-y-2">
