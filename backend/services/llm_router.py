@@ -227,6 +227,12 @@ class LLMRouter:
         key = self.get_api_key(provider)
         return bool(key and not key.startswith("  "))
 
+    def has_active_cloud_provider(self) -> bool:
+        return any(
+            self.is_provider_available(p) and "test" not in self.get_api_key(p).lower()
+            for p in (LLMProvider.GROQ, LLMProvider.NVIDIA, LLMProvider.GEMINI, LLMProvider.HUGGINGFACE)
+        )
+
     async def generate_with_fallback(
         self,
         request: LLMRequest,
