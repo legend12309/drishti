@@ -1,95 +1,122 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { OperatorProfile } from '../types';
 
 interface TopUtilityBarProps {
   operator?: OperatorProfile | null;
+  target?: string;
   onOpenCommandPalette: () => void;
   onOpenProfile: () => void;
   onNavigateToSettings: () => void;
-  onExportData?: () => void;
   onCreateScan?: () => void;
+  onNavigateToIntel?: () => void;
 }
 
 export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   operator,
+  target = 'vvdx.in',
   onOpenCommandPalette,
   onOpenProfile,
-  onNavigateToSettings,
   onCreateScan,
+  onNavigateToIntel,
 }) => {
+  const [utcTime, setUtcTime] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const year = now.getUTCFullYear();
+      const month = pad(now.getUTCMonth() + 1);
+      const day = pad(now.getUTCDate());
+      const hours = pad(now.getUTCHours());
+      const mins = pad(now.getUTCMinutes());
+      const secs = pad(now.getUTCSeconds());
+      setUtcTime(`${year}.${month}.${day} ${hours}:${mins}:${secs} UTC`);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <header className="h-[72px] bg-transparent flex items-center justify-between px-6 z-20 shrink-0 select-none border-b border-[#E8E4F2]">
-      {/* Search Input Command Bar */}
-      <div className="flex-1 max-w-md">
+    <header
+      className="h-12 w-full border-b border-hairline bg-pureWhite px-3.5 flex items-center justify-between text-xs tracking-wider shrink-0 z-30 select-none font-mono"
+      data-purpose="top-command-bar"
+    >
+      {/* Left Identity Dossier Badge */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        <div className="w-7 h-7 border border-hairline flex items-center justify-center bg-pureWhite shadow-xs shrink-0">
+          <svg className="w-4 h-4 text-vermilion" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M12 2L3 7v6c0 5.25 3.82 10.18 9 11.35 5.18-1.17 9-6.1 9-11.35V7l-9-5z"></path>
+            <circle cx="12" cy="12" r="2.5" fill="#FF2E00"></circle>
+          </svg>
+        </div>
+        <div className="flex items-baseline space-x-1.5 font-grotesk font-bold text-sm tracking-widest text-ink">
+          <span>DRISHTI</span>
+          <span className="text-charcoal text-xs font-mono font-normal tracking-normal hidden md:inline">
+            // SEC-OPS-09
+          </span>
+        </div>
+        <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 border border-hairline bg-boneLight text-[10px] text-signalGreen font-mono font-bold">
+          <span className="w-1.5 h-1.5 bg-signalGreen animate-pulse"></span>
+          <span>[ ENGINES ONLINE ]</span>
+        </div>
+        <span className="hidden lg:inline-block border border-hairline px-1.5 py-0.5 text-[9px] font-mono text-charcoal bg-boneDark/40 font-semibold">
+          ENV: PROD-US-EAST
+        </span>
+        <span className="hidden xl:inline-block border border-hairline px-1.5 py-0.5 text-[9px] font-mono text-charcoal bg-boneLight font-medium">
+          AGENT v4.2.0-STABLE
+        </span>
+      </div>
+
+      {/* Center Recon Target Input Bar */}
+      <div className="flex items-center space-x-1.5 sm:space-x-2">
+        <div className="border border-hairline bg-pureWhite px-2.5 py-1 text-ink font-mono text-xs flex items-center space-x-2 shadow-xs">
+          <span className="text-charcoal font-semibold text-[10px]">TARGET:</span>
+          <span className="font-bold text-ink">{target}</span>
+          <span className="text-[9px] text-signalGreen font-bold bg-signalGreenBg px-1 border border-signalGreen">
+            RESOLVED
+          </span>
+        </div>
+        <span className="hidden sm:inline-block border border-hairline text-charcoal text-[10px] px-1.5 py-1 tracking-tighter bg-boneDark font-medium">
+          [ RFC-8655 VERIFIED ]
+        </span>
         <button
-          onClick={onOpenCommandPalette}
-          className="w-full flex items-center justify-between bg-[#FAF9FF] border border-[#E8E4F2] hover:border-[#6C4CF1]/50 px-4 py-2 rounded-2xl text-[13px] text-[#77758E] transition-all shadow-[0_2px_8px_rgba(108,76,241,0.02)] group"
+          onClick={onCreateScan}
+          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-2.5 sm:px-3 py-1 text-xs uppercase tracking-wider transition-colors duration-75 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer"
+          title="Launch Autonomous Recon"
         >
-          <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-[18px] text-[#9896AA] group-hover:text-[#6C4CF1] transition-colors">
-              search
-            </span>
-            <span className="text-[13px] text-[#77758E] font-normal">Search targets, CVEs, or command...</span>
-          </div>
-          <kbd className="hidden sm:inline-block bg-white text-[#77758E] border border-[#E8E4F2] text-[10px] font-mono px-2 py-0.5 rounded-md shadow-xs">
-            ⌘K
-          </kbd>
+          <span>⚡</span>
+          <span className="hidden sm:inline">[ LAUNCH RECON ]</span>
+        </button>
+        <button
+          onClick={onNavigateToIntel}
+          className="hidden md:inline-block border border-hairline hover:bg-ink hover:text-pureWhite text-ink font-mono px-2.5 py-1 text-xs uppercase tracking-wider transition-colors duration-75 bg-boneLight font-semibold cursor-pointer"
+          title="Synthesize AI Consensus Threat Brief"
+        >
+          [ AI CONSENSUS BRIEF ]
         </button>
       </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-3 ml-4">
-        {/* Active Engine Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EAF8F1] border border-[#E8E4F2] text-[#299B75] text-[11px] font-semibold shadow-xs">
-          <span className="w-2 h-2 rounded-full bg-[#299B75] animate-pulse"></span>
-          <span>5 Engines Ready</span>
-        </div>
-
-        {/* Notifications Icon Button */}
+      {/* Right Telemetry & Clearance Indicators */}
+      <div className="flex items-center space-x-2 sm:space-x-2.5 text-[11px] font-mono">
         <button
           onClick={onOpenCommandPalette}
-          className="w-10 h-10 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] hover:border-[#6C4CF1]/50 hover:text-[#6C4CF1] text-[#77758E] flex items-center justify-center transition-all shadow-xs active:scale-95"
-          title="Notifications & Alerts"
+          className="border border-hairline bg-boneLight px-2 py-0.5 text-charcoal hover:text-ink font-semibold cursor-pointer"
+          title="Press ⌘K or Ctrl+K"
         >
-          <span className="material-symbols-outlined text-[19px]">notifications</span>
+          [ ⌘K PALETTE ]
         </button>
-
-        {/* Settings Icon Button */}
-        <button
-          onClick={onNavigateToSettings}
-          className="w-10 h-10 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] hover:border-[#6C4CF1]/50 hover:text-[#6C4CF1] text-[#77758E] flex items-center justify-center transition-all shadow-xs active:scale-95"
-          title="Engine Configuration"
-        >
-          <span className="material-symbols-outlined text-[19px]">tune</span>
-        </button>
-
-        {/* Primary Action Button: Launch Target Scan */}
-        {onCreateScan && (
-          <button
-            onClick={onCreateScan}
-            className="hidden md:flex items-center gap-1.5 bg-gradient-to-r from-[#6C4CF1] to-[#5940D8] hover:opacity-95 text-white px-4 py-2.5 rounded-2xl text-[13px] font-semibold tracking-wide shadow-[0_4px_16px_rgba(108,76,241,0.25)] transition-all active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[17px]">radar</span>
-            <span>New Scan</span>
-          </button>
-        )}
-
-        {/* Operator Capsule */}
+        <div className="hidden lg:inline-block text-ink font-bold px-2 py-0.5 border border-hairline bg-pureWhite">
+          [ {utcTime || '2026.11.02 16:18:24 UTC'} ]
+        </div>
         <div
           onClick={onOpenProfile}
-          className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] hover:border-[#6C4CF1]/40 cursor-pointer transition-all shadow-xs group"
+          className="border border-vermilion text-vermilion bg-vermilion/10 px-2 py-0.5 font-bold tracking-tight text-[10px] cursor-pointer hover:bg-vermilion hover:text-white transition-colors"
+          title={`Operator: ${operator?.name || 'Alex Morgan'} (${operator?.clearance || 'LEVEL 5'})`}
         >
-          <div className="flex flex-col text-right hidden sm:flex">
-            <span className="text-[13px] font-semibold text-[#22213A] leading-tight group-hover:text-[#6C4CF1] transition-colors">
-              {operator?.name || 'Alex Morgan'}
-            </span>
-            <span className="text-[11px] text-[#77758E] leading-none mt-0.5">
-              {operator?.role || 'SecOps Lead'}
-            </span>
-          </div>
-          <div className="w-8 h-8 rounded-xl bg-[#EAE4FF] text-[#6C4CF1] border border-[#E8E4F2] flex items-center justify-center font-bold text-[12px] shadow-xs">
-            {operator?.avatar_text || 'AM'}
-          </div>
+          [ TOP SECRET // ORCON ]
         </div>
       </div>
     </header>

@@ -12,6 +12,7 @@ import { IntelView } from './views/IntelView';
 import { GuardView } from './views/GuardView';
 import { GraphView } from './views/GraphView';
 import { StixView } from './views/StixView';
+import { ReportsView } from './views/ReportsView';
 import { AuditView } from './views/AuditView';
 import { SettingsView } from './views/SettingsView';
 import { ProfileView } from './views/ProfileView';
@@ -144,89 +145,94 @@ export default function App() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-[#F4F1FF] text-[#22213A] font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Floating Modern Pill Sidebar Dock */}
-      <Sidebar
-        activeTab={activeTab}
-        onSelectTab={(tab) => setActiveTab(tab)}
-        walActive={health?.sqlite?.wal_mode ?? true}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+    <div className="w-full h-screen flex flex-col bg-bone border border-hairline select-none overflow-hidden text-ink font-mono">
+      {/* Top Tactical Command Bar (Swiss Editorial Archival Header) */}
+      <TopUtilityBar
+        operator={operator}
+        target="vvdx.in"
+        onOpenCommandPalette={() => setIsCommandOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onNavigateToSettings={() => setActiveTab('settings')}
+        onCreateScan={() => setActiveTab('recon')}
+        onNavigateToIntel={() => setActiveTab('intel')}
       />
 
-      {/* Main Command Console Canvas Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 p-3 sm:p-5 pl-2 sm:pl-3">
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-white rounded-3xl border border-[#E8E4F2] shadow-[0_8px_24px_rgba(108,76,241,0.04)]">
-          {/* Top Utility Bar */}
-          <TopUtilityBar
-            operator={operator}
-            onOpenCommandPalette={() => setIsCommandOpen(true)}
-            onOpenProfile={() => setIsProfileOpen(true)}
-            onNavigateToSettings={() => setActiveTab('settings')}
-            onCreateScan={() => setActiveTab('recon')}
-          />
+      {/* Core Layout Container (Rail + Main Workspace Canvas) */}
+      <div className="flex flex-1 w-full overflow-hidden bg-bone">
+        {/* Left Vertical Navigation Rail (Swiss Index Style) */}
+        <Sidebar
+          activeTab={activeTab}
+          onSelectTab={(tab) => setActiveTab(tab)}
+          walActive={health?.sqlite?.wal_mode ?? true}
+          onLogout={handleLogout}
+        />
 
-          {/* View Container */}
-          <main className="flex-1 overflow-hidden flex flex-col min-w-0">
-            {activeTab === 'dashboard' && (
-              <DashboardView
-                health={health}
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'recon' && (
-              <ReconView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'intel' && (
-              <IntelView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'guard' && (
-              <GuardView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'graph' && (
-              <GraphView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'stix' && (
-              <StixView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'audit' && (
-              <AuditView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'settings' && (
-              <SettingsView
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-            {activeTab === 'profile' && (
-              <ProfileView
-                operator={operator}
-                onLogout={handleLogout}
-                onNavigate={(tab) => setActiveTab(tab)}
-                showToast={showToast}
-              />
-            )}
-          </main>
-        </div>
+        {/* Main Command Workspace View Container */}
+        <main className="flex-1 flex flex-col bg-bone overflow-hidden min-w-0">
+          {activeTab === 'dashboard' && (
+            <DashboardView
+              health={health}
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'recon' && (
+            <ReconView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'intel' && (
+            <IntelView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'graph' && (
+            <GraphView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'guard' && (
+            <GuardView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'stix' && (
+            <StixView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'reports' && (
+            <ReportsView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'audit' && (
+            <AuditView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <SettingsView
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+          {activeTab === 'profile' && (
+            <ProfileView
+              operator={operator}
+              onLogout={handleLogout}
+              onNavigate={(tab) => setActiveTab(tab)}
+              showToast={showToast}
+            />
+          )}
+        </main>
       </div>
 
       {/* Quick Profile Drawer / Modal */}
