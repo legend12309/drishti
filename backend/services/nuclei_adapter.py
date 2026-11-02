@@ -127,6 +127,23 @@ class ProjectDiscoveryNucleiAdapter(BaseScannerAdapter):
         """Verifies if Nuclei CLI is available, executable, and retrieves its version (with pure-async fallback)."""
         binary = self.get_binary_path()
         if not binary:
+            if self._binary_path and ("/" in self._binary_path or "\\" in self._binary_path):
+                return ScannerHealth(
+                    scanner_name=self.scanner_name,
+                    is_available=False,
+                    version=None,
+                    binary_path=None,
+                    supported_profiles=list(NUCLEI_PROFILES.keys()),
+                    error_message=f"Nuclei binary not found at configured path: {self._binary_path}",
+                )
+            return ScannerHealth(
+                scanner_name=self.scanner_name,
+                is_available=True,
+                version="pure-async-nuclei-engine",
+                binary_path=None,
+                supported_profiles=list(NUCLEI_PROFILES.keys()),
+                error_message=None,
+            )
             return ScannerHealth(
                 scanner_name=self.scanner_name,
                 is_available=True,

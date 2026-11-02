@@ -108,6 +108,16 @@ class AquaSecurityTrivyAdapter(BaseScannerAdapter):
 
     def check_availability(self) -> ScannerHealth:
         """Determines if Trivy binary is installed and executable (with pure-async fallback)."""
+        if self._binary_path and not os.path.isfile(self._binary_path):
+            return ScannerHealth(
+                scanner_name=self.scanner_name,
+                is_available=False,
+                version=None,
+                binary_path=self._binary_path,
+                supported_profiles=list(TRIVY_PROFILES.keys()),
+                error_message=f"Trivy binary not found at configured path: {self._binary_path}",
+            )
+
         binary = self.get_binary_path()
         if not binary:
             return ScannerHealth(

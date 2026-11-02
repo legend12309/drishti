@@ -217,11 +217,15 @@ async def test_zap_mocked_execution_and_persistence():
         scanner_name="OWASP ZAP",
         is_available=True,
         version="2.14.0",
-        supported_profiles=[ScanProfile.ZAP_PASSIVE_ANALYSIS]
+        supported_profiles=[ScanProfile.ZAP_PASSIVE_ANALYSIS],
+        binary_path="http://127.0.0.1:8080",
     )
 
     mock_resp = MagicMock()
     mock_resp.status_code = 200
+    mock_resp.text = "<html><head><title>Company Portal</title></head><body><h1>Security Scan</h1></body></html>"
+    mock_resp.url = "https://company.com"
+    mock_resp.headers = {"content-type": "text/html"}
     mock_resp.json.return_value = SAMPLE_ZAP_ALERTS_PAYLOAD
 
     with patch.object(adapter, "check_availability_async", return_value=mock_health):

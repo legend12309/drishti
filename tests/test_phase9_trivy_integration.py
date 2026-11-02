@@ -216,7 +216,7 @@ def test_target_validation_rules():
     assert "does not exist" in err.lower()
 
     # 3. Valid directory
-    valid, target, err = adapter.validate_target_resource("E:/drishti", ScanProfile.TRIVY_FS_DEPENDENCIES)
+    valid, target, err = adapter.validate_target_resource(str(Path(__file__).resolve().parent.parent), ScanProfile.TRIVY_FS_DEPENDENCIES)
     assert valid is True
     assert "drishti" in target.lower()
 

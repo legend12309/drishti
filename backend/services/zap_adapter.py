@@ -99,7 +99,19 @@ class OwaspZapAdapter(BaseScannerAdapter):
                         ],
                         error_message=None,
                     )
-        except Exception:
+        except Exception as ex:
+            if self._api_url and self._api_url not in ("http://localhost:8080", "http://127.0.0.1:8080", ""):
+                return ScannerHealth(
+                    scanner_name=self.scanner_name,
+                    is_available=False,
+                    version=None,
+                    binary_path=None,
+                    supported_profiles=[
+                        ScanProfile.ZAP_PASSIVE_ANALYSIS,
+                        ScanProfile.ZAP_BASELINE_AUDIT,
+                    ],
+                    error_message=f"OWASP ZAP daemon not reachable at {self._api_url}: {ex}",
+                )
             return ScannerHealth(
                 scanner_name=self.scanner_name,
                 is_available=True,
@@ -147,7 +159,19 @@ class OwaspZapAdapter(BaseScannerAdapter):
                         ],
                         error_message=None,
                     )
-        except Exception:
+        except Exception as ex:
+            if self._api_url and self._api_url not in ("http://localhost:8080", "http://127.0.0.1:8080", ""):
+                return ScannerHealth(
+                    scanner_name=self.scanner_name,
+                    is_available=False,
+                    version=None,
+                    binary_path=None,
+                    supported_profiles=[
+                        ScanProfile.ZAP_PASSIVE_ANALYSIS,
+                        ScanProfile.ZAP_BASELINE_AUDIT,
+                    ],
+                    error_message=f"OWASP ZAP daemon not reachable at {self._api_url}: {ex}",
+                )
             return ScannerHealth(
                 scanner_name=self.scanner_name,
                 is_available=True,
@@ -431,6 +455,23 @@ class OwaspZapAdapter(BaseScannerAdapter):
         target_urls = [f"https://{norm_target}", f"http://{norm_target}"]
         zap_alerts: List[ZapAlertObservation] = []
         raw_output_lines = [f"[*] DRISHTI Pure-Async DAST Engine targeting {norm_target}"]
+
+        if cancel_event and cancel_event.is_set():
+            duration = round(time.time() - started_at.timestamp(), 2)
+            return ScannerResult(
+                scan_id=scan_id,
+                target=norm_target,
+                scanner_name=self.scanner_name,
+                scanner_version="pure-async-dast-engine",
+                profile=profile,
+                status=ScannerExecutionState.CANCELLED,
+                zap_alerts=[],
+                raw_output="\n".join(raw_output_lines) + "\n[!] Scan execution cancelled by operator.",
+                exit_code=-1,
+                duration_seconds=duration,
+                started_at=started_at,
+                completed_at=datetime.now(timezone.utc),
+            )
 
         client_timeout = httpx.Timeout(min(timeout_seconds, 10.0), connect=5.0)
         async with httpx.AsyncClient(timeout=client_timeout, verify=False, follow_redirects=True) as client:
@@ -739,13 +780,16 @@ class OwaspZapAdapter(BaseScannerAdapter):
 
             # 10. Subresource Integrity (SRI) Audit (CWE-353, Plugin 10056)
             # Inspect external script tags in the HTML for missing cryptographic integrity hashes
-            script_srcs = re.findall(r'<script[^>]+src=[\'"]([^\'"]+)[\'"]', resp.text, re.IGNORECASE)
+            resp_content = getattr(resp, "text", "")
+            if not isinstance(resp_content, str):
+                resp_content = str(resp_content) if resp_content is not None else ""
+            script_srcs = re.findall(r'<script[^>]+src=[\'"]([^\'"]+)[\'"]', resp_content, re.IGNORECASE)
             sri_missing = []
             for s_src in script_srcs:
                 if s_src.startswith("http://") or s_src.startswith("https://") or s_src.startswith("//"):
                     # Check if the tag containing this src has an integrity attribute
                     # Simple heuristic: find tag slice
-                    tag_match = re.search(r'<script[^>]+' + re.escape(s_src) + r'[^>]*>', resp.text, re.IGNORECASE)
+                    tag_match = re.search(r'<script[^>]+' + re.escape(s_src) + r'[^>]*>', resp_content, re.IGNORECASE)
                     if tag_match and "integrity=" not in tag_match.group(0).lower():
                         sri_missing.append(s_src)
 
