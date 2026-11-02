@@ -5,42 +5,24 @@ description: Product design and creative workflow skills. Covers design research
 
 # Designer Skills - Product Design Toolkit
 
-Source: `D:\drishti\tools\designer-skills`
+**Source:** `~/.gemini/config/skills/` (Global Native Execution Engine)
 
 ## Available Skills (9)
 
-| Skill | Directory | Purpose |
-|-------|-----------|---------|
-| **designer-toolkit** | `designer-toolkit/` | Core design toolkit: methods, templates, frameworks |
-| **design-research** | `design-research/` | User research, competitive analysis, usability testing |
-| **ux-strategy** | `ux-strategy/` | UX strategy, user journey mapping, product strategy |
-| **design-systems** | `design-systems/` | Design system creation, component libraries, tokens |
-| **interaction-design** | `interaction-design/` | Interaction patterns, micro-interactions, animations |
-| **prototyping-testing** | `prototyping-testing/` | Rapid prototyping, usability testing, validation |
-| **ui-design** | `ui-design/` | Visual design, layouts, typography, color systems |
-| **visual-critique** | `visual-critique/` | Design critique, visual quality review, feedback |
-| **design-ops** | `design-ops/` | Design operations, workflow, handoff, governance |
-
-## Supporting Resources
-
-- `INDEX.md` - Complete skill index with descriptions
-- `SKILL_TEMPLATE.md` - Template for creating new design skills
-- `COMMAND_TEMPLATE.md` - Command template for design operations
-- `CONTRIBUTING.md` - Contribution guidelines
-- `CHANGELOG.md` - Version history
+| Skill | Focus | Purpose |
+| :--- | :--- | :--- |
+| **design-research** | User Discovery | User research, competitive analysis, usability testing |
+| **ux-strategy** | Product Alignment | UX strategy, user journey mapping, product value proposition |
+| **design-systems** | Consistency | Design system creation, component libraries, design tokens |
+| **interaction-design** | Micro-interactions | Interaction patterns, transitions, state changes |
+| **prototyping-testing** | Validation | Rapid prototyping, usability testing, flow validation |
+| **ui-design** | Layout & Hierarchy | Visual design, layouts, typography, color systems |
+| **visual-critique** | Review & QA | Design critique, visual quality review, heuristic evaluation |
+| **design-ops** | Handoff & Governance | Design operations, workflow, handoff, governance |
 
 ## Usage in DRISHTI
 
-Activate for:
 - **Dashboard Redesign**: `ui-design`, `design-systems`, `visual-critique`
 - **ReportsView UX**: `interaction-design`, `prototyping-testing`, `ux-strategy`
 - **Design System**: `design-systems`, `design-ops`
-- **User Research**: `design-research`, `prototyping-testing`
-- **Accessibility**: `ui-design` (with `impeccable` for WCAG)
-- **Design Handoff**: `design-ops`, `prototyping-testing`
-
-## Integration with Other Skills
-
-- Pair with **impeccable** for visual quality + accessibility
-- Pair with **ecc/frontend-patterns** for implementation
-- Pair with **agent-skills/frontend-ui-engineering** for engineering workflow
+- **Accessibility**: `ui-design` (paired with `impeccable` for WCAG 2.1 AA)

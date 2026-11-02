@@ -5,32 +5,22 @@ description: UI/UX and frontend quality skill for visual design, interaction ref
 
 # Impeccable UI/UX Quality
 
-Source: `D:\drishti\tools\impeccable`
+**Source:** `~/.gemini/config/skills/impeccable` (Global Native Execution Engine)
 
-## Skill Structure
+## Overview & Scope
 
-| Component | Path | Purpose |
-|-----------|------|---------|
-| **Core Skill** | `skill/` | Main UI/UX quality skill with agents, reference, scripts |
-| **Agents** | `skill/agents/` | Specialist UI/UX agents for different design tasks |
-| **Reference** | `skill/reference/` | Design patterns, accessibility guidelines, visual standards |
-| **Scripts** | `skill/scripts/` | Automation for visual regression, accessibility checks |
-| **Hermes Plugin** | `skill/hermes-plugin/` | Hermes integration for design system validation |
-
-## OpenCode Integration
-
-Native at `D:\drishti\tools\impeccable\.opencode\`:
-- Commands in `.opencode/commands/`
-- Skills in `.opencode/skills/`
+Provides design and UX principles for tactical, high-density aerospace HUD and SOC dashboards:
+- Clean visual hierarchy and intentional typography
+- Color tokens (`#6C4CF1`, `#22213A`, `#F4F1FF`)
+- Monospace density for security telemetry
+- Elimination of layout shift and generic placeholder aesthetics
+- Strict WCAG 2.1 AA accessibility contrast rules
 
 ## Usage in DRISHTI
 
 Activate for:
-- Dashboard and ReportsView visual design
-- Interface consistency and design system compliance
-- Accessibility audits (WCAG compliance)
-- Visual regression testing
-- Usability review of scanner progress UI
-- Color contrast and typography validation
+- Dashboard Tri-Pane Cockpit visual refinement
+- GraphView Canvas and Node Inspector aesthetics
+- ReportsView executive report styling
+- Micro-interactions, button active states, and telemetry animations
 - Responsive layout verification
-- Dark/light theme consistency

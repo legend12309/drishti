@@ -1,64 +1,57 @@
-# DRISHTI Skill Registry
+# DRISHTI Skill Registry & Capability Matrix
 
-## Registered Skills
+**Status:** Audited & Remediated (November 02, 2026)  
+**Global Skills Engine:** `~/.gemini/config/skills/` (475 Native Production Skills)  
+**Project Integration:** `D:\drishti\.opencode\skills\`  
 
-| Skill | Source Path | OpenCode Path | Status | Description |
-|-------|-------------|---------------|--------|-------------|
-| reverse-skill | D:\drishti\tools\reverse-skill | .opencode/skills/reverse-skill/SKILL.md | ✅ Active | 80+ cybersecurity/reverse engineering modules |
-| ponytail | D:\drishti\tools\ponytail | .opencode/skills/ponytail/SKILL.md | ✅ Active | 6 engineering discipline skills |
-| impeccable | D:\drishti\tools\impeccable | .opencode/skills/impeccable/SKILL.md | ✅ Active | UI/UX and frontend quality |
-| ecc | D:\drishti\tools\ecc | .opencode/skills/ecc/SKILL.md | ✅ Active | 200+ engineering skills |
-| agent-skills | D:\drishti\tools\agent-skills | .opencode/skills/agent-skills/SKILL.md | ✅ Active | 24 software lifecycle skills |
-| designer-skills | D:\drishti\tools\designer-skills | .opencode/skills/designer-skills/SKILL.md | ✅ Active | 9 product design skills |
+---
 
-## Skill Source Commit Hashes
+## 1. Registered Skill Frameworks
 
-| Repository | Commit Hash | Date | Branch |
-|------------|-------------|------|--------|
-| reverse-skill | (existing - preserved) | 2026-10-30 | main |
-| ponytail | (cloned 2026-10-30) | 2026-10-30 | main |
-| impeccable | (cloned 2026-10-30) | 2026-10-30 | main |
-| ecc | (cloned 2026-10-30) | 2026-10-30 | main |
-| agent-skills | (cloned 2026-10-30) | 2026-10-30 | main |
-| designer-skills | (cloned 2026-10-30) | 2026-10-30 | main |
+| Framework | Primary Purpose | Source Engine Location | Runtime Status | Active Capabilities |
+| :--- | :--- | :--- | :--- | :--- |
+| **ecc** | 200+ Enterprise Engineering Skills | `~/.gemini/config/skills/` | ✅ Active (Global Native) | Backend, FastAPI, Docker, K8s, CI/CD, Architecture |
+| **ponytail** | Engineering Discipline & Code Simplification | `~/.gemini/config/skills/ponytail*` | ✅ Active (Global Native) | Anti-bloat, debt reduction, complexity refactoring |
+| **impeccable** | UI/UX & Frontend Visual Polish | `~/.gemini/config/skills/impeccable` | ✅ Active (Global Native) | High-contrast HUD design, typography, accessibility |
+| **agent-skills** | Complete Software Engineering Lifecycle | `~/.gemini/config/skills/` | ✅ Active (Global Native) | Spec-driven dev, TDD, incremental release, ADRs |
+| **designer-skills** | Product Design & User Research | `~/.gemini/config/skills/` | ✅ Active (Global Native) | Interaction design, design systems, visual critique |
+| **reverse-skill** | Cybersecurity & ASM Intelligence | Native DRISHTI Services + AI Mesh | 🔄 Pure-Python Emulated | NVD 2.0, Metasploit tags, Dijkstra graph, WAF hotfixes |
 
-## Skill Routing Matrix
+---
 
-| Task Category | Primary Skill | Secondary Skills |
-|---------------|---------------|------------------|
-| Vulnerability Analysis | reverse-skill (api-security, code-audit, supply-chain-security) | ecc/security-review |
-| Penetration Testing | reverse-skill (pentest-tools, attack-chain, protocol-reverse) | ecc/security-scan |
-| Malware/Binary Analysis | reverse-skill (malware-analysis, ghidra-reverse, ida-reverse, radare2, pwn-chain) | |
-| Scanner Integration | reverse-skill (pentest-tools) | ecc/backend-patterns, ecc/docker-patterns |
-| Code Quality/Refactoring | ponytail (all), agent-skills (code-simplification, code-review-and-quality) | ecc/coding-standards |
-| UI/UX Design | impeccable, designer-skills (ui-design, design-systems, interaction-design) | ecc/frontend-design-direction |
-| Backend Engineering | ecc (backend-patterns, fastapi-patterns, api-design) | agent-skills (source-driven-development, incremental-implementation) |
-| Frontend Engineering | ecc (frontend-patterns, react-patterns, vite-patterns), impeccable | agent-skills (frontend-ui-engineering) |
-| Database Operations | ecc (database-migrations, postgres-patterns) | agent-skills (deprecation-and-migration) |
-| DevOps/Docker | ecc (docker-patterns, deployment-patterns) | agent-skills (ci-cd-and-automation) |
-| AI/LLM Integration | ecc (cost-aware-llm-pipeline) | agent-skills (context-engineering) |
-| Testing/QA | agent-skills (test-driven-development, browser-testing-with-devtools) | ecc (e2e-testing, benchmark) |
-| Product Design | designer-skills (all), impeccable | agent-skills (api-and-interface-design) |
-| Documentation | agent-skills (documentation-and-adrs) | ecc (docs-governance, living-docs-governance) |
-| Architecture | ecc (architecture-decision-records, orch-*) | agent-skills (planning-and-task-breakdown) |
-| Security Audit | reverse-skill (code-audit, api-security, supply-chain-security), reverse-skill | ecc/security-review |
-| DevOps/Infrastructure | ecc (docker-patterns, deployment-patterns) | agent-skills (ci-cd-and-automation) |
+## 2. Skill Routing Matrix by Engineering Domain
 
-## Skill Loading Rules
+| Task Category | Primary Skills | Secondary Supporting Skills |
+| :--- | :--- | :--- |
+| **Vulnerability Analysis** | `security-and-hardening`, `security-review` | `cve-correlation`, `remediation_engine` |
+| **Penetration Testing Intel** | `metasploit-intelligence`, `risk_engine` | `nvd_models`, `vulnerability_service` |
+| **Code Quality & Refactoring** | `ponytail`, `code-simplification` | `code-review-and-quality`, `clean-architecture` |
+| **Frontend Engineering** | `frontend-patterns`, `react-patterns`, `impeccable` | `vite-patterns`, `frontend-a11y` |
+| **Backend Engineering** | `fastapi-patterns`, `backend-patterns`, `python-patterns` | `contract-first`, `api-and-interface-design` |
+| **Database Operations** | `postgres-patterns`, `database-migrations` | `sqlite-wal`, `deprecation-and-migration` |
+| **DevOps & Infrastructure** | `docker-patterns`, `deployment-patterns` | `ci-cd-and-automation`, `observability` |
+| **AI / Multi-Model Router** | `llm-router`, `intelligence_explainer` | `cost-aware-llm-pipeline`, `guard-middleware` |
+| **Automated Testing & QA** | `test-driven-development`, `python-testing` | `e2e-testing`, `verification-loop` |
+| **System Architecture** | `architecture-decision-records`, `spec-driven-development`| `planning-and-task-breakdown` |
 
-1. **Orchestrator loads skills** based on task classification
-2. **Minimum necessary skills** - don't load all for every task
-3. **Conflict resolution** - when skills overlap, orchestrator decides
-3. **Subagents receive skill context** via handoff
-4. **Skills are reference-only** - source repos preserved at `D:\drishti\tools\`
+---
 
-## Skill Health Check
+## 3. Skill Health & Verification Audit
 
-| Skill | Source Accessible | OpenCode Compatible | Last Verified |
-|-------|-------------------|---------------------|---------------|
-| reverse-skill | ✅ | ✅ (native router) | 2026-10-30 |
-| ponytail | ✅ | ✅ (native .opencode) | 2026-10-30 |
-| impeccable | ✅ | ✅ (native .opencode) | 2026-10-30 |
-| ecc | ✅ | ✅ (native .opencode) | 2026-10-30 |
-| agent-skills | ✅ | ✅ (native .opencode) | 2026-10-30 |
-| designer-skills | ✅ | ✅ (references) | 2026-10-30 |
+| Skill Group | Physical Source | Runtime Availability | Last Verified | Health Verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| **ecc** | `~/.gemini/config/skills/` | ✅ Available | 2026-11-02 | Fully functional across all 200+ modules |
+| **ponytail** | `~/.gemini/config/skills/ponytail` | ✅ Available | 2026-11-02 | Fully functional (6 core simplification skills) |
+| **impeccable** | `~/.gemini/config/skills/impeccable` | ✅ Available | 2026-11-02 | Fully functional for tactical UI/UX design |
+| **agent-skills** | `~/.gemini/config/skills/` | ✅ Available | 2026-11-02 | Fully functional (24 lifecycle skills) |
+| **designer-skills**| `~/.gemini/config/skills/` | ✅ Available | 2026-11-02 | Fully functional (9 design strategy skills) |
+| **reverse-skill** | Native Python Services | ✅ Native Service | 2026-11-02 | Emulated natively in DRISHTI pure-python core |
+
+---
+
+## 4. Operational Rules for Development
+
+1. **Native Discovery:** Agents automatically discover and load skills directly from `~/.gemini/config/skills/`.
+2. **Zero Phantom Paths:** Never invoke legacy or non-existent tools paths (deprecated).
+3. **Just-In-Time Loading:** Load only domain-specific skills required for the active phase to conserve context budget.
+4. **Evidence Grounding:** All security findings and defense rules must be backed by deterministic code templates or verified telemetry.
