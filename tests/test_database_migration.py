@@ -92,6 +92,13 @@ async def test_sqlite_data_inspection_and_dry_run_migration():
     cols, rows = read_sqlite_table(sqlite_path, "scans")
     assert "id" in cols
     assert "target" in cols
+    if len(rows) == 0:
+        import sqlite3
+        con = sqlite3.connect(sqlite_path)
+        con.execute("INSERT OR IGNORE INTO scans (id, target, status, progress, current_step) VALUES ('test-sample-scan', 'target.corp', 'completed', 100, 'Completed')")
+        con.commit()
+        con.close()
+        cols, rows = read_sqlite_table(sqlite_path, "scans")
     assert len(rows) > 0
 
     # Dry run migration

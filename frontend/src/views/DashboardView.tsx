@@ -18,78 +18,50 @@ interface TelemetryLog {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showToast }) => {
   // Telemetry stream state
+  const [targetDomain, setTargetDomain] = useState<string>('curezy.in');
   const [telemetryFilter, setTelemetryFilter] = useState<'ALL' | 'RECON' | 'EXPLOIT' | 'DEFENSE'>('ALL');
   const [telemetryLogs] = useState<TelemetryLog[]>([
     {
       id: 'l1',
-      timestamp: '14:02:11.02',
+      timestamp: '00:00:01.02',
       category: 'RECON',
-      tag: 'INGEST',
-      message: 'DNS brute discovered 41 CNAMEs for vvdx.in',
+      tag: 'BOOT',
+      message: 'DRISHTI Cyber Command Core online // 5 scanners ready (Nmap, HTTPX, ZAP, Trivy, Nuclei)',
     },
     {
       id: 'l2',
-      timestamp: '14:02:12.44',
+      timestamp: '00:00:02.14',
       category: 'RECON',
       tag: 'PORT',
-      message: '80/tcp OPEN (Apache/2.4.49 - CGI Mode active)',
+      message: 'Listener daemon on 127.0.0.1:8000 // Ingress ready for target discovery',
     },
     {
       id: 'l3',
-      timestamp: '14:02:13.19',
-      category: 'RECON',
-      tag: 'TLS',
-      message: 'Cert valid SAN: *.vvdx.in, admin.vvdx.in',
+      timestamp: '00:00:03.45',
+      category: 'EXPLOIT',
+      tag: 'DIJKSTRA',
+      message: 'Attack graph topological matrix loaded // Weaponized MSF traversal heuristics active',
     },
     {
       id: 'l4',
-      timestamp: '14:02:14.05',
+      timestamp: '00:00:04.18',
       category: 'EXPLOIT',
-      tag: 'PROBE',
-      message: 'Nuclei HTTP GET /cgi-bin/php-cgi fuzzing triggered',
+      tag: 'CORPUS',
+      message: 'NIST NVD v2.0 feed synchronized // EPSS exploit probability scoring primed',
     },
     {
       id: 'l5',
-      timestamp: '14:02:14.90',
-      category: 'EXPLOIT',
-      tag: 'MATCH',
-      message: 'CVE-2024-4577 | EPSS: 97.2% | PHP-CGI Argument Injection candidate confirmed on vvdx.in:80',
-      isAlert: true,
+      timestamp: '00:00:05.30',
+      category: 'DEFENSE',
+      tag: 'SYNTH',
+      message: 'Autonomous defense compiler armed (Cloudflare WAF, Nginx, iptables, virtual patches)',
     },
     {
       id: 'l6',
-      timestamp: '14:02:15.82',
-      category: 'EXPLOIT',
-      tag: 'GRAPH',
-      message: 'Synthesizing Dijkstra shortest attack path...',
-    },
-    {
-      id: 'l7',
-      timestamp: '14:02:16.10',
-      category: 'EXPLOIT',
-      tag: 'AI-CONSENSUS',
-      message: 'Groq Llama-3-Sec correlates MSF module availability',
-    },
-    {
-      id: 'l8',
-      timestamp: '14:02:17.33',
-      category: 'EXPLOIT',
-      tag: 'RADAR',
-      message: 'Threat weight 0.40 Dijkstra cost applied',
-    },
-    {
-      id: 'l9',
-      timestamp: '14:02:18.01',
+      timestamp: '00:00:06.01',
       category: 'DEFENSE',
-      tag: 'AUTO-DEFENSE',
-      message: 'Generating WAF perimeter regex mitigation',
-    },
-    {
-      id: 'l10',
-      timestamp: '14:02:18.42',
-      category: 'DEFENSE',
-      tag: 'VERIFIER',
-      message: 'Synthetic replay returned HTTP 403 Forbidden',
+      tag: 'GUARD',
+      message: 'Dual-layer AI prompt injection shield active // Zero-egress enclave verified',
     },
   ]);
 
@@ -99,7 +71,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
 
   // Probe testing state
   const [probeUrl, setProbeUrl] = useState<string>(
-    'https://vvdx.in/cgi-bin/php-cgi?%add+allow_url_include=1'
+    'https://curezy.in/cgi-bin/php-cgi?%add+allow_url_include=1'
   );
   const [probing, setProbing] = useState<boolean>(false);
   const [probeSecured, setProbeSecured] = useState<boolean>(true);
@@ -158,7 +130,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cve_id: cveId,
-          target_domain: 'vvdx.in',
+          target_domain: targetDomain,
         }),
       });
 
@@ -308,27 +280,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             </div>
 
             {/* Sub-strip with origin & resistance */}
-            <div className="px-4 py-2 border-b border-hairlineLight bg-[#FAF8F5] flex flex-wrap items-center justify-between text-[10px] text-charcoal gap-2">
+            <div className="px-4 py-2 border-b border-hairlineLight bg-boneDark flex flex-wrap items-center justify-between text-[10px] text-charcoal gap-2">
               <div className="flex items-center space-x-3">
-                <span>ORIGIN: <strong className="text-ink">vvdx.in:80</strong></span>
+                <span>TARGET:</span>
+                <input
+                  type="text"
+                  value={targetDomain}
+                  onChange={(e) => setTargetDomain(e.target.value)}
+                  placeholder="e.g. curezy.in"
+                  className="px-2 py-0.5 bg-bone text-cyan font-bold font-mono text-[10px] border border-hairline focus:border-cyan outline-none w-32"
+                />
+                <span className="text-hairlineLight">|</span>
+                <span>ORIGIN: <strong className="text-ink">{targetDomain}:80</strong></span>
                 <span className="text-hairlineLight">|</span>
                 <span>SERVICE: <strong className="text-ink">PHP-CGI 8.1.2</strong></span>
               </div>
               <div className="flex items-center space-x-3 font-mono">
                 <span className="text-vermilion font-bold">EPSS: 97.2% [CRITICAL]</span>
                 <span className="text-hairlineLight">|</span>
-                <span className="text-ink font-bold">FRICTION: 0.40 MIN</span>
+                <span className="text-cyan font-bold">FRICTION: 0.40 MIN</span>
               </div>
             </div>
 
             {/* Attack Graph Canvas Area */}
-            <div className="p-6 paper-grid bg-[#FAF8F5] flex-1 flex flex-col justify-between space-y-6">
+            <div className="p-6 paper-grid bg-bone flex-1 flex flex-col justify-between space-y-6">
               {/* Controls bar */}
               <div className="flex items-center justify-between text-[9px] text-charcoal bg-pureWhite border border-hairline px-3 py-1.5 shadow-xs">
                 <div className="flex items-center space-x-2 font-mono">
                   <span className="font-bold text-ink">TOPOLOGY: DIRECTED ACYCLIC GRAPH</span>
                   <span className="text-hairlineLight">|</span>
-                  <span>SCALE 1:1</span>
+                  <span className="text-signalGreen font-bold">[ DIJKSTRA SOLVED ]</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <button onClick={() => onNavigate('graph')} className="border border-hairline px-2 py-0.5 bg-boneLight hover:bg-ink hover:text-white font-mono font-bold text-[8px] cursor-pointer">
@@ -369,7 +350,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span>CVE-2024-4577</span>
                   </div>
                   <div className="font-bold text-[11px] text-ink leading-tight font-mono">PHP-CGI ARG INJ</div>
-                  <div className="text-[9px] text-charcoal font-mono">vvdx.in:80/cgi-bin</div>
+                  <div className="text-[9px] text-charcoal font-mono">{targetDomain}:80/cgi-bin</div>
                   <div className="flex items-center justify-between text-[8px] pt-1 border-t border-hairlineLight font-mono">
                     <span className="text-vermilion font-bold">EPSS 97.2%</span>
                     <span className="text-ink font-bold font-mono">f(n): 0.15</span>
@@ -423,7 +404,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 </div>
                 <div className="bg-boneDark/60 border border-hairline px-3 py-1.5 text-[10px] text-vermilion font-mono font-bold flex items-center justify-between">
                   <span>msf6 &gt; use exploit/windows/http/php_cgi_arg_injection</span>
-                  <span className="text-charcoal text-[9px] font-normal">TARGET: vvdx.in:80</span>
+                  <span className="text-charcoal text-[9px] font-normal">TARGET: {targetDomain}:80</span>
                 </div>
                 <button
                   onClick={() => handleSynthesizeDefense(selectedCve)}
@@ -689,7 +670,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span className="w-2 h-2 bg-vermilion animate-pulse"></span>
                     <span>CVE-2024-4577</span>
                   </td>
-                  <td className="py-3 px-4 text-ink font-bold border-r border-hairlineLight">vvdx.in:80/cgi-bin</td>
+                  <td className="py-3 px-4 text-ink font-bold border-r border-hairlineLight">{targetDomain}:80/cgi-bin</td>
                   <td className="py-3 px-4 text-charcoal border-r border-hairlineLight">PHP/8.1.2 CGI Mode</td>
                   <td className="py-3 px-4 text-vermilion font-bold border-r border-hairlineLight">97.2% [CRITICAL]</td>
                   <td className="py-3 px-4 border-r border-hairlineLight">
@@ -714,7 +695,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span className="w-1.5 h-1.5 bg-vermilion"></span>
                     <span>CVE-2021-41773</span>
                   </td>
-                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">static.vvdx.in:443</td>
+                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">static.{targetDomain}:443</td>
                   <td className="py-3 px-4 text-charcoal border-r border-hairlineLight">Apache/2.4.49 (Unix)</td>
                   <td className="py-3 px-4 text-vermilion font-bold border-r border-hairlineLight">94.1% [HIGH]</td>
                   <td className="py-3 px-4 border-r border-hairlineLight">
@@ -739,7 +720,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span className="w-1.5 h-1.5 bg-charcoal"></span>
                     <span>CVE-2024-6387</span>
                   </td>
-                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">bastion.vvdx.in:22</td>
+                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">bastion.{targetDomain}:22</td>
                   <td className="py-3 px-4 text-charcoal border-r border-hairlineLight">OpenSSH_9.2p1 Debian</td>
                   <td className="py-3 px-4 text-charcoal border-r border-hairlineLight">41.8% [MEDIUM]</td>
                   <td className="py-3 px-4 border-r border-hairlineLight">
@@ -764,7 +745,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span className="w-1.5 h-1.5 bg-signalGreen"></span>
                     <span>CVE-2023-48795</span>
                   </td>
-                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">vpn.vvdx.in:1194</td>
+                  <td className="py-3 px-4 text-ink border-r border-hairlineLight">vpn.{targetDomain}:1194</td>
                   <td className="py-3 px-4 text-charcoal border-r border-hairlineLight">OpenSSH Terrapin</td>
                   <td className="py-3 px-4 text-signalGreen font-bold border-r border-hairlineLight">12.4% [LOW]</td>
                   <td className="py-3 px-4 border-r border-hairlineLight">

@@ -57,6 +57,7 @@ export default function App() {
     return DEFAULT_OPERATOR;
   });
 
+  const [activeTarget, setActiveTarget] = useState<string>('curezy.in');
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -149,7 +150,7 @@ export default function App() {
       {/* Top Tactical Command Bar (Swiss Editorial Archival Header) */}
       <TopUtilityBar
         operator={operator}
-        target="vvdx.in"
+        target={activeTarget}
         onOpenCommandPalette={() => setIsCommandOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
         onNavigateToSettings={() => setActiveTab('settings')}

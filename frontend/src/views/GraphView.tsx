@@ -7,21 +7,21 @@ interface GraphViewProps {
 }
 
 export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) => {
-  const [source, setSource] = useState('vvdx.in');
+  const [source, setSource] = useState('curezy.in');
   const [target, setTarget] = useState('CoreDB');
   const [calculating, setCalculating] = useState(false);
   const [paths, setPaths] = useState<any[]>([
     {
-      source_node: 'vvdx.in:80',
+      source_node: 'curezy.in:80',
       target_node: 'CoreDB:5432',
       cumulative_cost: 0.40,
-      path_nodes: ['vvdx.in:80', 'CVE-2024-4577 [MSF]', 'DMZ-Proxy:8080', 'CoreDB:5432'],
+      path_nodes: ['curezy.in:80', 'CVE-2024-4577 [MSF]', 'DMZ-Proxy:8080', 'CoreDB:5432'],
     },
     {
-      source_node: 'static.vvdx.in:443',
+      source_node: 'static.curezy.in:443',
       target_node: 'CoreDB:5432',
       cumulative_cost: 1.15,
-      path_nodes: ['static.vvdx.in:443', 'CVE-2021-41773', 'InternalAuth', 'CoreDB:5432'],
+      path_nodes: ['static.curezy.in:443', 'CVE-2021-41773', 'InternalAuth', 'CoreDB:5432'],
     },
   ]);
   const [selectedPath, setSelectedPath] = useState<any | null>(paths[0]);
@@ -192,7 +192,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                 type="text"
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                placeholder="e.g. vvdx.in:80"
+                placeholder="e.g. curezy.in:80"
                 className="w-full bg-[#FAF8F5] border border-hairline px-2.5 py-1.5 text-xs text-ink font-mono"
               />
             </div>

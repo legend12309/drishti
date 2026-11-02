@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DRISHTI // SEC-OPS-09 — Autonomous Cyber Intelligence & Attack Cockpit</title>
+    <title>DRISHTI // HACKER COMMAND COCKPIT — Elite Cyber Recon & Attack Platform</title>
     <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <!-- Tailwind CSS with Swiss Brutalist Editorial & Kinetic Signal Dossier Design Tokens -->
+    <!-- Tailwind CSS with Elite Hacker Cyber Command Palette -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
       tailwind.config = {
@@ -18,47 +18,50 @@
         theme: {
           extend: {
             colors: {
-              // Kinetic Signal Dossier Palette
-              bone: '#F6F3EC',
-              boneDark: '#ECE8DF',
-              boneLight: '#FAF8F4',
-              pureWhite: '#FFFFFF',
-              ink: '#0A0A0D',
-              inkMuted: '#24242C',
-              charcoal: '#555560',
-              pencil: '#7A7A85',
-              hairline: '#18181C',
-              hairlineLight: '#D5D0C5',
-              vermilion: '#FF2E00',
-              crimson: '#D91E00',
-              signalGreen: '#007A4D',
-              signalGreenBg: '#E6F4EA',
+              // Elite Cyber / Hacker Void Palette
+              bone: '#080A0F',          // Deep Obsidian Void Canvas
+              boneDark: '#0D111A',      // Elevated Panel Surface 1
+              boneLight: '#121824',     // Input / Active Tab / Sub-Surface
+              pureWhite: '#0D111A',     // Card Surface (Sleek Dark Carbon Panel)
+              ink: '#E6EDF3',           // Primary High-Contrast Phosphor White
+              inkMuted: '#AFBAC6',      // Secondary Readable Silver Text
+              charcoal: '#8B95A5',      // Muted Cyber Gray / Telemetry Labels
+              pencil: '#525E70',        // Subtle Terminal Borders / Grid / Dim Indicators
+              hairline: '#1E2838',      // 1px Sharp Dark Cyber Border
+              hairlineLight: '#141D2B', // Subtle partition lines
+              vermilion: '#FF0055',     // Laser Crimson / Exploit / Critical Threat Accent
+              crimson: '#D90045',       // Darker Threat Crimson
+              signalGreen: '#00FF66',   // Phosphor Matrix Neon Green (Active, Shell Prompt)
+              signalGreenBg: 'rgba(0, 255, 102, 0.08)',
+              cyan: '#00F0FF',          // Cyber Electric Cyan (Network, Radar, Telemetry)
+              cyanBg: 'rgba(0, 240, 255, 0.08)',
+              amber: '#FFB800',         // Warning / Medium Friction Accent
               // Legacy SaaS compatibility mappings
-              "canvas": "#F6F3EC",
-              "canvas-subtle": "#ECE8DF",
-              "surface": "#FFFFFF",
-              "surface-subtle": "#FAF8F4",
-              "primary-violet": "#0A0A0D",
-              "hover-violet": "#FF2E00",
-              "soft-violet": "#ECE8DF",
-              "pale-violet": "#FAF8F4",
-              "text-primary": "#0A0A0D",
-              "text-secondary": "#555560",
-              "text-muted": "#7A7A85",
-              "app-border": "#18181C",
-              "critical-red": "#FF2E00",
-              "critical-bg": "#FFF0ED",
-              "success-green": "#007A4D",
-              "success-bg": "#E6F4EA",
-              "warning-amber": "#C78A27",
-              "warning-bg": "#FFF7E8",
-              "info-blue": "#0A0A0D",
+              "canvas": "#080A0F",
+              "canvas-subtle": "#0D111A",
+              "surface": "#0D111A",
+              "surface-subtle": "#121824",
+              "primary-violet": "#00FF66",
+              "hover-violet": "#00F0FF",
+              "soft-violet": "#121824",
+              "pale-violet": "#0D111A",
+              "text-primary": "#E6EDF3",
+              "text-secondary": "#8B95A5",
+              "text-muted": "#525E70",
+              "app-border": "#1E2838",
+              "critical-red": "#FF0055",
+              "critical-bg": "rgba(255, 0, 85, 0.1)",
+              "success-green": "#00FF66",
+              "success-bg": "rgba(0, 255, 102, 0.08)",
+              "warning-amber": "#FFB800",
+              "warning-bg": "rgba(255, 184, 0, 0.1)",
+              "info-blue": "#00F0FF",
             },
             fontFamily: {
               mono: ['JetBrains Mono', 'Courier New', 'Consolas', 'monospace'],
-              grotesk: ['Space Grotesk', 'Barlow Condensed', 'Arial Black', 'sans-serif'],
+              grotesk: ['Space Grotesk', 'Barlow Condensed', 'sans-serif'],
               condensed: ['Barlow Condensed', 'Space Grotesk', 'sans-serif'],
-              sans: ['Space Grotesk', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
+              sans: ['Space Grotesk', 'JetBrains Mono', 'sans-serif'],
             }
           }
         }
@@ -66,7 +69,7 @@
     </script>
   </head>
   <body class="bg-bone text-ink min-h-screen flex overflow-hidden antialiased select-none font-mono">
-    <div id="root" class="w-full h-full flex"></div>
+    <div id="root" class="w-full h-full flex bg-bone text-ink"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

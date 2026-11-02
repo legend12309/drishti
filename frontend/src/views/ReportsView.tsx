@@ -44,33 +44,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
             generated_at: w.completed_at || w.updated_at,
             error_message: w.error_summary,
           }));
-        setReports(reportsWithData.length > 0 ? reportsWithData : [
-          {
-            id: 'rpt-wf-1793539669-company-com',
-            workflow_id: 'wf-1793539669-company-com',
-            scan_id: 'wf-1793539669-company-com',
-            target: 'vvdx.in',
-            status: 'completed',
-            file_path: 'generated',
-            file_size: 14,
-            generated_at: new Date().toISOString(),
-          }
-        ]);
+        setReports(reportsWithData);
+      } else {
+        setReports([]);
       }
     } catch {
-      // Heuristic fallback
-      setReports([
-        {
-          id: 'rpt-wf-1793539669-company-com',
-          workflow_id: 'wf-1793539669-company-com',
-          scan_id: 'wf-1793539669-company-com',
-          target: 'vvdx.in',
-          status: 'completed',
-          file_path: 'generated',
-          file_size: 14,
-          generated_at: new Date().toISOString(),
-        }
-      ]);
+      setReports([]);
     } finally {
       setLoading(false);
     }
