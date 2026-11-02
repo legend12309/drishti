@@ -55,6 +55,10 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   // Results State
   const [subdomains, setSubdomains] = useState<SubdomainRecord[]>([]);
 
+  // Recon Mode State (Active vs Passive OSINT)
+  const [reconMode, setReconMode] = useState<'ACTIVE' | 'PASSIVE'>('PASSIVE');
+  const [observations, setObservations] = useState<any[]>([]);
+
   // Authorization State
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(false);
@@ -90,10 +94,10 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      checkAuthorization(target, 'FULL_PASSIVE');
+      checkAuthorization(target, reconMode === 'PASSIVE' ? 'PASSIVE_OSINT' : 'FULL_ACTIVE');
     }, 400);
     return () => clearTimeout(timer);
-  }, [target, checkAuthorization]);
+  }, [target, reconMode, checkAuthorization]);
 
   const loadFindingsForScan = useCallback(async (scanId: string, targetDomain: string) => {
     try {
@@ -113,6 +117,15 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           setSubdomains(mappedAssets);
         }
       }
+
+      // Also retrieve immutable passive observations (DNS, CT, RDAP)
+      const obsRes = await fetch(`/api/scans/${scanId}/observations`);
+      if (obsRes.ok) {
+        const obsData = await obsRes.json();
+        if (obsData.observations && Array.isArray(obsData.observations)) {
+          setObservations(obsData.observations);
+        }
+      }
     } catch (e) {
       console.error('Failed to load findings for scan:', e);
     }
@@ -120,23 +133,38 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
   const attachWorkflowStream = useCallback((workflowId: string, targetDomain?: string) => {
     if (eventSourceRef.current) eventSourceRef.current.close();
-    const es = new EventSource(`/api/scans/orchestrator/workflows/${workflowId}/stream`);
+    const isWf = workflowId.startsWith('wf-');
+    const streamUrl = isWf
+      ? `/api/scans/orchestrator/workflows/${workflowId}/stream`
+      : `/api/scans/${workflowId}/stream`;
+    const es = new EventSource(streamUrl);
     eventSourceRef.current = es;
 
     const finalizeScan = async () => {
       setScanning(false);
       es.close();
-      try {
-        const wfRes = await fetch(`/api/scans/orchestrator/workflows/${workflowId}`);
-        if (wfRes.ok) {
-          const wfData = await wfRes.json();
-          if (wfData.workflow) {
-            setOrchestratorWorkflow(wfData.workflow);
-            if (wfData.workflow.progress !== undefined) setProgress(wfData.workflow.progress);
-            if (wfData.workflow.current_step) setStatusText(wfData.workflow.current_step);
+      if (isWf) {
+        try {
+          const wfRes = await fetch(`/api/scans/orchestrator/workflows/${workflowId}`);
+          if (wfRes.ok) {
+            const wfData = await wfRes.json();
+            if (wfData.workflow) {
+              setOrchestratorWorkflow(wfData.workflow);
+              if (wfData.workflow.progress !== undefined) setProgress(wfData.workflow.progress);
+              if (wfData.workflow.current_step) setStatusText(wfData.workflow.current_step);
+            }
           }
-        }
-      } catch (err) {}
+        } catch (err) {}
+      } else {
+        try {
+          const scRes = await fetch(`/api/scans/${workflowId}`);
+          if (scRes.ok) {
+            const scData = await scRes.json();
+            setProgress(scData.progress || 100);
+            if (scData.current_step) setStatusText(scData.current_step);
+          }
+        } catch (err) {}
+      }
       await loadFindingsForScan(workflowId, targetDomain || target);
     };
 
@@ -436,15 +464,71 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   };
 
   /**
-   * One-Click Entry Point: "Start AutoRecon"
-   * The backend dynamically determines compatible scanners (Nmap, HTTPX, ZAP, Trivy, Nuclei)
-   * according to target compatibility and authorization scope.
+   * Dispatches either Passive OSINT (frictionless) or Full Active Recon (DAG)
    */
   const startAutoRecon = async () => {
     setScanning(true);
-    setProgress(10);
-    setStatusText('Resolving perimeter scope & initializing scanning pipeline...');
-    setActiveTab('timeline');
+    setProgress(15);
+    setStatusText(
+      reconMode === 'PASSIVE'
+        ? 'Resolving public DNS, CT logs, and RDAP metadata (Passive OSINT)...'
+        : 'Resolving perimeter scope & initializing active scanning pipeline...'
+    );
+    setActiveTab(reconMode === 'PASSIVE' ? 'findings' : 'timeline');
+
+    if (reconMode === 'PASSIVE') {
+      try {
+        const res = await fetch('/api/scans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target: target.trim(),
+            scope: 'PASSIVE_OSINT',
+            authorization_id: authStatus?.authorization_id || undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Passive scan could not be initiated.');
+        }
+
+        const data = await res.json();
+        const scanId = data.scan_id || data.id;
+        setCurrentScanId(scanId);
+
+        if (showToast) showToast('info', 'Passive OSINT Dispatched', `Scan ID: ${scanId}`);
+
+        localStorage.setItem(STORAGE_KEY, scanId);
+        attachWorkflowStream(scanId, target.trim());
+
+        // Fast polling fallback to guarantee completion even if SSE drops
+        const pollInterval = setInterval(async () => {
+          try {
+            const checkRes = await fetch(`/api/scans/${scanId}`);
+            if (checkRes.ok) {
+              const sc = await checkRes.json();
+              setProgress(sc.progress || 50);
+              if (sc.current_step) setStatusText(sc.current_step);
+              if (sc.status === 'completed' || sc.status === 'failed') {
+                clearInterval(pollInterval);
+                setScanning(false);
+                setProgress(100);
+                await loadFindingsForScan(scanId, target.trim());
+                if (showToast) showToast('success', 'Passive OSINT Complete', `Discovered assets for ${target.trim()}`);
+              }
+            }
+          } catch (e) {
+            clearInterval(pollInterval);
+          }
+        }, 1200);
+
+      } catch (err: any) {
+        if (showToast) showToast('error', 'Execution Error', err.message || 'Passive scan could not be started.');
+        setScanning(false);
+      }
+      return;
+    }
 
     const requestedScope = authStatus?.permitted_scope || 'FULL_ACTIVE';
     const requestedScanners = ['nmap', 'httpx', 'zap', 'trivy', 'nuclei'];
@@ -536,10 +620,22 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             <button
               onClick={startAutoRecon}
               disabled={scanning}
-              className="bg-vermilion hover:bg-crimson disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer"
+              className={`disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer ${
+                reconMode === 'PASSIVE'
+                  ? 'bg-signalGreen hover:bg-forestGreen text-white'
+                  : 'bg-vermilion hover:bg-crimson text-white'
+              }`}
             >
-              <span>⚡</span>
-              <span>{scanning ? '[ RUNNING PIPELINE... ]' : '[ START FULL SECURITY AUDIT ➔ ]'}</span>
+              <span>{reconMode === 'PASSIVE' ? '🌐' : '⚡'}</span>
+              <span>
+                {scanning
+                  ? reconMode === 'PASSIVE'
+                    ? '[ HARVESTING PASSIVE OSINT... ]'
+                    : '[ RUNNING PIPELINE... ]'
+                  : reconMode === 'PASSIVE'
+                  ? '[ START PASSIVE OSINT RECON ➔ ]'
+                  : '[ START FULL SECURITY AUDIT ➔ ]'}
+              </span>
             </button>
           </div>
         </div>
@@ -554,34 +650,52 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
               <div className="flex items-center space-x-1">
                 <button
                   type="button"
-                  onClick={() => checkAuthorization(target, 'FULL_ACTIVE')}
-                  className="px-2.5 py-1 text-[10px] font-bold font-mono border border-signalGreen bg-signalGreenBg text-signalGreen cursor-pointer shadow-xs"
+                  onClick={() => {
+                    setReconMode('PASSIVE');
+                    checkAuthorization(target, 'PASSIVE_OSINT');
+                  }}
+                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
+                    reconMode === 'PASSIVE'
+                      ? 'border-signalGreen bg-signalGreenBg text-signalGreen font-bold shadow-xs'
+                      : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
+                  }`}
                 >
-                  [ ⚡ ACTIVE RECON (FULL PIPELINE) ]
+                  [ 🌐 PASSIVE OSINT ONLY (FRICTIONLESS) ]
                 </button>
                 <button
                   type="button"
-                  onClick={() => checkAuthorization(target, 'FULL_PASSIVE')}
-                  className="px-2.5 py-1 text-[10px] font-mono border border-hairline text-charcoal hover:text-ink bg-boneLight cursor-pointer"
+                  onClick={() => {
+                    setReconMode('ACTIVE');
+                    checkAuthorization(target, 'FULL_ACTIVE');
+                  }}
+                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
+                    reconMode === 'ACTIVE'
+                      ? 'border-vermilion bg-red-50 text-vermilion font-bold shadow-xs'
+                      : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
+                  }`}
                 >
-                  [ 🌐 PASSIVE OSINT ONLY ]
+                  [ ⚡ ACTIVE RECON (FULL PIPELINE) ]
                 </button>
               </div>
             </div>
 
             <div className="flex items-center space-x-2 text-[10px] font-mono text-charcoal">
               <span>ACTIVE ENGINES:</span>
-              <span className="text-signalGreen font-bold">[ 5/5 SCANNERS LOADED ]</span>
+              <span className={reconMode === 'PASSIVE' ? 'text-signalGreen font-bold' : 'text-signalGreen font-bold'}>
+                {reconMode === 'PASSIVE'
+                  ? '[ PASSIVE OSINT: CT LOGS + DNS + RDAP ]'
+                  : '[ 5/5 SCANNERS LOADED ]'}
+              </span>
             </div>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex-1 max-w-xl">
               <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block mb-1.5 flex items-center justify-between">
-                <span>[ ACTIVE ASSESSMENT TARGET DOMAIN ]</span>
+                <span>[ {reconMode === 'PASSIVE' ? 'PASSIVE OSINT TARGET DOMAIN' : 'ACTIVE ASSESSMENT TARGET DOMAIN'} ]</span>
                 {checkingAuth && (
                   <span className="text-[9px] text-pencil font-mono flex items-center gap-1.5 normal-case">
-                    <span className="w-1.5 h-1.5 bg-vermilion animate-ping"></span>
+                    <span className="w-1.5 h-1.5 bg-signalGreen animate-ping"></span>
                     Checking Authorization...
                   </span>
                 )}
@@ -595,45 +709,63 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   className="w-full px-3 py-2 bg-pureWhite border border-hairline text-xs text-ink focus:border-signalGreen outline-none font-mono"
                 />
                 <span className="absolute right-2 top-2 text-[9px] font-bold text-signalGreen bg-signalGreenBg border border-signalGreen/40 px-2 py-0.5 uppercase tracking-wider font-mono">
-                  RFC 8655 Ready
+                  {reconMode === 'PASSIVE' ? 'Instant Clearance' : 'RFC 8655 Ready'}
                 </span>
               </div>
             </div>
 
-            {/* 5 Scanner Badges */}
+            {/* Scanner Badges */}
             <div className="flex flex-col space-y-1.5 border-t lg:border-t-0 lg:border-l border-hairlineLight pt-3 lg:pt-0 lg:pl-6 text-[10px] font-mono">
-              <span className="font-bold text-ink text-[11px] font-grotesk uppercase">COORDINATED ACTIVE SCANNERS (5/5)</span>
+              <span className="font-bold text-ink text-[11px] font-grotesk uppercase">
+                {reconMode === 'PASSIVE' ? 'PASSIVE INTELLIGENCE SOURCES (3/3)' : 'COORDINATED ACTIVE SCANNERS (5/5)'}
+              </span>
               <div className="flex flex-wrap gap-1.5">
-                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NMAP]</span>
-                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ HTTPX]</span>
-                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ OWASP ZAP]</span>
-                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ TRIVY]</span>
-                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NUCLEI]</span>
+                {reconMode === 'PASSIVE' ? (
+                  <>
+                    <span className="px-1.5 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold text-[9px]">[✓ DNS DOH (A/AAAA/MX/NS/TXT)]</span>
+                    <span className="px-1.5 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold text-[9px]">[✓ CERT TRANSPARENCY]</span>
+                    <span className="px-1.5 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold text-[9px]">[✓ RDAP / REGISTRAR]</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NMAP]</span>
+                    <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ HTTPX]</span>
+                    <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ OWASP ZAP]</span>
+                    <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ TRIVY]</span>
+                    <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NUCLEI]</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           {/* Verification Status Banner */}
           <div className={`p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-            authStatus?.authorized
+            reconMode === 'PASSIVE' || authStatus?.authorized
               ? 'bg-signalGreenBg border-signalGreen text-signalGreen'
               : 'bg-boneLight border-hairline text-charcoal'
           }`}>
             <div className="flex items-start gap-3">
               <div className="font-bold text-sm">
-                {authStatus?.authorized ? '✓' : '!'}
+                {reconMode === 'PASSIVE' || authStatus?.authorized ? '✓' : '!'}
               </div>
               <div>
                 <div className="font-bold text-ink flex items-center gap-2 text-[11px]">
-                  <span>{authStatus?.authorized ? 'DOMAIN SCOPE VERIFIED' : 'SCOPE VERIFICATION REQUIRED'}</span>
-                  {authStatus?.authorized && (
-                    <span className="text-[9px] bg-pureWhite text-signalGreen font-bold px-2 py-0.5 border border-signalGreen uppercase">
-                      ACTIVE ({authStatus.permitted_scope || 'FULL_ACTIVE'})
-                    </span>
-                  )}
+                  <span>
+                    {reconMode === 'PASSIVE'
+                      ? 'DOMAIN CLEARANCE: FRICTIONLESS OSINT (NO DNS TXT REQUIRED)'
+                      : authStatus?.authorized
+                      ? 'DOMAIN SCOPE VERIFIED'
+                      : 'SCOPE VERIFICATION REQUIRED'}
+                  </span>
+                  <span className="text-[9px] bg-pureWhite text-signalGreen font-bold px-2 py-0.5 border border-signalGreen uppercase">
+                    {reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : `ACTIVE (${authStatus?.permitted_scope || 'FULL_ACTIVE'})`}
+                  </span>
                 </div>
                 <div className="text-[10px] text-charcoal mt-0.5 font-mono">
-                  {authStatus?.authorized
+                  {reconMode === 'PASSIVE'
+                    ? `Target '${target}' is authorized for instant passive intelligence. No intrusive packets will touch target servers.`
+                    : authStatus?.authorized
                     ? `Target '${target}' is authorized and ready for deep discovery, port probing, and vulnerability auditing.`
                     : `Active security probing requires explicit authorization via DNS challenge token to ensure RFC 8655 compliance.`}
                 </div>
@@ -641,7 +773,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             </div>
 
             <div className="shrink-0 flex items-center gap-2">
-              {!authStatus?.authorized && (
+              {reconMode === 'ACTIVE' && !authStatus?.authorized && (
                 <button
                   onClick={initiateDNSChallenge}
                   className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer"
@@ -812,73 +944,129 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           </div>
         )}
 
-        {/* Tab 3: Findings */}
+        {/* Tab 3: Findings & Passive Observations */}
         {activeTab === 'findings' && (
-          <div className="bg-pureWhite border border-hairline p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-hairline">
-              <div>
-                <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
-                  AGGREGATED OBSERVATIONS & VULNERABILITY EVIDENCE
-                </h3>
-                <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                  Correlated vulnerability and service evidence streamed directly from scanning engines
-                </p>
-              </div>
-              <span className="px-2 py-0.5 bg-boneDark border border-hairline text-ink text-[10px] font-bold uppercase font-mono">
-                TOTAL: {subdomains.length}
-              </span>
-            </div>
-
-            {subdomains.length > 0 ? (
-              <div className="space-y-2">
-                {subdomains.map((f, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-ink transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`px-2 py-0.5 font-bold font-mono text-[9px] shrink-0 uppercase border ${
-                        f.risk === 'CRITICAL'
-                          ? 'bg-vermilion text-white border-vermilion'
-                          : f.risk === 'HIGH'
-                          ? 'bg-amber-100 text-amber-900 border-amber-300'
-                          : f.risk === 'MEDIUM'
-                          ? 'bg-yellow-50 text-yellow-800 border-yellow-300'
-                          : 'bg-signalGreenBg text-signalGreen border-signalGreen'
-                      }`}>
-                        [{f.risk}]
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-ink font-mono">{f.host}</span>
-                          <span className="text-[10px] text-charcoal font-mono">({f.ip})</span>
-                        </div>
-                        <p className="text-[11px] text-charcoal mt-0.5 font-mono">{f.tech}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[10px] text-charcoal font-mono bg-pureWhite px-2 py-0.5 border border-hairline">
-                        SCORE: <strong className="text-ink">{f.score}</strong>
-                      </span>
-                      {f.ports && f.ports.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          {f.ports.map((p) => (
-                            <span key={p} className="px-1.5 py-0.5 bg-boneDark text-ink font-mono text-[9px] font-bold border border-hairline">
-                              :{p}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+          <div className="bg-pureWhite border border-hairline p-5 shadow-xs space-y-6">
+            {/* Passive Observations Section */}
+            {observations.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-hairline">
+                  <div>
+                    <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk flex items-center gap-2">
+                      <span className="w-2 h-2 bg-signalGreen"></span>
+                      <span>IMMUTABLE PASSIVE RECONNAISSANCE OBSERVATIONS (DOH / CT / RDAP)</span>
+                    </h3>
+                    <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+                      Cryptographically verified public OSINT records collected without touching target infrastructure
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-charcoal text-[11px] font-mono bg-[#FAF8F5] border border-dashed border-hairline p-6">
-                [ NO OBSERVATIONS OR VULNERABILITY EVIDENCE RECORDED YET. ]
+                  <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen text-[10px] font-bold uppercase font-mono">
+                    OBSERVATIONS: {observations.length}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {observations.map((obs, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-2 font-mono text-xs hover:border-ink transition-colors"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="px-1.5 py-0.5 bg-ink text-white font-bold text-[9px] uppercase shrink-0">
+                          [{obs.query_type || obs.asset_type}]
+                        </span>
+                        <span className="text-ink font-bold text-xs shrink-0">{obs.asset_id}</span>
+                        <span className="text-charcoal text-[11px] truncate">
+                          ➔ {obs.observed_value || JSON.stringify(obs.raw_metadata || {})}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] shrink-0">
+                        <span className="px-1.5 py-0.5 bg-pureWhite border border-hairline text-ink font-bold">
+                          {obs.source}
+                        </span>
+                        <span className={`px-1.5 py-0.5 font-bold uppercase border ${
+                          obs.status === 'success'
+                            ? 'bg-signalGreenBg text-signalGreen border-signalGreen'
+                            : obs.status === 'blocked_ssrf'
+                            ? 'bg-red-50 text-vermilion border-vermilion'
+                            : 'bg-boneDark text-charcoal border-hairline'
+                        }`}>
+                          [{obs.status}]
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+
+            {/* Correlated Findings Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-hairline">
+                <div>
+                  <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                    CORRELATED FINDINGS & PERIMETER ASSETS
+                  </h3>
+                  <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+                    Correlated vulnerability and service evidence analyzed by the Detective & Recon engine
+                  </p>
+                </div>
+                <span className="px-2 py-0.5 bg-boneDark border border-hairline text-ink text-[10px] font-bold uppercase font-mono">
+                  TOTAL ASSETS: {subdomains.length}
+                </span>
+              </div>
+
+              {subdomains.length > 0 ? (
+                <div className="space-y-2">
+                  {subdomains.map((f, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-ink transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`px-2 py-0.5 font-bold font-mono text-[9px] shrink-0 uppercase border ${
+                          f.risk === 'CRITICAL'
+                            ? 'bg-vermilion text-white border-vermilion'
+                            : f.risk === 'HIGH'
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : f.risk === 'MEDIUM'
+                            ? 'bg-yellow-50 text-yellow-800 border-yellow-300'
+                            : 'bg-signalGreenBg text-signalGreen border-signalGreen'
+                        }`}>
+                          [{f.risk}]
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-ink font-mono">{f.host}</span>
+                            <span className="text-[10px] text-charcoal font-mono">({f.ip})</span>
+                          </div>
+                          <p className="text-[11px] text-charcoal mt-0.5 font-mono">{f.tech}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-[10px] text-charcoal font-mono bg-pureWhite px-2 py-0.5 border border-hairline">
+                          SCORE: <strong className="text-ink">{f.score}</strong>
+                        </span>
+                        {f.ports && f.ports.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {f.ports.map((p) => (
+                              <span key={p} className="px-1.5 py-0.5 bg-boneDark text-ink font-mono text-[9px] font-bold border border-hairline">
+                                :{p}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : observations.length === 0 ? (
+                <div className="py-12 text-center text-charcoal text-[11px] font-mono bg-[#FAF8F5] border border-dashed border-hairline p-6">
+                  [ NO OBSERVATIONS OR ASSETS RECORDED YET. CLICK "START PASSIVE OSINT RECON" ABOVE. ]
+                </div>
+              ) : null}
+            </div>
           </div>
         )}
 
