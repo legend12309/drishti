@@ -546,10 +546,39 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
         {/* Target Configuration & Domain Verification Panel */}
         <div className="bg-pureWhite border border-hairline p-5 space-y-4 shadow-xs">
+          
+          {/* Active Recon Scope & Mode Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hairlineLight">
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">[ RECON DISCOVERY MODE ]:</span>
+              <div className="flex items-center space-x-1">
+                <button
+                  type="button"
+                  onClick={() => checkAuthorization(target, 'FULL_ACTIVE')}
+                  className="px-2.5 py-1 text-[10px] font-bold font-mono border border-signalGreen bg-signalGreenBg text-signalGreen cursor-pointer shadow-xs"
+                >
+                  [ ⚡ ACTIVE RECON (FULL PIPELINE) ]
+                </button>
+                <button
+                  type="button"
+                  onClick={() => checkAuthorization(target, 'FULL_PASSIVE')}
+                  className="px-2.5 py-1 text-[10px] font-mono border border-hairline text-charcoal hover:text-ink bg-boneLight cursor-pointer"
+                >
+                  [ 🌐 PASSIVE OSINT ONLY ]
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 text-[10px] font-mono text-charcoal">
+              <span>ACTIVE ENGINES:</span>
+              <span className="text-signalGreen font-bold">[ 5/5 SCANNERS LOADED ]</span>
+            </div>
+          </div>
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex-1 max-w-xl">
               <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block mb-1.5 flex items-center justify-between">
-                <span>[ ASSESSMENT TARGET DOMAIN ]</span>
+                <span>[ ACTIVE ASSESSMENT TARGET DOMAIN ]</span>
                 {checkingAuth && (
                   <span className="text-[9px] text-pencil font-mono flex items-center gap-1.5 normal-case">
                     <span className="w-1.5 h-1.5 bg-vermilion animate-ping"></span>
@@ -563,22 +592,23 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
                   placeholder="e.g. curezy.in or scanme.nmap.org"
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
+                  className="w-full px-3 py-2 bg-pureWhite border border-hairline text-xs text-ink focus:border-signalGreen outline-none font-mono"
                 />
-                <span className="absolute right-2 top-2 text-[9px] font-bold text-ink bg-boneLight border border-hairline px-2 py-0.5 uppercase tracking-wider font-mono">
-                  RFC 8655 Verified
+                <span className="absolute right-2 top-2 text-[9px] font-bold text-signalGreen bg-signalGreenBg border border-signalGreen/40 px-2 py-0.5 uppercase tracking-wider font-mono">
+                  RFC 8655 Ready
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-[10px] text-charcoal border-t lg:border-t-0 lg:border-l border-hairlineLight pt-3 lg:pt-0 lg:pl-6">
-              <div>
-                <span className="font-bold text-ink block text-[11px] font-grotesk">5 AUTOMATED ENGINES</span>
-                <span className="text-charcoal text-[9px] mt-0.5 block font-mono">Nmap • HTTPX • ZAP • Trivy • Nuclei</span>
-              </div>
-              <div>
-                <span className="font-bold text-ink block text-[11px] font-grotesk">DEPENDENCY DAG</span>
-                <span className="text-charcoal text-[9px] mt-0.5 block font-mono">Discovery ➔ CVE Correlation</span>
+            {/* 5 Scanner Badges */}
+            <div className="flex flex-col space-y-1.5 border-t lg:border-t-0 lg:border-l border-hairlineLight pt-3 lg:pt-0 lg:pl-6 text-[10px] font-mono">
+              <span className="font-bold text-ink text-[11px] font-grotesk uppercase">COORDINATED ACTIVE SCANNERS (5/5)</span>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NMAP]</span>
+                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ HTTPX]</span>
+                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ OWASP ZAP]</span>
+                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ TRIVY]</span>
+                <span className="px-1.5 py-0.5 bg-boneLight border border-hairline text-ink font-bold text-[9px]">[✓ NUCLEI]</span>
               </div>
             </div>
           </div>
