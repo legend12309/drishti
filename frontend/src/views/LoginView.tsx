@@ -95,7 +95,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
   return (
     <div className="min-h-screen w-full bg-bone paper-grid flex items-center justify-center p-6 text-ink font-mono select-none">
-      <div className="bg-boneDark border border-hairline hover:border-signalGreen/50 transition-colors max-w-md w-full p-8 space-y-6 shadow-2xl relative">
+      <div className="bg-pureWhite border-2 border-hairline hover:border-signalGreen transition-colors max-w-md w-full p-8 space-y-6 shadow-lg relative">
         
         {/* Hacker Terminal Prompt Header */}
         <div className="flex items-center justify-between pb-3 border-b border-hairline text-[10px] text-charcoal">
@@ -108,7 +108,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 border border-signalGreen/40 bg-bone text-signalGreen mx-auto flex items-center justify-center shadow-xs font-bold text-lg">
+          <div className="w-12 h-12 border border-hairline bg-boneLight text-signalGreen mx-auto flex items-center justify-center shadow-xs font-bold text-lg">
             #_
           </div>
           <div className="flex items-baseline justify-center space-x-1.5 font-grotesk font-bold text-xl tracking-widest text-ink">
@@ -130,7 +130,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-bone border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none"
+              className="w-full bg-pureWhite border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none"
             />
           </div>
 
@@ -142,7 +142,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-bone border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none"
+              className="w-full bg-pureWhite border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none"
             />
           </div>
 
@@ -153,7 +153,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full bg-bone border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none cursor-pointer"
+              className="w-full bg-pureWhite border border-hairline px-3 py-2 text-ink font-mono focus:border-signalGreen outline-none cursor-pointer"
             >
               <option value="Principal Security Analyst">Principal Security Analyst (Level 5 Clearance)</option>
               <option value="SecOps Lead">SecOps Lead (Level 4 Tactical)</option>
@@ -164,7 +164,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-signalGreen hover:bg-emerald-400 text-bone font-mono font-bold text-xs uppercase tracking-wider transition-colors border border-signalGreen shadow-xs cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 bg-ink hover:bg-signalGreen text-white font-mono font-bold text-xs uppercase tracking-wider transition-colors border border-hairline shadow-xs cursor-pointer disabled:opacity-50"
           >
             {loading ? '[ VERIFYING HARDWARE TOKEN... ]' : '[ INITIALIZE COCKPIT SESSION ➔ ]'}
           </button>
@@ -175,7 +175,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           <button
             type="button"
             onClick={handleQuickDevLogin}
-            className="text-[10px] text-cyan hover:text-white font-mono font-bold cursor-pointer transition-colors"
+            className="text-[10px] text-cyan hover:underline font-mono font-bold cursor-pointer transition-colors"
           >
             ⚡ [ 1-CLICK OPERATOR SESSION BYPASS ]
           </button>

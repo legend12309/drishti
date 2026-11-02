@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   return (
     <nav
-      className="w-16 h-full border-r border-hairline bg-boneDark flex flex-col justify-between py-2 shrink-0 z-20 select-none font-mono"
+      className="w-16 h-full border-r border-hairline bg-boneLight flex flex-col justify-between py-2 shrink-0 z-20 select-none font-mono"
       data-purpose="vertical-navigation-rail"
     >
       {/* Hacker Command Nav Stack */}
@@ -56,8 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
               className={`w-full py-2 px-1 flex flex-col items-center justify-center transition-all duration-75 text-center cursor-pointer ${
                 isActive
-                  ? 'text-signalGreen bg-bone border-l-[3px] border-signalGreen shadow-sm'
-                  : 'text-charcoal hover:text-ink hover:bg-boneLight border-l-2 border-transparent'
+                  ? 'text-signalGreen bg-pureWhite border-l-[3px] border-signalGreen shadow-xs'
+                  : 'text-charcoal hover:text-ink hover:bg-boneDark border-l-2 border-transparent'
               }`}
               title={`${item.index} ${item.label}`}
             >
@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>14ms</span>
         </span>
         <div
-          className="w-4 h-4 border border-signalGreen/40 flex items-center justify-center text-[7px] text-signalGreen font-bold bg-bone shadow-xs"
+          className="w-4 h-4 border border-hairline flex items-center justify-center text-[7px] text-ink font-bold bg-pureWhite shadow-xs"
           title="Hardware Cryptographic Enclave Verified"
         >
           ■

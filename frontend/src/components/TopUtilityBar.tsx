@@ -43,12 +43,12 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
   return (
     <header
-      className="h-12 w-full border-b border-hairline bg-boneDark px-3.5 flex items-center justify-between text-xs tracking-wider shrink-0 z-30 select-none font-mono"
+      className="h-12 w-full border-b border-hairline bg-pureWhite px-3.5 flex items-center justify-between text-xs tracking-wider shrink-0 z-30 select-none font-mono"
       data-purpose="top-command-bar"
     >
       {/* Left Hacker Identity & System Status */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        <div className="w-7 h-7 border border-signalGreen/40 flex items-center justify-center bg-bone shadow-xs shrink-0">
+        <div className="w-7 h-7 border border-hairline flex items-center justify-center bg-boneLight shadow-xs shrink-0">
           <span className="text-signalGreen font-bold text-xs select-none">#_</span>
         </div>
         <div className="flex items-baseline space-x-1.5 font-grotesk font-bold text-sm tracking-widest text-ink">
@@ -71,14 +71,14 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
       {/* Center Target Acquisition & Quick Probe */}
       <div className="flex items-center space-x-1.5 sm:space-x-2">
-        <div className="border border-hairline bg-bone px-2.5 py-1 text-ink font-mono text-xs flex items-center space-x-2 shadow-xs">
+        <div className="border border-hairline bg-pureWhite px-2.5 py-1 text-ink font-mono text-xs flex items-center space-x-2 shadow-xs">
           <span className="text-charcoal font-semibold text-[10px]">TARGET:</span>
           <span className="font-bold text-cyan">{displayTarget}</span>
           <span className="text-[9px] text-signalGreen font-bold bg-signalGreenBg px-1 border border-signalGreen/30">
             ARMED
           </span>
         </div>
-        <span className="hidden sm:inline-block border border-hairline text-charcoal text-[10px] px-1.5 py-1 tracking-tighter bg-boneLight font-medium">
+        <span className="hidden sm:inline-block border border-hairline text-charcoal text-[10px] px-1.5 py-1 tracking-tighter bg-boneDark font-medium">
           [ RFC-8655 AUTH ]
         </span>
         <button
@@ -107,12 +107,12 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
         >
           [ ⌘K CLI ]
         </button>
-        <div className="hidden lg:inline-block text-cyan font-bold px-2 py-0.5 border border-hairline bg-bone">
+        <div className="hidden lg:inline-block text-ink font-bold px-2 py-0.5 border border-hairline bg-boneDark">
           [ {utcTime || '2026.11.02 UTC'} ]
         </div>
         <div
           onClick={onOpenProfile}
-          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2 py-0.5 font-bold tracking-tight text-[10px] cursor-pointer hover:bg-signalGreen hover:text-bone transition-colors"
+          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2 py-0.5 font-bold tracking-tight text-[10px] cursor-pointer hover:bg-signalGreen hover:text-white transition-colors"
           title={`Operator: ${operator?.name || 'Security Operator'} (${operator?.clearance || 'LEVEL 3'})`}
         >
           [ CLEARANCE // TOP-SECRET ]
