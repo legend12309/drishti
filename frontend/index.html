@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DRISHTI — Cyber Command & Threat Intelligence</title>
+    <title>DRISHTI // SEC-OPS-09 — Autonomous Cyber Intelligence & Attack Cockpit</title>
     <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <!-- Tailwind CSS with Soft Neumorphic / Violet Modern Design Tokens -->
+    <!-- Tailwind CSS with Swiss Brutalist Editorial & Kinetic Signal Dossier Design Tokens -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
       tailwind.config = {
@@ -18,51 +18,54 @@
         theme: {
           extend: {
             colors: {
-              // Lavender-and-Violet Enterprise SaaS Palette
-              "canvas": "#F4F1FF",
-              "canvas-subtle": "#EDE8FF",
+              // Kinetic Signal Dossier Palette
+              bone: '#F6F3EC',
+              boneDark: '#ECE8DF',
+              boneLight: '#FAF8F4',
+              pureWhite: '#FFFFFF',
+              ink: '#0A0A0D',
+              inkMuted: '#24242C',
+              charcoal: '#555560',
+              pencil: '#7A7A85',
+              hairline: '#18181C',
+              hairlineLight: '#D5D0C5',
+              vermilion: '#FF2E00',
+              crimson: '#D91E00',
+              signalGreen: '#007A4D',
+              signalGreenBg: '#E6F4EA',
+              // Legacy SaaS compatibility mappings
+              "canvas": "#F6F3EC",
+              "canvas-subtle": "#ECE8DF",
               "surface": "#FFFFFF",
-              "surface-subtle": "#FAF9FF",
-              "primary-violet": "#6C4CF1",
-              "hover-violet": "#5940D8",
-              "soft-violet": "#EAE4FF",
-              "pale-violet": "#F3F0FF",
-              "text-primary": "#22213A",
-              "text-secondary": "#77758E",
-              "text-muted": "#9896AA",
-              "app-border": "#E8E4F2",
-              "critical-red": "#DC4655",
-              "critical-bg": "#FFF0F1",
-              "success-green": "#299B75",
-              "success-bg": "#EAF8F1",
+              "surface-subtle": "#FAF8F4",
+              "primary-violet": "#0A0A0D",
+              "hover-violet": "#FF2E00",
+              "soft-violet": "#ECE8DF",
+              "pale-violet": "#FAF8F4",
+              "text-primary": "#0A0A0D",
+              "text-secondary": "#555560",
+              "text-muted": "#7A7A85",
+              "app-border": "#18181C",
+              "critical-red": "#FF2E00",
+              "critical-bg": "#FFF0ED",
+              "success-green": "#007A4D",
+              "success-bg": "#E6F4EA",
               "warning-amber": "#C78A27",
               "warning-bg": "#FFF7E8",
-              "info-blue": "#5279D9",
-            },
-            borderRadius: {
-              "md": "10px",
-              "lg": "12px",
-              "xl": "16px",
-              "2xl": "20px",
-              "3xl": "24px",
-              "full": "9999px"
-            },
-            boxShadow: {
-              "soft": "0 8px 24px rgba(108, 76, 241, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
-              "soft-hover": "0 12px 32px rgba(108, 76, 241, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03)",
-              "elevated": "0 16px 40px rgba(34, 33, 58, 0.06)",
-              "violet-glow": "0 4px 16px rgba(108, 76, 241, 0.25)",
+              "info-blue": "#0A0A0D",
             },
             fontFamily: {
-              sans: ["Plus Jakarta Sans", "Inter", "-apple-system", "sans-serif"],
-              mono: ["JetBrains Mono", "monospace"],
+              mono: ['JetBrains Mono', 'Courier New', 'Consolas', 'monospace'],
+              grotesk: ['Space Grotesk', 'Barlow Condensed', 'Arial Black', 'sans-serif'],
+              condensed: ['Barlow Condensed', 'Space Grotesk', 'sans-serif'],
+              sans: ['Space Grotesk', 'Plus Jakarta Sans', 'Inter', 'sans-serif'],
             }
           }
         }
       }
     </script>
   </head>
-  <body class="bg-[#F4F1FF] text-[#22213A] min-h-screen flex overflow-hidden antialiased">
+  <body class="bg-bone text-ink min-h-screen flex overflow-hidden antialiased select-none font-mono">
     <div id="root" class="w-full h-full flex"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -1,20 +1,27 @@
 :root {
-  --color-bg-base: #F4F1FF;
+  --color-bg-base: #F6F3EC;
   --color-card-surface: #FFFFFF;
-  --color-brand: #6C4CF1;
+  --color-brand: #0A0A0D;
+  --color-vermilion: #FF2E00;
+}
+
+* {
+  border-radius: 0px !important;
+  box-sizing: border-box;
 }
 
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background-color: #F4F1FF;
+  background-color: #F6F3EC;
 }
 
 body {
-  background-color: #F4F1FF;
-  color: #22213A;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #F6F3EC;
+  color: #0A0A0D;
+  font-family: 'JetBrains Mono', monospace;
+  overflow-x: hidden;
 }
 
 .material-symbols-outlined {
@@ -22,25 +29,84 @@ body {
   user-select: none;
 }
 
-/* Clean subtle scrollbars */
+/* Swiss Brutalist tactile grid & barcode styles */
+.paper-grid {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(24, 24, 28, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 24, 28, 0.12) 1px, transparent 1px);
+}
+.paper-grid-dense {
+  background-size: 12px 12px;
+  background-image: 
+    linear-gradient(to right, rgba(24, 24, 28, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(24, 24, 28, 0.08) 1px, transparent 1px);
+}
+.barcode-strip {
+  background: repeating-linear-gradient(
+    90deg,
+    #0A0A0D 0px,
+    #0A0A0D 2px,
+    transparent 2px,
+    transparent 4px,
+    #0A0A0D 4px,
+    #0A0A0D 7px,
+    transparent 7px,
+    transparent 9px,
+    #0A0A0D 9px,
+    #0A0A0D 12px
+  );
+  height: 14px;
+  opacity: 0.9;
+}
+.barcode-strip-sm {
+  background: repeating-linear-gradient(
+    90deg,
+    #18181C 0px,
+    #18181C 1.5px,
+    transparent 1.5px,
+    transparent 3px,
+    #18181C 3px,
+    #18181C 5px,
+    transparent 5px,
+    transparent 6px
+  );
+  height: 10px;
+  opacity: 0.8;
+}
+
+/* Tactical Scrollbars */
+.scrollbar-tactical::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.scrollbar-tactical::-webkit-scrollbar-track {
+  background: #ECE8DF;
+}
+.scrollbar-tactical::-webkit-scrollbar-thumb {
+  background: #18181C;
+}
+.scrollbar-tactical::-webkit-scrollbar-thumb:hover {
+  background: #FF2E00;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #ECE8DF;
 }
 ::-webkit-scrollbar-thumb {
-  background: #E8E4F2;
-  border-radius: 9999px;
+  background: #18181C;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C7D2FE;
+  background: #FF2E00;
 }
 
 button, a {
   transition-property: transform, background-color, border-color, box-shadow, color;
-  transition-duration: 180ms;
+  transition-duration: 100ms;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 button:active, a:active {
@@ -51,16 +117,13 @@ button:active, a:active {
 input[type="text"],
 input[type="search"],
 input[type="password"] {
-  border: none !important;
-  outline: none !important;
+  border-radius: 0px !important;
   box-shadow: none !important;
-  background-color: transparent;
 }
 
 input[type="text"]:focus,
 input[type="search"]:focus,
 input[type="password"]:focus {
-  border: none !important;
-  outline: none !important;
+  border-radius: 0px !important;
   box-shadow: none !important;
 }
