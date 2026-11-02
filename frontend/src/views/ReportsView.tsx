@@ -22,6 +22,30 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloading, setDownloading] = useState<Record<string, boolean>>({});
+  const [downloadingLatest, setDownloadingLatest] = useState(false);
+
+  const downloadLatestPdfReport = async () => {
+    setDownloadingLatest(true);
+    try {
+      if (showToast) showToast('info', 'Compiling PDF Report...', 'Generating certified ReportLab assessment report.');
+      const res = await fetch('/api/scans/reports/latest/download');
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `drishti-executive-security-assessment-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      if (showToast) showToast('success', 'PDF Report Delivered', 'Assessment saved directly into your system Downloads folder.');
+    } catch (err: any) {
+      if (showToast) showToast('error', 'Download Failed', err.message || 'Could not export report.');
+    } finally {
+      setDownloadingLatest(false);
+    }
+  };
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -124,6 +148,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
               [ REFRESH ]
             </button>
             <button
+              onClick={downloadLatestPdfReport}
+              disabled={downloadingLatest}
+              className="bg-signalGreen hover:bg-forestGreen disabled:opacity-50 text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1"
+            >
+              <span>↓</span>
+              <span>{downloadingLatest ? '[ COMPILING... ]' : '[ EXPORT EXECUTIVE PDF ]'}</span>
+            </button>
+            <button
               onClick={() => onNavigate?.('recon')}
               className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer"
             >
@@ -180,44 +212,74 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairlineLight border-b border-hairline">
-                {reports.map((report: any) => (
-                  <tr key={report.id} className="hover:bg-boneLight transition-colors">
-                    <td className="py-2.5 px-3.5 border-r border-hairlineLight">
-                      <div className="font-bold text-ink">{report.id}</div>
-                      <div className="text-[8px] text-charcoal">{report.workflow_id}</div>
-                    </td>
-                    <td className="py-2.5 px-3.5 border-r border-hairlineLight font-bold text-ink">
-                      {report.target}
-                    </td>
-                    <td className="py-2.5 px-3.5 border-r border-hairlineLight">
-                      <span className={`px-2 py-0.5 text-[8px] font-bold uppercase ${getStatusBadgeClass(report.status)}`}>
-                        {report.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3.5 border-r border-hairlineLight text-charcoal">
-                      {report.generated_at ? new Date(report.generated_at).toLocaleString() : '—'}
-                    </td>
-                    <td className="py-2.5 px-3.5 border-r border-hairlineLight text-ink font-bold">
-                      {report.file_size} findings
-                    </td>
-                    <td className="py-2.5 px-3.5 text-right pr-4 space-x-1.5">
-                      <button
-                        onClick={() => downloadReport(report.workflow_id, `drishti-security-report-${report.workflow_id}.pdf`)}
-                        disabled={downloading[report.workflow_id]}
-                        className="px-2.5 py-1 bg-vermilion hover:bg-crimson text-white font-mono font-bold text-[9px] border border-hairline shadow-xs cursor-pointer disabled:opacity-50"
-                      >
-                        {downloading[report.workflow_id] ? '[ DOWNLOADING... ]' : '[ DOWNLOAD PDF ]'}
-                      </button>
-                      <button
-                        onClick={() => generateReport(report.workflow_id)}
-                        disabled={generating[report.workflow_id]}
-                        className="px-2.5 py-1 bg-pureWhite hover:bg-ink hover:text-white text-ink font-mono font-bold text-[9px] border border-hairline cursor-pointer disabled:opacity-50"
-                      >
-                        {generating[report.workflow_id] ? '[ GENERATING... ]' : '[ REGENERATE ]'}
-                      </button>
+                {reports.length > 0 ? (
+                  reports.map((report: any) => (
+                    <tr key={report.id} className="hover:bg-boneLight transition-colors">
+                      <td className="py-2.5 px-3.5 border-r border-hairlineLight">
+                        <div className="font-bold text-ink">{report.id}</div>
+                        <div className="text-[8px] text-charcoal">{report.workflow_id}</div>
+                      </td>
+                      <td className="py-2.5 px-3.5 border-r border-hairlineLight font-bold text-ink">
+                        {report.target}
+                      </td>
+                      <td className="py-2.5 px-3.5 border-r border-hairlineLight">
+                        <span className={`px-2 py-0.5 text-[8px] font-bold uppercase ${getStatusBadgeClass(report.status)}`}>
+                          {report.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3.5 border-r border-hairlineLight text-charcoal">
+                        {report.generated_at ? new Date(report.generated_at).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2.5 px-3.5 border-r border-hairlineLight text-ink font-bold">
+                        {report.file_size} findings
+                      </td>
+                      <td className="py-2.5 px-3.5 text-right pr-4 space-x-1.5">
+                        <button
+                          onClick={() => downloadReport(report.workflow_id, `drishti-security-report-${report.workflow_id}.pdf`)}
+                          disabled={downloading[report.workflow_id]}
+                          className="px-2.5 py-1 bg-vermilion hover:bg-crimson text-white font-mono font-bold text-[9px] border border-hairline shadow-xs cursor-pointer disabled:opacity-50"
+                        >
+                          {downloading[report.workflow_id] ? '[ DOWNLOADING... ]' : '[ DOWNLOAD PDF ]'}
+                        </button>
+                        <button
+                          onClick={() => generateReport(report.workflow_id)}
+                          disabled={generating[report.workflow_id]}
+                          className="px-2.5 py-1 bg-pureWhite hover:bg-ink hover:text-white text-ink font-mono font-bold text-[9px] border border-hairline cursor-pointer disabled:opacity-50"
+                        >
+                          {generating[report.workflow_id] ? '[ GENERATING... ]' : '[ REGENERATE ]'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-charcoal font-mono bg-[#FAF8F5]">
+                      <div className="space-y-2">
+                        <div className="text-signalGreen font-bold text-xs">
+                          [ 0 GENERATED REPORTS IN REPOSITORY • PRISTINE STANDBY ]
+                        </div>
+                        <div className="text-[11px] text-charcoal max-w-md mx-auto">
+                          Historical reports have been purged. Click below to compile and download an instant executive assessment PDF directly to your system's Downloads folder.
+                        </div>
+                        <div className="pt-2 flex items-center justify-center gap-2">
+                          <button
+                            onClick={downloadLatestPdfReport}
+                            disabled={downloadingLatest}
+                            className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline shadow-xs cursor-pointer"
+                          >
+                            [ ⚡ DOWNLOAD INSTANT ASSESSMENT PDF ]
+                          </button>
+                          <button
+                            onClick={() => onNavigate?.('recon')}
+                            className="px-3.5 py-1.5 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-bold text-xs cursor-pointer"
+                          >
+                            [ 🌐 LAUNCH RECON DISCOVERY ]
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

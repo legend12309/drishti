@@ -650,37 +650,81 @@ async def generate_workflow_report(
 
 
 @router.get("/orchestrator/workflows/{workflow_id}/report/download")
+@router.get("/{workflow_id}/report/download")
 async def download_workflow_report(workflow_id: str):
     """
-    Downloads the generated PDF report for a workflow.
+    Downloads the generated PDF report for a workflow or scan.
     """
     import os
+    import tempfile
     from fastapi.responses import FileResponse
     
     # Check if report exists in database
+    file_path = None
     async with get_db() as db:
         async with db.execute(
             "SELECT file_path FROM scan_reports WHERE scan_id = ? AND status = 'generated'",
             (workflow_id,)
         ) as cursor:
             row = await cursor.fetchone()
+            if row and row["file_path"]:
+                file_path = row["file_path"]
     
-    if not row or not row["file_path"]:
-        # Try to generate if not exists
-        result = await generate_workflow_report(workflow_id, include_ai=True)
-        if result["status"] == "error":
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found and generation failed")
-        file_path = result["file_path"]
-    else:
-        file_path = row["file_path"]
+    if not file_path or not os.path.exists(file_path):
+        output_dir = tempfile.gettempdir()
+        result = await generate_security_report(workflow_id, output_dir)
+        if result.get("status") == "error":
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=result.get("error", "Report generation failed"))
+        file_path = result.get("file_path")
     
-    if not os.path.exists(file_path):
+    if not file_path or not os.path.exists(file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report file not found on disk")
     
+    safe_filename = f"drishti-security-report-{workflow_id}.pdf"
     return FileResponse(
         file_path,
         media_type="application/pdf",
-        filename=f"drishti-security-report-{workflow_id}.pdf"
+        filename=safe_filename,
+        headers={"Content-Disposition": f"attachment; filename={safe_filename}"}
+    )
+
+
+@router.get("/reports/latest/download")
+async def download_latest_report(target: Optional[str] = Query(None)):
+    """
+    Downloads the executive PDF security assessment report for the latest scan or specified target.
+    Delivers directly to the operating system's Downloads folder.
+    """
+    import os
+    import tempfile
+    from fastapi.responses import FileResponse
+
+    target_name = (target or "curezy.in").strip().lower()
+    latest_id = None
+    async with get_db() as db:
+        async with db.execute("SELECT id, target FROM scans ORDER BY created_at DESC LIMIT 1") as cursor:
+            row = await cursor.fetchone()
+            if row:
+                latest_id = row["id"]
+                if row["target"]:
+                    target_name = row["target"]
+
+    if not latest_id:
+        latest_id = f"audit-{target_name}"
+
+    output_dir = tempfile.gettempdir()
+    result = await generate_security_report(latest_id, output_dir)
+    file_path = result.get("file_path")
+
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=500, detail="Could not generate executive report")
+
+    filename = f"drishti-security-assessment-{target_name}.pdf"
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        filename=filename,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 

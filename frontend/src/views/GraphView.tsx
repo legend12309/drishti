@@ -10,29 +10,11 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
   const [source, setSource] = useState('curezy.in');
   const [target, setTarget] = useState('CoreDB');
   const [calculating, setCalculating] = useState(false);
-  const [paths, setPaths] = useState<any[]>([
-    {
-      source_node: 'curezy.in:80',
-      target_node: 'CoreDB:5432',
-      cumulative_cost: 0.40,
-      path_nodes: ['curezy.in:80', 'CVE-2024-4577 [MSF]', 'DMZ-Proxy:8080', 'CoreDB:5432'],
-    },
-    {
-      source_node: 'static.curezy.in:443',
-      target_node: 'CoreDB:5432',
-      cumulative_cost: 1.15,
-      path_nodes: ['static.curezy.in:443', 'CVE-2021-41773', 'InternalAuth', 'CoreDB:5432'],
-    },
-  ]);
-  const [selectedPath, setSelectedPath] = useState<any | null>(paths[0]);
+  const [paths, setPaths] = useState<any[]>([]);
+  const [selectedPath, setSelectedPath] = useState<any | null>(null);
   const [graphNodes, setGraphNodes] = useState<any[]>([]);
   const [graphEdges, setGraphEdges] = useState<any[]>([]);
-  const [selectedNode, setSelectedNode] = useState<{ id: string; type: string; risk: number; desc: string } | null>({
-    id: 'CVE-2024-4577 [MSF]',
-    type: 'Critical Weaponized Breach',
-    risk: 9.8,
-    desc: 'PHP-CGI Argument Injection vector. Metasploit module available. Traversal friction reduced by 60% (0.40x factor).',
-  });
+  const [selectedNode, setSelectedNode] = useState<{ id: string; type: string; risk: number; desc: string } | null>(null);
 
   const [aiPathModalOpen, setAiPathModalOpen] = useState(false);
   const [aiPathExplanation, setAiPathExplanation] = useState<string | null>(null);
@@ -290,11 +272,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               )}
             </div>
           ) : (
-            <div className="py-12 text-center space-y-2">
-              <div className="text-sm font-bold text-ink">[ NO ATTACK PATHS SYNTHESIZED ]</div>
-              <p className="text-[10px] text-charcoal max-w-md mx-auto">
-                Attack paths require active scan telemetry. Launch an assessment to map topological attack graphs.
+            <div className="py-12 text-center space-y-3 bg-[#FAF8F5] border border-dashed border-hairline p-6">
+              <div className="text-sm font-bold text-ink">[ NO ATTACK PATHS SYNTHESIZED // STANDBY ]</div>
+              <p className="text-[10px] text-charcoal max-w-md mx-auto font-mono">
+                Attack graphs require real reconnaissance telemetry. Launch a scan to compute Dijkstra shortest attack paths across the perimeter topology.
               </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => onNavigate?.('recon')}
+                  className="px-4 py-2 bg-vermilion hover:bg-crimson text-white font-mono font-bold text-xs border border-hairline shadow-xs cursor-pointer"
+                >
+                  [ 🌐 LAUNCH RECONNAISSANCE ➔ ]
+                </button>
+              </div>
             </div>
           )}
 

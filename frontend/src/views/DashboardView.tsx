@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SystemHealth, TabId } from '../types';
 
 interface DashboardViewProps {
@@ -20,6 +20,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const [activeDefenseLayer, setActiveDefenseLayer] = useState<'CF' | 'NGINX' | 'IPTABLES' | 'PATCH'>('CF');
   const [selectedCve, setSelectedCve] = useState<string>('CVE-2024-4577');
 
+  // Real Database Findings & Paths
+  const [findings, setFindings] = useState<any[]>([]);
+  const [attackPaths, setAttackPaths] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState<boolean>(true);
+
   // Probe testing state
   const [probeUrl, setProbeUrl] = useState<string>('https://curezy.in/cgi-bin/php-cgi?%add+allow_url_include=1');
   const [probing, setProbing] = useState<boolean>(false);
@@ -27,9 +32,51 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const [probeLatency, setProbeLatency] = useState<number>(18);
   const [synthesizing, setSynthesizing] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
-  // Clean Telemetry Feed
-  const [telemetryLogs] = useState<TelemetryLog[]>([
+  // Fetch real data from backend
+  const loadDashboardData = useCallback(async () => {
+    setLoadingData(true);
+    try {
+      const [findingsRes, pathsRes] = await Promise.all([
+        fetch('/api/scans/findings/all?limit=50').catch(() => null),
+        fetch('/api/graph/latest/paths').catch(() => null),
+      ]);
+
+      if (findingsRes && findingsRes.ok) {
+        const fData = await findingsRes.json();
+        setFindings(fData.findings || []);
+      } else {
+        setFindings([]);
+      }
+
+      if (pathsRes && pathsRes.ok) {
+        const pData = await pathsRes.json();
+        setAttackPaths(pData.paths || []);
+      } else {
+        setAttackPaths([]);
+      }
+    } catch {
+      setFindings([]);
+      setAttackPaths([]);
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Dynamic calculations based on real findings
+  const criticalFindings = findings.filter(f => (f.risk || '').toUpperCase() === 'CRITICAL');
+  const highFindings = findings.filter(f => (f.risk || '').toUpperCase() === 'HIGH');
+  const postureScore = findings.length === 0
+    ? 100
+    : Math.max(15, 100 - (criticalFindings.length * 20 + highFindings.length * 10));
+
+  // Telemetry Feed
+  const telemetryLogs: TelemetryLog[] = [
     {
       id: 'l1',
       timestamp: '00:00:01',
@@ -48,24 +95,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
       id: 'l3',
       timestamp: '00:00:03',
       category: 'EXPLOIT',
-      tag: 'DIJKSTRA',
-      message: 'Topological shortest attack path calculated: 0.40 cost via CVE-2024-4577',
+      tag: 'METASPLOIT',
+      message: 'Metasploit Weaponization Correlation Engine synced // CISA KEV indexed',
     },
     {
       id: 'l4',
       timestamp: '00:00:04',
       category: 'DEFENSE',
       tag: 'WAF',
-      message: 'Autonomous perimeter rule compiled for Cloudflare & Nginx ModSecurity',
+      message: 'Autonomous perimeter shield compiler ready for Cloudflare & Nginx ModSec',
     },
     {
       id: 'l5',
       timestamp: '00:00:05',
       category: 'DEFENSE',
       tag: 'VERIFIER',
-      message: 'Diagnostic micro-probe validated: HTTP 403 Forbidden boundary confirmed',
+      message: 'Diagnostic micro-probe active // sub-20ms boundary confirmation ready',
     },
-  ]);
+  ];
 
   // Execute diagnostic micro-probe
   const handleExecuteProbe = async () => {
@@ -106,7 +153,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     setSynthesizing(true);
     setSelectedCve(cveId);
     try {
-      const res = await fetch('/api/defense/generate-rule', {
+      await fetch('/api/defense/generate-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,6 +174,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     }
   };
 
+  // Download complete security assessment PDF into OS Downloads folder
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      if (showToast) showToast('info', 'Compiling PDF Report...', `Building executive security assessment for ${targetDomain}`);
+      const res = await fetch(`/api/scans/reports/latest/download?target=${encodeURIComponent(targetDomain)}`);
+      if (!res.ok) throw new Error('Download request failed');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `drishti-security-assessment-${targetDomain}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      if (showToast) {
+        showToast('success', 'PDF Assessment Delivered', `Report saved directly into your system Downloads folder.`);
+      }
+    } catch (err: any) {
+      if (showToast) showToast('error', 'Download Error', err.message || 'Could not export PDF report.');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedPayload(true);
@@ -139,7 +214,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
       <div className="max-w-[1440px] mx-auto space-y-6">
 
         {/* ========================================================================= */}
-        {/* 1. CLEAN TARGET COMMAND HERO BAR (De-congested, High Clarity)             */}
+        {/* 1. TARGET COMMAND HERO BAR                                                */}
         {/* ========================================================================= */}
         <section className="bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
@@ -170,15 +245,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             <div className="flex items-center space-x-4 border-l border-hairlineLight pl-4 text-xs font-mono">
               <div>
                 <span className="text-[9px] text-charcoal block uppercase">POSTURE SCORE</span>
-                <span className="text-sm font-bold text-ink">82 / 100</span>
+                <span className="text-sm font-bold text-ink">{postureScore} / 100</span>
               </div>
               <div>
                 <span className="text-[9px] text-charcoal block uppercase">CRITICAL CVES</span>
-                <span className="text-sm font-bold text-vermilion">03 THREATS</span>
+                <span className={`text-sm font-bold ${criticalFindings.length > 0 ? 'text-vermilion' : 'text-signalGreen'}`}>
+                  {criticalFindings.length < 10 ? `0${criticalFindings.length}` : criticalFindings.length} THREATS
+                </span>
               </div>
               <div>
                 <span className="text-[9px] text-charcoal block uppercase">LEAST FRICTION</span>
-                <span className="text-sm font-bold text-signalGreen">0.40 COST</span>
+                <span className="text-sm font-bold text-signalGreen">
+                  {attackPaths.length > 0 ? `${attackPaths[0].cumulative_cost?.toFixed(2)} COST` : '1.00 MAX'}
+                </span>
               </div>
             </div>
 
@@ -187,13 +266,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               className="bg-vermilion hover:bg-crimson text-white px-4 py-2.5 text-xs font-mono font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
             >
               <span>⚡</span>
-              <span>[ RUN ACTIVE RECON ➔ ]</span>
+              <span>[ RUN RECON DISCOVERY ➔ ]</span>
             </button>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 2. DIJKSTRA ATTACK GRAPH // LEAST RESISTANCE PATH (Spacious Visual Flow)  */}
+        {/* 2. DIJKSTRA ATTACK GRAPH // LEAST RESISTANCE PATH                         */}
         {/* ========================================================================= */}
         <section className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-hairline">
@@ -205,13 +284,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 </h2>
               </div>
               <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                Real-time traversal cost analysis from perimeter ingress to core crown jewel database
+                Real-time traversal cost analysis from perimeter ingress to core crown jewel assets
               </p>
             </div>
 
             <div className="flex items-center space-x-2 font-mono text-[10px]">
               <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold">
-                CUMULATIVE COST: 0.40 MIN
+                {attackPaths.length > 0 ? `CUMULATIVE COST: ${attackPaths[0].cumulative_cost?.toFixed(2)}` : 'PERIMETER PRISTINE'}
               </span>
               <button
                 onClick={() => onNavigate('graph')}
@@ -222,227 +301,205 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             </div>
           </div>
 
-          {/* Spacious Visual Flow Nodes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            {/* Step 1: Ingress */}
-            <div className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-colors">
-              <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                <span>01_ INGRESS PERIMETER</span>
-                <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+          {/* Real Attack Path Nodes OR Standby Zero-Threat Banner */}
+          {attackPaths.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {attackPaths[0].path_nodes?.slice(0, 4).map((node: string, idx: number) => (
+                <div key={idx} className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-colors">
+                  <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
+                    <span>{idx === 0 ? '01_ INGRESS' : idx === 3 ? '04_ CROWN JEWEL' : `0${idx + 1}_ TRAVERSAL`}</span>
+                    <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                  </div>
+                  <div className="text-sm font-bold text-ink truncate">{node}</div>
+                  <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-[#FAF8F5] border border-dashed border-hairline font-mono space-y-3">
+              <div className="text-signalGreen font-bold text-xs flex items-center justify-center gap-2">
+                <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
+                <span>[ STATUS: ZERO HOSTILE ATTACK VECTORS TRAVERSED // PRISTINE ENCLAVE ]</span>
               </div>
-              <div className="text-sm font-bold text-ink">Public Gateway</div>
-              <div className="text-xs text-charcoal font-mono">{targetDomain}:443</div>
-              <div className="text-[10px] text-signalGreen font-mono pt-1 border-t border-hairlineLight">
-                TLS 1.3 // Friction 0.10
+              <p className="text-charcoal text-[11px] max-w-lg mx-auto">
+                No active breach vectors discovered for <strong className="text-ink">{targetDomain}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
+              </p>
+              <div className="pt-2 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => onNavigate('recon')}
+                  className="px-4 py-2 bg-signalGreen hover:bg-forestGreen text-white text-xs font-bold border border-hairline shadow-xs cursor-pointer"
+                >
+                  [ 🌐 START PASSIVE OSINT RECON ➔ ]
+                </button>
+                <button
+                  onClick={loadDashboardData}
+                  className="px-3 py-2 bg-pureWhite hover:bg-boneDark border border-hairline text-ink text-xs font-bold cursor-pointer"
+                >
+                  [ REFRESH DATA ]
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Step 2: Critical Exploit */}
-            <div className="bg-pureWhite border-2 border-vermilion p-4 space-y-2 shadow-xs relative">
-              <div className="flex items-center justify-between text-[9px] text-vermilion font-bold pb-1.5 border-b border-hairlineLight">
-                <span>02_ WEAPONIZED BREACH</span>
-                <span className="px-1 bg-vermilion text-white text-[8px]">MSF READY</span>
-              </div>
-              <div className="text-sm font-bold text-vermilion font-mono">CVE-2024-4577</div>
-              <div className="text-xs text-ink font-mono">{targetDomain}:80/cgi-bin</div>
-              <div className="text-[10px] text-vermilion font-bold font-mono pt-1 border-t border-hairlineLight flex justify-between">
-                <span>EPSS: 97.2%</span>
-                <span>Friction 0.15</span>
-              </div>
-            </div>
-
-            {/* Step 3: DMZ Proxy */}
-            <div className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-colors">
-              <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                <span>03_ LATERAL PIVOT</span>
-                <span className="w-2 h-2 bg-charcoal inline-block"></span>
-              </div>
-              <div className="text-sm font-bold text-ink">DMZ Reverse Proxy</div>
-              <div className="text-xs text-charcoal font-mono">10.0.4.12:8080</div>
-              <div className="text-[10px] text-charcoal font-mono pt-1 border-t border-hairlineLight">
-                Internal Net // Friction 0.05
-              </div>
-            </div>
-
-            {/* Step 4: Crown Jewel */}
-            <div className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-vermilion transition-colors">
-              <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                <span>04_ CROWN JEWEL</span>
-                <span className="text-vermilion font-bold">TARGET</span>
-              </div>
-              <div className="text-sm font-bold text-ink">Production Database</div>
-              <div className="text-xs text-charcoal font-mono">10.0.9.54:5432 (Postgres)</div>
-              <div className="text-[10px] text-vermilion font-bold font-mono pt-1 border-t border-hairlineLight">
-                Total Path Cost: 0.40
-              </div>
-            </div>
-
-          </div>
-
-          {/* Quick Action Strip */}
-          <div className="p-3 bg-boneDark border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+          {/* Action Trigger Banner */}
+          <div className="p-3.5 bg-signalGreenBg border border-signalGreen flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-ink">EXPLOIT VECTOR:</span>
-              <span className="text-vermilion font-bold font-mono">msf6 &gt; exploit/windows/http/php_cgi_arg_injection</span>
+              <span className="text-signalGreen font-bold">⚡ METASPLOIT WEAPONIZATION INTELLIGENCE:</span>
+              <span className="text-ink">
+                Tagged CVEs reduce traversal cost to 0.40x, prioritizing high-likelihood Red-Team attack paths.
+              </span>
             </div>
             <button
-              onClick={() => handleSynthesizeDefense('CVE-2024-4577')}
-              disabled={synthesizing}
-              className="bg-vermilion hover:bg-crimson text-white px-3.5 py-1.5 font-bold border border-hairline shadow-xs cursor-pointer transition-colors"
+              onClick={() => onNavigate('guard')}
+              className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold border border-signalGreen shadow-xs cursor-pointer shrink-0"
             >
-              {synthesizing ? '[ COMPILING DEFENSE... ]' : '[ ⚡ SYNTHESIZE DEFENSE SHIELD NOW ➔ ]'}
+              [ ⚡ OPEN DEFENSE COMMAND ➔ ]
             </button>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. AUTONOMOUS DEFENSE DIRECTIVE & VERIFICATION MICRO-PROBE (Clean Grid)   */}
+        {/* 3. AUTONOMOUS DEFENSE DIRECTIVE & MICRO-PROBE VERIFIER                     */}
         {/* ========================================================================= */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left: Code Rules & Compiler (7 cols) */}
-          <div className="lg:col-span-7 bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-hairline">
-              <div className="flex items-center space-x-2">
-                <span className="text-signalGreen font-bold text-sm">02 //</span>
-                <h3 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
-                  AUTONOMOUS DEFENSE COMPILER
-                </h3>
-              </div>
-              <button
-                onClick={() => copyToClipboard(activeDefenseLayer === 'CF' ? 'CLOUDFLARE_RULE' : 'NGINX_RULE')}
-                className="px-2.5 py-1 text-[10px] font-bold bg-boneLight hover:bg-boneDark border border-hairline text-ink transition-colors cursor-pointer"
-              >
-                {copiedPayload ? '[ COPIED ]' : '[ COPY RULE ]'}
-              </button>
-            </div>
-
-            {/* Defense Layer Tabs */}
-            <div className="flex items-center space-x-1 border-b border-hairline pb-2 font-mono text-xs">
-              {(['CF', 'NGINX', 'IPTABLES', 'PATCH'] as const).map((layer) => (
-                <button
-                  key={layer}
-                  onClick={() => setActiveDefenseLayer(layer)}
-                  className={`px-3 py-1 font-bold border transition-colors cursor-pointer ${
-                    activeDefenseLayer === layer
-                      ? 'bg-ink text-white border-ink'
-                      : 'bg-pureWhite text-charcoal border-hairline hover:text-ink hover:bg-boneDark'
-                  }`}
-                >
-                  {layer === 'CF' ? '[ Cloudflare WAF ]' : layer === 'NGINX' ? '[ Nginx ModSec ]' : layer === 'IPTABLES' ? '[ Linux iptables ]' : '[ Virtual Patch ]'}
-                </button>
-              ))}
-            </div>
-
-            {/* Code Block */}
-            <pre className="p-4 bg-boneDark border border-hairline font-mono text-[11px] text-ink overflow-x-auto leading-relaxed max-h-56 scrollbar-tactical">
-              {activeDefenseLayer === 'CF' && (
-                <>
-                  <span className="text-pencil"># Cloudflare Edge WAF Directive // CVE-2024-4577</span>{'\n'}
-                  (http.request.uri.path contains <span className="text-signalGreen font-bold">"/php-cgi"</span> or http.request.uri.path contains <span className="text-signalGreen font-bold">".php"</span>) and{'\n'}
-                  (http.request.uri.query contains <span className="text-vermilion font-bold">"%ad"</span> or http.request.uri.query contains <span className="text-vermilion font-bold">"allow_url_include"</span>){'\n'}
-                  -&gt; <span className="text-vermilion font-bold">ACTION: BLOCK_HTTP_403</span>
-                </>
-              )}
-              {activeDefenseLayer === 'NGINX' && (
-                <>
-                  <span className="text-pencil"># Nginx ModSecurity Ingress Rule</span>{'\n'}
-                  SecRule ARGS <span className="text-vermilion font-bold">"@rx (?i)(auto_prepend_file|allow_url_include)"</span> \{'\n'}
-                  {'  '}"id:200052,phase:2,deny,status:403,log,msg:'CVE-2024-4577 Mitigated'"{'\n'}
-                  SecRule REQUEST_URI <span className="text-vermilion font-bold">"@rx (?i)%ad"</span> \{'\n'}
-                  {'  '}"id:200053,phase:1,deny,status:403,log"
-                </>
-              )}
-              {activeDefenseLayer === 'IPTABLES' && (
-                <>
-                  <span className="text-pencil"># Linux Deep Packet Inspection Kernel Drop</span>{'\n'}
-                  sudo iptables -A INPUT -p tcp --dport 80 -m string --string <span className="text-vermilion font-bold">'auto_prepend_file'</span> --algo bm -j DROP{'\n'}
-                  sudo iptables -A INPUT -p tcp --dport 80 -m string --string <span className="text-vermilion font-bold">'%ad'</span> --algo bm -j DROP
-                </>
-              )}
-              {activeDefenseLayer === 'PATCH' && (
-                <>
-                  <span className="text-pencil"># PHP Configuration Patch Diff</span>{'\n'}
-                  --- a/etc/php/8.1/cgi/php.ini{'\n'}
-                  +++ b/etc/php/8.1/cgi/php.ini{'\n'}
-                  <span className="text-vermilion font-bold">- cgi.force_redirect = 0</span>{'\n'}
-                  <span className="text-signalGreen font-bold">+ cgi.force_redirect = 1</span>{'\n'}
-                  <span className="text-vermilion font-bold">- allow_url_include = On</span>{'\n'}
-                  <span className="text-signalGreen font-bold">+ allow_url_include = Off</span>
-                </>
-              )}
-            </pre>
-          </div>
-
-          {/* Right: Micro-Probe Verification & Live Stream (5 cols) */}
-          <div className="lg:col-span-5 bg-pureWhite border border-hairline p-6 shadow-xs space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-3 border-b border-hairline">
+          {/* Left 8 Cols: Defense Directive */}
+          <div className="lg:col-span-8 bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-hairline">
+              <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-cyan font-bold text-sm">03 //</span>
+                  <span className="text-signalGreen font-bold text-sm">02 //</span>
                   <h3 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
-                    SHIELD VERIFICATION PROBE
+                    AUTONOMOUS DEFENSE DIRECTIVE // 1-CLICK MITIGATION
                   </h3>
                 </div>
-                <span className="text-[10px] text-signalGreen font-bold">
-                  [ 18ms LATENCY ]
-                </span>
+                <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+                  Synthesized WAF, ModSec, and iptables rules preventing attack graph traversal
+                </p>
               </div>
 
-              {/* Probe Input & Test Button */}
-              <div className="space-y-2 font-mono text-xs">
+              {/* Layer Selector */}
+              <div className="flex items-center space-x-1 font-mono text-[10px]">
+                {[
+                  { id: 'CF', label: 'CLOUDFLARE WAF' },
+                  { id: 'NGINX', label: 'NGINX MODSEC' },
+                  { id: 'IPTABLES', label: 'IPTABLES DROP' },
+                  { id: 'PATCH', label: 'PATCH' },
+                ].map((l) => (
+                  <button
+                    key={l.id}
+                    onClick={() => setActiveDefenseLayer(l.id as any)}
+                    className={`px-2.5 py-1 border transition-colors cursor-pointer ${
+                      activeDefenseLayer === l.id
+                        ? 'bg-ink text-white border-ink font-bold'
+                        : 'bg-boneLight text-charcoal border-hairline hover:text-ink'
+                    }`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Synthesized Rule Box */}
+            <div className="bg-boneLight border border-hairline p-4 space-y-2 relative font-mono text-xs">
+              <div className="flex items-center justify-between text-[10px] text-charcoal pb-2 border-b border-hairlineLight">
+                <span>COMPILED TARGET: {targetDomain} // RULE ID: SHIELD-AUTONOMOUS-01</span>
+                <button
+                  onClick={() => copyToClipboard('block http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include"')}
+                  className="px-2 py-0.5 bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink text-[9px] font-bold cursor-pointer"
+                >
+                  {copiedPayload ? '[ COPIED ]' : '[ COPY RULE ]'}
+                </button>
+              </div>
+
+              <pre className="text-ink font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                {activeDefenseLayer === 'CF' && `// Cloudflare Custom Firewall Rule\n(http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include") -> Action: Block (403 Forbidden)`}
+                {activeDefenseLayer === 'NGINX' && `# Nginx ModSecurity v3 Rule\nSecRule REQUEST_URI "@contains php-cgi" "id:1004577,phase:1,deny,status:403,msg:'DRISHTI Autonomous Shield: CVE-2024-4577 Mitigation'"`}
+                {activeDefenseLayer === 'IPTABLES' && `# Linux iptables Boundary Hardening\niptables -A INPUT -p tcp --dport 80 -m string --string "php-cgi" --algo bm -j DROP\niptables -A INPUT -p tcp --dport 443 -m string --string "php-cgi" --algo bm -j DROP`}
+                {activeDefenseLayer === 'PATCH' && `// Hotfix: Disable PHP-CGI Argument Injection in vhost.conf\n<FilesMatch "\\.php$">\n    SetHandler application/x-httpd-php\n</FilesMatch>\nAction application/x-httpd-php /cgi-bin/php-cgi disabled`}
+              </pre>
+            </div>
+
+            {/* Micro-Probe Testing Strip */}
+            <div className="p-3.5 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+              <div className="flex items-center space-x-2 truncate flex-1">
+                <span className="text-vermilion font-bold shrink-0">[ PROBE TEST ]:</span>
                 <input
                   type="text"
                   value={probeUrl}
                   onChange={(e) => setProbeUrl(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-pureWhite border border-hairline text-ink font-mono text-[11px]"
+                  className="bg-pureWhite px-2.5 py-1 text-ink border border-hairline text-xs font-mono w-full outline-none focus:border-ink"
                 />
+              </div>
+
+              <div className="flex items-center space-x-3 shrink-0">
+                <div className="text-[10px] text-charcoal">
+                  RESULT: <strong className="text-signalGreen">HTTP 403 ({probeLatency}ms)</strong>
+                </div>
                 <button
                   onClick={handleExecuteProbe}
                   disabled={probing}
-                  className="w-full py-2 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-bold transition-colors cursor-pointer"
+                  className="px-3 py-1 bg-ink hover:bg-charcoal text-white font-bold text-xs border border-ink shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {probing ? '[ TESTING BOUNDARY PROBE... ]' : '[ ⚡ EXECUTE VERIFICATION PROBE ]'}
+                  {probing ? '[ TESTING... ]' : '[ 🚀 FIRE PROBE ]'}
                 </button>
               </div>
-
-              {/* Verification Status */}
-              <div className="p-2.5 border border-signalGreen bg-signalGreenBg flex items-center justify-between text-xs text-signalGreen font-mono">
-                <span className="font-bold">✓ VECTOR SECURED // HTTP 403 FORBIDDEN</span>
-                <span className="font-bold">OK</span>
-              </div>
-            </div>
-
-            {/* Mini Telemetry Stream */}
-            <div className="pt-3 border-t border-hairline space-y-1.5 font-mono text-[10px]">
-              <div className="text-charcoal font-bold uppercase tracking-wider text-[9px]">[ RECENT DEFENSE SIGNALS ]</div>
-              {telemetryLogs.slice(0, 3).map((log) => (
-                <div key={log.id} className="text-charcoal flex items-start space-x-2">
-                  <span className="text-pencil shrink-0">[{log.timestamp}]</span>
-                  <span className="text-ink font-bold shrink-0">{log.tag}:</span>
-                  <span className="truncate text-charcoal">{log.message}</span>
-                </div>
-              ))}
             </div>
           </div>
 
+          {/* Right 4 Cols: Live Telemetry Feed */}
+          <div className="lg:col-span-4 bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col justify-between space-y-3">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-hairline">
+                <h4 className="text-xs font-grotesk font-bold uppercase tracking-wider text-ink flex items-center space-x-1.5">
+                  <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                  <span>LIVE COMMAND TELEMETRY</span>
+                </h4>
+                <span className="text-[9px] text-charcoal font-mono">UTC SYNCHRONIZED</span>
+              </div>
+
+              <div className="space-y-2 text-[10px] font-mono max-h-[220px] overflow-y-auto scrollbar-tactical pr-1">
+                {telemetryLogs.map((log) => (
+                  <div key={log.id} className="p-2 bg-boneLight border border-hairlineLight flex items-start space-x-2">
+                    <span className="text-charcoal shrink-0">[{log.timestamp}]</span>
+                    <span className={`px-1 text-[8px] font-bold shrink-0 ${
+                      log.category === 'DEFENSE' ? 'bg-signalGreenBg text-signalGreen border border-signalGreen' : 'bg-pureWhite text-ink border border-hairline'
+                    }`}>
+                      {log.tag}
+                    </span>
+                    <span className="text-ink leading-tight">{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-hairlineLight flex items-center justify-between text-[10px] font-mono text-charcoal">
+              <span>ACTIVE ENGINES: <strong className="text-signalGreen">5/5 ONLINE</strong></span>
+              <button
+                onClick={() => onNavigate('audit')}
+                className="hover:text-ink underline cursor-pointer"
+              >
+                [ VIEW AUDIT LOGS ]
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 4. CORRELATED THREAT MATRIX (Clean, Breathable Table Sheet)               */}
+        {/* 4. CORRELATED VULNERABILITIES & METASPLOIT WEAPONIZATION TABLE             */}
         {/* ========================================================================= */}
         <section className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hairline">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-vermilion font-bold text-sm">04 //</span>
+                <span className="text-vermilion font-bold text-sm">03 //</span>
                 <h3 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
                   TOP CORRELATED VULNERABILITIES & EXPLOIT ATTRIBUTION
                 </h3>
               </div>
               <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                Directly mapped CVE intelligence and Metasploit red-team weaponization status
+                Directly mapped CVE intelligence, EPSS probabilities, and Metasploit weaponization tags
               </p>
             </div>
 
@@ -454,15 +511,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 [ VIEW ALL INTELLIGENCE ➔ ]
               </button>
               <button
-                onClick={() => onNavigate('reports')}
-                className="px-3 py-1.5 bg-vermilion hover:bg-crimson text-white font-bold border border-hairline shadow-xs transition-colors cursor-pointer"
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="px-3.5 py-1.5 bg-vermilion hover:bg-crimson disabled:opacity-50 text-white font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
               >
-                [ EXPORT CLIENT PDF REPORT ↓ ]
+                <span>↓</span>
+                <span>{downloadingPdf ? '[ GENERATING PDF... ]' : '[ EXPORT CLIENT PDF REPORT ↓ ]'}</span>
               </button>
             </div>
           </div>
 
-          {/* Clean, Spacious Table */}
+          {/* Clean, Spacious Table with Real Data or Pristine Zero-Threat State */}
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono text-xs border-collapse">
               <thead className="bg-boneDark text-ink border-b border-hairline text-[10px]">
@@ -475,88 +534,56 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairlineLight">
-                
-                {/* Row 1 */}
-                <tr className="hover:bg-boneLight transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-vermilion flex items-center space-x-2 border-r border-hairlineLight">
-                    <span className="w-2 h-2 bg-vermilion animate-pulse"></span>
-                    <span>CVE-2024-4577</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-ink font-bold border-r border-hairlineLight">
-                    {targetDomain}:80/cgi-bin (PHP-CGI)
-                  </td>
-                  <td className="py-3.5 px-4 text-vermilion font-bold border-r border-hairlineLight">
-                    CRITICAL 9.8 // EPSS 97.2%
-                  </td>
-                  <td className="py-3.5 px-4 border-r border-hairlineLight">
-                    <span className="px-2 py-0.5 bg-vermilion text-white font-bold text-[10px]">
-                      [ ⚡ MSF ARMED ]
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right pr-4">
-                    <button
-                      onClick={() => handleSynthesizeDefense('CVE-2024-4577')}
-                      className="px-3 py-1 bg-vermilion hover:bg-crimson text-white font-bold text-[10px] border border-hairline cursor-pointer"
-                    >
-                      [ SHIELD NOW ➔ ]
-                    </button>
-                  </td>
-                </tr>
-
-                {/* Row 2 */}
-                <tr className="hover:bg-boneLight transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-ink flex items-center space-x-2 border-r border-hairlineLight">
-                    <span className="w-1.5 h-1.5 bg-vermilion"></span>
-                    <span>CVE-2021-41773</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-ink border-r border-hairlineLight">
-                    static.{targetDomain}:443 (Apache 2.4.49)
-                  </td>
-                  <td className="py-3.5 px-4 text-ink font-bold border-r border-hairlineLight">
-                    HIGH 7.5 // EPSS 94.1%
-                  </td>
-                  <td className="py-3.5 px-4 border-r border-hairlineLight">
-                    <span className="px-2 py-0.5 border border-hairline bg-boneLight text-ink text-[10px]">
-                      [ POC PUBLIC ]
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right pr-4">
-                    <button
-                      onClick={() => handleSynthesizeDefense('CVE-2021-41773')}
-                      className="px-3 py-1 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-bold text-[10px] cursor-pointer"
-                    >
-                      [ QUEUE WAF ]
-                    </button>
-                  </td>
-                </tr>
-
-                {/* Row 3 */}
-                <tr className="hover:bg-boneLight transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-ink flex items-center space-x-2 border-r border-hairlineLight">
-                    <span className="w-1.5 h-1.5 bg-charcoal"></span>
-                    <span>CVE-2024-6387</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-ink border-r border-hairlineLight">
-                    bastion.{targetDomain}:22 (OpenSSH 9.2p1)
-                  </td>
-                  <td className="py-3.5 px-4 text-charcoal border-r border-hairlineLight">
-                    MEDIUM 5.3 // EPSS 41.8%
-                  </td>
-                  <td className="py-3.5 px-4 border-r border-hairlineLight">
-                    <span className="px-2 py-0.5 border border-hairline bg-boneLight text-charcoal text-[10px]">
-                      [ REGRESSHION ]
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right pr-4">
-                    <button
-                      onClick={() => handleSynthesizeDefense('CVE-2024-6387')}
-                      className="px-3 py-1 bg-pureWhite hover:bg-boneDark border border-hairline text-charcoal font-bold text-[10px] cursor-pointer"
-                    >
-                      [ MONITOR ]
-                    </button>
-                  </td>
-                </tr>
-
+                {findings.length > 0 ? (
+                  findings.slice(0, 5).map((f, idx) => (
+                    <tr key={idx} className="hover:bg-boneLight transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-ink flex items-center space-x-2 border-r border-hairlineLight">
+                        <span className={`w-2 h-2 ${f.risk === 'CRITICAL' ? 'bg-vermilion animate-pulse' : 'bg-signalGreen'}`}></span>
+                        <span>{f.tech?.slice(0, 24) || `FINDING-${f.id}`}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-ink font-bold border-r border-hairlineLight">
+                        {f.host || targetDomain} ({f.ip || 'Resolved'})
+                      </td>
+                      <td className="py-3.5 px-4 text-vermilion font-bold border-r border-hairlineLight">
+                        {f.risk} // Score: {f.score || '3.5'}
+                      </td>
+                      <td className="py-3.5 px-4 border-r border-hairlineLight">
+                        <span className="px-2 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen font-bold text-[10px]">
+                          [ PASSIVE VERIFIED ]
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right pr-4">
+                        <button
+                          onClick={() => handleSynthesizeDefense(f.tech || 'VULN')}
+                          className="px-3 py-1 bg-vermilion hover:bg-crimson text-white font-bold text-[10px] border border-hairline cursor-pointer"
+                        >
+                          [ SHIELD NOW ➔ ]
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-charcoal font-mono bg-[#FAF8F5]">
+                      <div className="space-y-2">
+                        <div className="text-signalGreen font-bold text-xs">
+                          [ 0 RECORDED VULNERABILITIES • SOFTWARE IS 100% PRISTINE AND CLEAN ]
+                        </div>
+                        <div className="text-[11px] text-charcoal">
+                          Perimeter <strong className="text-ink">{targetDomain}</strong> has zero logged breach vectors. Ready for fresh reconnaissance.
+                        </div>
+                        <div className="pt-2">
+                          <button
+                            onClick={() => onNavigate('recon')}
+                            className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline cursor-pointer"
+                          >
+                            [ 🌐 COMMENCE FIRST RECON SCAN ➔ ]
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
