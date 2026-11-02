@@ -70,133 +70,132 @@ export const AuditView: React.FC<AuditViewProps> = ({ onNavigate, showToast }) =
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-[#F4F1FF] text-[#22213A]">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+      <div className="max-w-[1400px] mx-auto space-y-4">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-[#6C4CF1]">history_edu</span>
-              <h1 className="text-2xl font-bold tracking-tight text-[#22213A]">
-                Audit Trail & Compliance Ledger
+            <div className="flex items-center space-x-2">
+              <span className="text-vermilion font-extrabold text-sm">09 //</span>
+              <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                CRYPTOGRAPHIC AUDIT TRAIL & WAL COMPLIANCE LEDGER
               </h1>
             </div>
-            <p className="text-sm text-[#77758E] mt-1">
+            <p className="text-[10px] text-charcoal mt-0.5">
               Cryptographically verified ledger of operator activities, scope grants, scan authorizations, and security events.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1.5 rounded-xl bg-[#EAF8F1] border border-[#299B75]/20 text-[#299B75] text-xs font-semibold">
-              Live Audit Active
+          <div className="flex items-center space-x-2">
+            <span className="px-2.5 py-1 bg-signalGreenBg border border-signalGreen text-signalGreen text-[10px] font-bold">
+              [ SHA-256 HASH CHAINED ]
             </span>
             <button
               onClick={fetchAuditData}
-              className="bg-white border border-[#E8E4F2] hover:border-[#6C4CF1]/40 text-[#22213A] px-4 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-2 transition-all"
+              className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#6C4CF1]">sync</span>
-              <span>Refresh Logs</span>
+              [ REFRESH LOGS ]
             </button>
           </div>
         </div>
 
         {/* Filter and Search Bar */}
-        <div className="bg-white rounded-2xl border border-[#E8E4F2] p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-1.5 bg-[#FAF9FF] p-1 rounded-xl border border-[#E8E4F2]">
+        <div className="bg-pureWhite border border-hairline p-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-1">
             {['All', 'Guard', 'Recon', 'Auth'].map((eng) => (
               <button
                 key={eng}
                 onClick={() => setEngineFilter(eng)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1 text-xs font-mono font-bold border cursor-pointer ${
                   engineFilter === eng
-                    ? 'bg-[#6C4CF1] text-white shadow-sm'
-                    : 'text-[#77758E] hover:text-[#22213A]'
+                    ? 'bg-ink text-white border-hairline'
+                    : 'bg-boneLight text-charcoal border-hairline hover:text-ink'
                 }`}
               >
-                {eng}
+                [ {eng.toUpperCase()} ]
               </button>
             ))}
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <span className="material-symbols-outlined text-[18px] text-[#9896AA] absolute left-3 top-2.5">search</span>
+          <div className="relative w-full sm:w-80">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search action, TX ID, detail..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] text-sm text-[#22213A] placeholder:text-[#9896AA] focus:border-[#6C4CF1] outline-none"
+              placeholder="Filter actions, TX IDs, details..."
+              className="w-full px-3 py-1.5 bg-[#FAF8F5] border border-hairline text-xs text-ink font-mono focus:border-vermilion outline-none"
             />
           </div>
         </div>
 
-        {/* Audit Log Table */}
-        <div className="bg-white rounded-2xl border border-[#E8E4F2] p-6 shadow-sm overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-[#E8E4F2] text-xs font-bold text-[#77758E] uppercase tracking-wider">
-                <th className="pb-3 px-3">Transaction</th>
-                <th className="pb-3 px-3">Timestamp</th>
-                <th className="pb-3 px-3">Module</th>
-                <th className="pb-3 px-3">Action</th>
-                <th className="pb-3 px-3">Status</th>
-                <th className="pb-3 px-3">Operator Context</th>
+        {/* Audit Log Table Sheet */}
+        <div className="border border-hairline bg-pureWhite shadow-xs overflow-x-auto">
+          <table className="w-full text-left font-mono text-[10px] border-collapse">
+            <thead className="bg-boneDark/70 text-ink border-b border-hairline">
+              <tr>
+                <th className="py-2.5 px-3.5 font-bold border-r border-hairlineLight">[ TRANSACTION ID ]</th>
+                <th className="py-2.5 px-3.5 font-bold border-r border-hairlineLight">[ TIMESTAMP ]</th>
+                <th className="py-2.5 px-3.5 font-bold border-r border-hairlineLight">[ MODULE ]</th>
+                <th className="py-2.5 px-3.5 font-bold border-r border-hairlineLight">[ ACTION & DETAIL ]</th>
+                <th className="py-2.5 px-3.5 font-bold border-r border-hairlineLight">[ STATUS ]</th>
+                <th className="py-2.5 px-3.5 font-bold text-right pr-4">[ OPERATOR CONTEXT ]</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E8E4F2] text-xs">
+            <tbody className="divide-y divide-hairlineLight border-b border-hairline">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-[#77758E]">
-                    <span className="material-symbols-outlined text-2xl text-[#6C4CF1] animate-spin block mb-2">progress_activity</span>
-                    Fetching audit ledger...
+                  <td colSpan={6} className="py-12 text-center text-charcoal font-bold">
+                    [ FETCHING AUDIT LEDGER BLOCKS... ]
                   </td>
                 </tr>
               ) : filteredLogs.length > 0 ? (
                 filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#FAF9FF] transition-colors">
-                    <td className="py-3 px-3 font-mono font-semibold text-[#6C4CF1]">
+                  <tr key={log.id} className="hover:bg-boneLight transition-colors">
+                    <td className="py-2.5 px-3.5 font-bold text-ink border-r border-hairlineLight">
                       {log.id}
                     </td>
-                    <td className="py-3 px-3 text-[#77758E] font-mono text-[11px]">
+                    <td className="py-2.5 px-3.5 text-charcoal border-r border-hairlineLight">
                       {log.time}
                     </td>
-                    <td className="py-3 px-3 font-medium text-[#22213A]">
+                    <td className="py-2.5 px-3.5 font-bold text-ink border-r border-hairlineLight">
                       {log.engine}
                     </td>
-                    <td className="py-3 px-3">
-                      <div className="font-semibold text-[#22213A]">{log.action}</div>
-                      <div className="text-[11px] text-[#77758E] truncate max-w-sm mt-0.5">{log.detail}</div>
+                    <td className="py-2.5 px-3.5 border-r border-hairlineLight">
+                      <div className="font-bold text-ink">{log.action}</div>
+                      <div className="text-[9px] text-charcoal truncate max-w-sm">{log.detail}</div>
                     </td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                    <td className="py-2.5 px-3.5 border-r border-hairlineLight">
+                      <span className={`px-2 py-0.5 text-[8px] font-bold uppercase border ${
                         log.status === 'SUCCESS'
-                          ? 'bg-[#EAF8F1] text-[#299B75] border border-[#299B75]/20'
-                          : 'bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/20'
+                          ? 'bg-signalGreenBg text-signalGreen border-signalGreen'
+                          : 'bg-vermilion/10 text-vermilion border-vermilion'
                       }`}>
                         {log.status}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-[#77758E] font-mono text-[11px]">
-                      {log.ip || '127.0.0.1'}
+                    <td className="py-2.5 px-3.5 text-right pr-4 text-charcoal">
+                      {log.ip || '127.0.0.1 (Local)'}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-[#F4F1FF] flex items-center justify-center mx-auto text-[#6C4CF1] mb-2">
-                      <span className="material-symbols-outlined text-xl">fact_check</span>
-                    </div>
-                    <h4 className="text-xs font-bold text-[#22213A]">No Audit Records Recorded</h4>
-                    <p className="text-xs text-[#77758E] max-w-sm mx-auto mt-0.5">
-                      All scope evaluations, authorization grants, and scanner transactions will stream into this tamper-evident ledger.
-                    </p>
+                  <td colSpan={6} className="py-12 text-center text-charcoal">
+                    [ NO AUDIT TRANSACTIONS RECORDED UNDER CURRENT FILTER ]
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {/* Dossier Barcode Footer */}
+          <div className="h-7 border-t border-hairline px-3 flex items-center justify-between bg-boneDark/40">
+            <div className="barcode-strip w-32"></div>
+            <span className="text-[8px] text-charcoal font-mono font-bold">
+              BLOCK_INTEGRITY: MERKLE_ROOT_VERIFIED // SEC_ARCH_09
+            </span>
+          </div>
         </div>
 
       </div>

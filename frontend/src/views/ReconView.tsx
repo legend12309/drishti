@@ -493,70 +493,66 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-8 select-none font-sans">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 select-none font-mono text-xs bg-bone text-ink scrollbar-tactical">
+      <div className="max-w-[1400px] mx-auto space-y-4">
         
-        {/* Page Header with Single Primary Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[12px] font-bold uppercase tracking-wider text-[#5A45FF] bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                Enterprise Recon Pipeline
-              </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-vermilion font-extrabold text-sm">03 //</span>
+              <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                ATTACK SURFACE DISCOVERY & AUTORECON PIPELINE
+              </h1>
             </div>
-            <h1 className="text-[26px] lg:text-[28px] font-extrabold text-slate-900 tracking-tight mt-1">
-              Attack Surface Discovery & Security Auditing
-            </h1>
-            <p className="text-[13px] text-slate-500 mt-0.5">
+            <p className="text-[10px] text-charcoal mt-0.5">
               Coordinated Multi-Engine Pipeline: Nmap • HTTPX • OWASP ZAP • Trivy • Nuclei
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center space-x-2">
             {authStatus?.authorized ? (
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[12px] font-semibold shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Scope Authorized</span>
+              <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-signalGreenBg border border-signalGreen text-signalGreen text-[10px] font-bold">
+                <span className="w-1.5 h-1.5 bg-signalGreen animate-pulse"></span>
+                <span>[ SCOPE AUTHORIZED ]</span>
               </div>
             ) : (
               <button
                 onClick={initiateDNSChallenge}
-                className="bg-white border border-slate-200 hover:border-[#5A45FF]/50 text-slate-700 px-4 py-2.5 rounded-2xl text-[13px] font-semibold shadow-xs flex items-center gap-2 transition-all hover:bg-slate-50 active:scale-95"
+                className="bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors shadow-xs cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[17px] text-[#5A45FF]">verified</span>
-                <span>Verify Scope (DNS)</span>
+                [ VERIFY SCOPE (DNS) ]
               </button>
             )}
 
             <button
               onClick={fetchLatestScan}
               disabled={loading}
-              className="bg-white border border-slate-200 hover:border-[#5A45FF]/50 text-slate-700 px-4 py-2.5 rounded-2xl text-[13px] font-semibold shadow-xs flex items-center gap-2 transition-all hover:bg-slate-50 active:scale-95"
+              className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[17px] text-[#5A45FF]">refresh</span>
-              <span>Refresh</span>
+              [ REFRESH ]
             </button>
 
             <button
               onClick={startAutoRecon}
               disabled={scanning}
-              className="bg-gradient-to-r from-[#5A45FF] to-[#6C5CE7] hover:opacity-95 disabled:opacity-50 text-white px-6 py-2.5 rounded-2xl text-[13px] font-semibold shadow-[0_4px_16px_rgba(90,69,255,0.25)] flex items-center gap-2 transition-all active:scale-95"
+              className="bg-vermilion hover:bg-crimson disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">radar</span>
-              <span>{scanning ? 'Running Pipeline...' : 'Start Full Security Audit'}</span>
+              <span>⚡</span>
+              <span>{scanning ? '[ RUNNING PIPELINE... ]' : '[ START FULL SECURITY AUDIT ➔ ]'}</span>
             </button>
           </div>
         </div>
 
         {/* Target Configuration & Domain Verification Panel */}
-        <div className="bg-white rounded-3xl border border-[#E8E4F2] p-6 sm:p-7 shadow-[0_8px_24px_rgba(108,76,241,0.04)] space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="bg-pureWhite border border-hairline p-5 space-y-4 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex-1 max-w-xl">
-              <label className="text-[12px] font-bold text-[#22213A] uppercase tracking-wider block mb-2 flex items-center justify-between">
-                <span>Assessment Target Domain</span>
+              <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block mb-1.5 flex items-center justify-between">
+                <span>[ ASSESSMENT TARGET DOMAIN ]</span>
                 {checkingAuth && (
-                  <span className="text-[11px] text-[#77758E] font-mono flex items-center gap-1.5 normal-case">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#6C4CF1] animate-ping"></span>
+                  <span className="text-[9px] text-pencil font-mono flex items-center gap-1.5 normal-case">
+                    <span className="w-1.5 h-1.5 bg-vermilion animate-ping"></span>
                     Checking Authorization...
                   </span>
                 )}
@@ -567,55 +563,49 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
                   placeholder="e.g. curezy.in or scanme.nmap.org"
-                  className="w-full px-4 py-3.5 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] text-[14px] text-[#22213A] focus:border-[#6C4CF1] focus:bg-white outline-none font-mono transition-all"
+                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
                 />
-                <span className="absolute right-3.5 top-3.5 text-[10px] font-bold text-[#6C4CF1] bg-[#EAE4FF] border border-[#E8E4F2] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <span className="absolute right-2 top-2 text-[9px] font-bold text-ink bg-boneLight border border-hairline px-2 py-0.5 uppercase tracking-wider font-mono">
                   RFC 8655 Verified
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-8 text-[12px] text-[#77758E] border-t lg:border-t-0 lg:border-l border-[#E8E4F2] pt-4 lg:pt-0 lg:pl-8">
+            <div className="flex items-center gap-6 text-[10px] text-charcoal border-t lg:border-t-0 lg:border-l border-hairlineLight pt-3 lg:pt-0 lg:pl-6">
               <div>
-                <span className="font-bold text-[#22213A] block text-[13px]">5 Automated Engines</span>
-                <span className="text-[#77758E] text-[12px] mt-0.5 block">Nmap • HTTPX • ZAP • Trivy • Nuclei</span>
+                <span className="font-bold text-ink block text-[11px] font-grotesk">5 AUTOMATED ENGINES</span>
+                <span className="text-charcoal text-[9px] mt-0.5 block font-mono">Nmap • HTTPX • ZAP • Trivy • Nuclei</span>
               </div>
               <div>
-                <span className="font-bold text-[#22213A] block text-[13px]">Dependency DAG</span>
-                <span className="text-[#77758E] text-[12px] mt-0.5 block">Host Discovery → CVE Correlation</span>
+                <span className="font-bold text-ink block text-[11px] font-grotesk">DEPENDENCY DAG</span>
+                <span className="text-charcoal text-[9px] mt-0.5 block font-mono">Discovery ➔ CVE Correlation</span>
               </div>
             </div>
           </div>
 
           {/* Verification Status Banner */}
-          <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+          <div className={`p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
             authStatus?.authorized
-              ? 'bg-[#EAF8F1] border-[#299B75]/30 text-[#299B75]'
-              : 'bg-[#F3F0FF] border-[#E8E4F2] text-[#77758E]'
+              ? 'bg-signalGreenBg border-signalGreen text-signalGreen'
+              : 'bg-boneLight border-hairline text-charcoal'
           }`}>
-            <div className="flex items-start gap-3.5">
-              <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
-                authStatus?.authorized
-                  ? 'bg-emerald-100 text-[#299B75]'
-                  : 'bg-[#EAE4FF] text-[#6C4CF1]'
-              }`}>
-                <span className="material-symbols-outlined text-[19px]">
-                  {authStatus?.authorized ? 'verified_user' : 'gpp_maybe'}
-                </span>
+            <div className="flex items-start gap-3">
+              <div className="font-bold text-sm">
+                {authStatus?.authorized ? '✓' : '!'}
               </div>
               <div>
-                <div className="text-[14px] font-bold text-[#22213A] flex items-center gap-2">
-                  <span>{authStatus?.authorized ? 'Domain Ownership Verified' : 'Domain Scope Verification'}</span>
+                <div className="font-bold text-ink flex items-center gap-2 text-[11px]">
+                  <span>{authStatus?.authorized ? 'DOMAIN SCOPE VERIFIED' : 'SCOPE VERIFICATION REQUIRED'}</span>
                   {authStatus?.authorized && (
-                    <span className="text-[10px] bg-emerald-100 text-[#299B75] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                    <span className="text-[9px] bg-pureWhite text-signalGreen font-bold px-2 py-0.5 border border-signalGreen uppercase">
                       ACTIVE ({authStatus.permitted_scope || 'FULL_ACTIVE'})
                     </span>
                   )}
                 </div>
-                <div className="text-[12px] text-[#77758E] mt-0.5">
+                <div className="text-[10px] text-charcoal mt-0.5 font-mono">
                   {authStatus?.authorized
                     ? `Target '${target}' is authorized and ready for deep discovery, port probing, and vulnerability auditing.`
-                    : `Active security probing requires explicit authorization via DNS challenge token or Sandbox verification to ensure compliance.`}
+                    : `Active security probing requires explicit authorization via DNS challenge token to ensure RFC 8655 compliance.`}
                 </div>
               </div>
             </div>
@@ -624,45 +614,43 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
               {!authStatus?.authorized && (
                 <button
                   onClick={initiateDNSChallenge}
-                  className="bg-[#6C4CF1] hover:bg-[#5940D8] text-white px-4 py-2 rounded-2xl text-[12px] font-semibold shadow-xs flex items-center gap-1.5 transition-all active:scale-95"
+                  className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[16px]">domain_verification</span>
-                  <span>Generate TXT Challenge</span>
+                  [ GENERATE TXT CHALLENGE ]
                 </button>
               )}
             </div>
           </div>
+        </div>
 
         {/* Live Execution & Progress Card */}
         {scanning && (
-          <div className="p-5 rounded-3xl bg-white border border-[#E8E4F2] space-y-3 shadow-[0_8px_24px_rgba(108,76,241,0.04)] animate-fadeIn">
+          <div className="p-4 bg-pureWhite border border-hairline space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[22px] text-[#6C4CF1] animate-spin">
-                  progress_activity
-                </span>
+                <div className="w-2.5 h-2.5 bg-vermilion animate-ping"></div>
                 <div>
-                  <div className="text-[14px] font-bold text-[#22213A]">
+                  <div className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
                     {statusText}
                   </div>
-                  <div className="text-[12px] text-[#9896AA] font-mono">
-                    Workflow {currentScanId} • {progress}% Complete
+                  <div className="text-[10px] text-charcoal font-mono mt-0.5">
+                    WORKFLOW ID: {currentScanId} • {progress}% COMPLETE
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={cancelWorkflow}
-                className="px-4 py-2 rounded-2xl bg-[#FFF0F1] border border-[#DC4655]/20 text-[#DC4655] text-[12px] font-semibold hover:bg-[#FFF0F1]/80 transition-all shadow-xs"
+                className="px-3 py-1 bg-pureWhite border border-vermilion text-vermilion hover:bg-vermilion hover:text-white text-[10px] font-mono font-bold transition-colors cursor-pointer"
               >
-                Abort Workflow
+                [ ABORT WORKFLOW ]
               </button>
             </div>
 
             {/* Progress track */}
-            <div className="w-full bg-[#FAF9FF] border border-[#E8E4F2] h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-boneDark border border-hairline h-2">
               <div
-                className="bg-gradient-to-r from-[#6C4CF1] to-[#818CF8] h-full rounded-full transition-all duration-300"
+                className="bg-vermilion h-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
@@ -670,93 +658,91 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         )}
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-[#E8E4F2] pb-3">
+        <div className="flex items-center gap-2 border-b border-hairline pb-2">
           {[
-            { id: 'timeline', label: 'Stage Execution Timeline' },
-            { id: 'assets', label: 'Discovered Assets & Ports' },
-            { id: 'findings', label: 'Aggregated Observations' },
+            { id: 'timeline', label: '01_ STAGE TIMELINE' },
+            { id: 'assets', label: '02_ DISCOVERED TARGETS' },
+            { id: 'findings', label: '03_ AGGREGATED OBSERVATIONS' },
           ].map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id as any)}
-              className={`px-4 py-2 rounded-2xl text-[13px] font-semibold transition-all ${
+              className={`px-3 py-1.5 text-xs font-mono font-bold transition-colors cursor-pointer border ${
                 activeTab === t.id
-                  ? 'bg-gradient-to-r from-[#6C4CF1] to-[#5940D8] text-white shadow-[0_4px_16px_rgba(108,76,241,0.25)]'
-                  : 'text-[#77758E] hover:text-[#22213A] hover:bg-[#FAF9FF]'
+                  ? 'bg-ink text-white border-ink'
+                  : 'bg-pureWhite text-charcoal border-hairline hover:text-ink hover:bg-boneDark'
               }`}
             >
-              {t.label}
+              [ {t.label} ]
             </button>
           ))}
         </div>
 
         {/* Tab 1: Stage Timeline */}
         {activeTab === 'timeline' && (
-          <div className="bg-white rounded-3xl border border-[#E8E4F2] p-8 shadow-[0_8px_24px_rgba(108,76,241,0.04)] space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E8E4F2]">
+          <div className="bg-pureWhite border border-hairline p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-hairline">
               <div>
-                <h3 className="text-[16px] font-bold text-[#22213A] tracking-tight">
-                  Stage-by-Stage Coordinated Execution
+                <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                  STAGE-BY-STAGE MULTI-ENGINE EXECUTION TIMELINE
                 </h3>
-                <p className="text-[12px] text-[#77758E] mt-0.5">
-                  Sequential dependency enforcement and isolated subprocess tracking
+                <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+                  Sequential dependency enforcement and isolated worker subprocess tracking
                 </p>
               </div>
 
-              <span className="px-3.5 py-1 rounded-full bg-[#EAE4FF] border border-[#E8E4F2] text-[#6C4CF1] text-[11px] font-bold uppercase">
-                Status: {orchestratorWorkflow?.overall_status || 'Ready'}
+              <span className="px-2 py-0.5 bg-boneDark border border-hairline text-ink text-[10px] font-bold uppercase font-mono">
+                STATUS: {orchestratorWorkflow?.overall_status || 'READY'}
               </span>
             </div>
 
             {/* Vertical Stage Cards or Empty State */}
             {orchestratorWorkflow && orchestratorWorkflow.stages && orchestratorWorkflow.stages.length > 0 ? (
-              <div className="space-y-3.5">
+              <div className="space-y-2">
                 {orchestratorWorkflow.stages.map((st: any, idx: number) => (
                   <div
                     key={idx}
-                    className="p-5 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#6C4CF1]/40"
+                    className="p-3.5 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-ink transition-colors"
                   >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-8 h-8 rounded-xl bg-[#EAE4FF] text-[#6C4CF1] flex items-center justify-center font-bold text-[12px] shrink-0 shadow-xs">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-boneDark border border-hairline text-ink flex items-center justify-center font-bold text-[11px] shrink-0 font-mono">
                         {idx + 1}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[14px] font-bold text-[#22213A]">
+                          <span className="text-xs font-bold text-ink uppercase font-grotesk">
                             {st.scanner_name}
                           </span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase border ${
                             st.status === 'completed'
-                              ? 'bg-[#EAF8F1] text-[#299B75] border border-[#299B75]/20'
+                              ? 'bg-signalGreenBg text-signalGreen border-signalGreen'
                               : st.status === 'running'
-                              ? 'bg-[#EAE4FF] text-[#6C4CF1] border border-[#6C4CF1]/20'
+                              ? 'bg-vermilion text-white border-vermilion animate-pulse'
                               : st.status === 'skipped' || st.status === 'not_applicable'
-                              ? 'bg-[#FFF9EA] text-[#B76E00] border border-[#B76E00]/30'
+                              ? 'bg-boneDark text-charcoal border-hairline'
                               : st.status === 'failed'
-                              ? 'bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/20'
-                              : st.status === 'blocked'
-                              ? 'bg-[#F1F3F5] text-[#495057] border border-[#ADB5BD]/30'
-                              : 'bg-[#FAF9FF] text-[#77758E] border border-[#E8E4F2]'
+                              ? 'bg-white text-vermilion border-vermilion'
+                              : 'bg-pureWhite text-charcoal border-hairline'
                           }`}>
-                            {st.status}
+                            [{st.status}]
                           </span>
                         </div>
-                        <p className="text-[12px] text-[#77758E] mt-1">
+                        <p className="text-[10px] text-charcoal mt-0.5 font-mono">
                           {st.error_message || st.desc || 'Pipeline stage'}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-[12px] font-mono text-[#77758E] shrink-0">
-                      <span>Findings: <strong className="text-[#22213A]">{st.findings_count ?? 0}</strong></span>
-                      <span>Progress: <strong className="text-[#6C4CF1]">{st.progress ?? 0}%</strong></span>
+                    <div className="flex items-center gap-4 text-[10px] font-mono text-charcoal shrink-0">
+                      <span>FINDINGS: <strong className="text-ink">{st.findings_count ?? 0}</strong></span>
+                      <span>PROGRESS: <strong className="text-vermilion">{st.progress ?? 0}%</strong></span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-[#9896AA] text-[13px]">
-                No active scan workflow in memory. Click "Start Full Security Audit" above to dispatch assessment telemetry.
+              <div className="py-12 text-center text-charcoal text-[11px] font-mono bg-[#FAF8F5] border border-dashed border-hairline p-6">
+                [ NO ACTIVE SCAN WORKFLOW IN MEMORY. CLICK "START FULL SECURITY AUDIT" ABOVE TO INITIATE. ]
               </div>
             )}
           </div>
@@ -764,21 +750,21 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
         {/* Tab 2: Assets */}
         {activeTab === 'assets' && (
-          <div className="bg-white rounded-3xl border border-slate-100 p-8 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
-            <h3 className="text-[16px] font-bold text-slate-900 tracking-tight mb-4">
-              Discovered Perimeter Targets
+          <div className="bg-pureWhite border border-hairline p-5 shadow-xs space-y-4">
+            <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk pb-2 border-b border-hairline">
+              DISCOVERED PERIMETER TARGETS & NETWORK SERVICES
             </h3>
             {subdomains.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {subdomains.map((sd, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <div key={idx} className="p-3 bg-boneLight border border-hairline flex items-center justify-between">
                     <div>
-                      <div className="text-[14px] font-bold text-slate-900">{sd.host}</div>
-                      <div className="text-[12px] text-slate-500">{sd.ip} • {sd.tech}</div>
+                      <div className="text-xs font-bold text-ink font-mono">{sd.host}</div>
+                      <div className="text-[10px] text-charcoal font-mono mt-0.5">{sd.ip} • {sd.tech}</div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {sd.ports.map((p) => (
-                        <span key={p} className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[#5A45FF] text-[11px] font-bold font-mono">
+                        <span key={p} className="px-2 py-0.5 bg-pureWhite border border-hairline text-ink text-[10px] font-bold font-mono">
                           :{p}
                         </span>
                       ))}
@@ -787,13 +773,10 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 ))}
               </div>
             ) : (
-              <div className="py-16 text-center space-y-3">
-                <span className="material-symbols-outlined text-4xl text-slate-300">
-                  dns
-                </span>
-                <p className="text-[13px] text-slate-400">
-                  No hosts or perimeter ports discovered yet. Launch AutoRecon to probe target infrastructure.
-                </p>
+              <div className="py-12 text-center space-y-2 bg-[#FAF8F5] border border-dashed border-hairline p-6 font-mono">
+                <div className="text-charcoal text-[11px]">
+                  [ NO HOSTS OR PERIMETER PORTS DISCOVERED YET. RUN AUTORECON TO PROBE INFRASTRUCTURE. ]
+                </div>
               </div>
             )}
           </div>
@@ -801,57 +784,57 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
         {/* Tab 3: Findings */}
         {activeTab === 'findings' && (
-          <div className="bg-white rounded-3xl border border-[#E8E4F2] p-8 shadow-[0_8px_24px_rgba(108,76,241,0.04)]">
-            <div className="flex items-center justify-between pb-4 border-b border-[#E8E4F2] mb-6">
+          <div className="bg-pureWhite border border-hairline p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-hairline">
               <div>
-                <h3 className="text-[16px] font-bold text-[#22213A] tracking-tight">
-                  Aggregated Observations & Vulnerability Evidence
+                <h3 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                  AGGREGATED OBSERVATIONS & VULNERABILITY EVIDENCE
                 </h3>
-                <p className="text-[12px] text-[#77758E] mt-0.5">
+                <p className="text-[10px] text-charcoal mt-0.5 font-mono">
                   Correlated vulnerability and service evidence streamed directly from scanning engines
                 </p>
               </div>
-              <span className="px-3.5 py-1 rounded-full bg-[#EAE4FF] border border-[#E8E4F2] text-[#6C4CF1] text-[11px] font-bold uppercase">
-                Total Findings: {subdomains.length}
+              <span className="px-2 py-0.5 bg-boneDark border border-hairline text-ink text-[10px] font-bold uppercase font-mono">
+                TOTAL: {subdomains.length}
               </span>
             </div>
 
             {subdomains.length > 0 ? (
-              <div className="space-y-3.5">
+              <div className="space-y-2">
                 {subdomains.map((f, idx) => (
                   <div
                     key={idx}
-                    className="p-5 rounded-2xl bg-[#FAF9FF] border border-[#E8E4F2] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-[#6C4CF1]/40"
+                    className="p-3.5 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-ink transition-colors"
                   >
-                    <div className="flex items-start gap-3.5">
-                      <div className={`px-2.5 py-1 rounded-xl font-bold text-[11px] shrink-0 uppercase tracking-wider ${
+                    <div className="flex items-start gap-3">
+                      <div className={`px-2 py-0.5 font-bold font-mono text-[9px] shrink-0 uppercase border ${
                         f.risk === 'CRITICAL'
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          ? 'bg-vermilion text-white border-vermilion'
                           : f.risk === 'HIGH'
-                          ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
                           : f.risk === 'MEDIUM'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          ? 'bg-yellow-50 text-yellow-800 border-yellow-300'
+                          : 'bg-signalGreenBg text-signalGreen border-signalGreen'
                       }`}>
-                        {f.risk}
+                        [{f.risk}]
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[14px] font-bold text-[#22213A]">{f.host}</span>
-                          <span className="text-[12px] text-[#77758E] font-mono">({f.ip})</span>
+                          <span className="text-xs font-bold text-ink font-mono">{f.host}</span>
+                          <span className="text-[10px] text-charcoal font-mono">({f.ip})</span>
                         </div>
-                        <p className="text-[13px] text-[#55536D] mt-1 font-medium">{f.tech}</p>
+                        <p className="text-[11px] text-charcoal mt-0.5 font-mono">{f.tech}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[12px] text-[#77758E] font-mono bg-white px-2.5 py-1 rounded-xl border border-[#E8E4F2]">
-                        Score: <strong className="text-[#22213A]">{f.score}</strong>
+                      <span className="text-[10px] text-charcoal font-mono bg-pureWhite px-2 py-0.5 border border-hairline">
+                        SCORE: <strong className="text-ink">{f.score}</strong>
                       </span>
                       {f.ports && f.ports.length > 0 && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           {f.ports.map((p) => (
-                            <span key={p} className="px-2 py-0.5 rounded-lg bg-[#EAE4FF] text-[#6C4CF1] font-mono text-[11px] font-bold">
+                            <span key={p} className="px-1.5 py-0.5 bg-boneDark text-ink font-mono text-[9px] font-bold border border-hairline">
                               :{p}
                             </span>
                           ))}
@@ -862,8 +845,8 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-[#9896AA] text-[13px]">
-                No observations or vulnerability evidence recorded yet. Launch an assessment to populate findings.
+              <div className="py-12 text-center text-charcoal text-[11px] font-mono bg-[#FAF8F5] border border-dashed border-hairline p-6">
+                [ NO OBSERVATIONS OR VULNERABILITY EVIDENCE RECORDED YET. ]
               </div>
             )}
           </div>
@@ -871,86 +854,83 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
         {/* DNS Verification Modal */}
         {showVerifyModal && challengeData && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.1)] max-w-xl w-full p-6 space-y-5 animate-fadeIn font-sans">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-pureWhite border-2 border-ink max-w-xl w-full p-6 space-y-4 shadow-xl font-mono text-xs animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#5A45FF] text-[20px]">verified</span>
-                  <h3 className="text-[16px] font-bold text-slate-900">
-                    DNS TXT Domain Verification
+                  <span className="w-2.5 h-2.5 bg-vermilion"></span>
+                  <h3 className="text-sm font-bold text-ink uppercase tracking-wider font-grotesk">
+                    DNS TXT DOMAIN VERIFICATION // RFC 8655
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowVerifyModal(false)}
-                  className="text-slate-400 hover:text-slate-700 transition-colors"
+                  className="text-charcoal hover:text-ink font-bold text-sm cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  [ ✕ ]
                 </button>
               </div>
 
               <div className="space-y-2">
-                <p className="text-[13px] text-slate-600 leading-relaxed">
-                  Publish the following DNS TXT record at your DNS provider (Cloudflare, Route53, GoDaddy) to prove administrative ownership of <strong className="text-slate-900">{target}</strong>.
+                <p className="text-xs text-charcoal leading-relaxed font-mono">
+                  Publish the following DNS TXT record at your DNS provider (Cloudflare, Route53, GoDaddy) to prove administrative ownership of <strong className="text-ink">{target}</strong>.
                 </p>
-                <div className="text-[11px] text-slate-400 flex items-center gap-2 font-mono">
-                  <span>Record:</span>
-                  <span className="bg-slate-100 px-2 py-1 rounded text-slate-900">{challengeData.challenge_record_name}</span>
-                  <button
-                    onClick={() => copyToClipboard(challengeData.challenge_record_name, 'record')}
-                    className="text-[#5A45FF] hover:text-[#6C4CF1] text-xs underline"
-                  >
-                    Copy
-                  </button>
-                </div>
-                <div className="text-[11px] text-slate-400 flex items-center gap-2 font-mono">
-                  <span>Token:</span>
-                  <span className="bg-slate-100 px-2 py-1 rounded text-slate-900">{challengeData.verification_token}</span>
-                  <button
-                    onClick={() => copyToClipboard(challengeData.verification_token, 'token')}
-                    className="text-[#5A45FF] hover:text-[#6C4CF1] text-xs underline"
-                  >
-                    Copy
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  DNS propagation typically takes 30-120 seconds. Click <strong>Verify</strong> once the record is live.
-                </p>
-              </div>
+                
+                <div className="p-2.5 bg-boneLight border border-hairline space-y-2">
+                  <div className="flex items-center justify-between text-[10px] text-charcoal">
+                    <span>RECORD NAME:</span>
+                    <button
+                      onClick={() => copyToClipboard(challengeData.challenge_record_name, 'record')}
+                      className="text-vermilion hover:underline font-bold cursor-pointer"
+                    >
+                      [ COPY RECORD ]
+                    </button>
+                  </div>
+                  <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all">
+                    {challengeData.challenge_record_name}
+                  </div>
 
-              <div className="space-y-2">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <div className="text-[11px] text-slate-400 font-medium mb-1">Status</div>
-                  <div className="text-[13px] font-semibold text-slate-900">
-                    {verificationError ? (
-                      <span className="text-rose-600">{verificationError}</span>
-                    ) : (
-                      <span className="text-amber-600">Awaiting DNS propagation...</span>
-                    )}
+                  <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
+                    <span>TXT TOKEN VALUE:</span>
+                    <button
+                      onClick={() => copyToClipboard(challengeData.verification_token, 'token')}
+                      className="text-vermilion hover:underline font-bold cursor-pointer"
+                    >
+                      [ COPY TOKEN ]
+                    </button>
+                  </div>
+                  <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all">
+                    {challengeData.verification_token}
                   </div>
                 </div>
-                <button
-                  onClick={verifyDNSChallenge}
-                  disabled={verifying}
-                  className="w-full bg-[#6C4CF1] hover:bg-[#5940D8] text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold shadow-xs flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {verifying ? (
-                    <>
-                      <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[16px]">verified</span>
-                      <span>Verify Domain</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setShowVerifyModal(false)}
-                  className="w-full bg-white border border-slate-300 hover:border-slate-400 text-slate-700 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
-                >
-                  Cancel
-                </button>
+
+                <p className="text-[10px] text-pencil font-mono">
+                  DNS propagation typically requires 30-120 seconds. Click Verify once the TXT record is live.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-hairline">
+                {verificationError && (
+                  <div className="p-2 bg-white border border-vermilion text-vermilion text-[10px] font-mono">
+                    ERROR: {verificationError}
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={verifyDNSChallenge}
+                    disabled={verifying}
+                    className="flex-1 bg-vermilion hover:bg-crimson text-white px-4 py-2 font-mono font-bold text-xs border border-hairline transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {verifying ? '[ VERIFYING PROPAGATION... ]' : '[ VERIFY DOMAIN NOW ➔ ]'}
+                  </button>
+                  <button
+                    onClick={() => setShowVerifyModal(false)}
+                    className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-4 py-2 font-mono font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    [ DISMISS ]
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -959,24 +939,23 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         {/* DNS Challenge Tooltip */}
         {copiedField && (
           <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
-            <div className="bg-slate-900 text-white px-4 py-2 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.2)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-green-400">check_circle</span>
-              <span className="text-sm font-medium">{copiedField === 'record' ? 'Record name copied' : 'TXT token copied'}</span>
+            <div className="bg-ink text-pureWhite px-3 py-1.5 border border-hairline text-xs font-mono font-bold shadow-lg">
+              [ ✓ {copiedField === 'record' ? 'RECORD NAME COPIED' : 'TXT TOKEN COPIED'} ]
             </div>
           </div>
         )}
 
         {/* Loading Overlay */}
         {loading && (
-          <div className="fixed inset-0 z-40 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <span className="material-symbols-outlined text-[40px] text-[#6C4CF1] animate-spin">progress_activity</span>
-              <p className="text-[14px] text-slate-600">Loading latest scan...</p>
+          <div className="fixed inset-0 z-40 bg-bone/70 backdrop-blur-xs flex items-center justify-center">
+            <div className="bg-pureWhite border-2 border-ink p-4 flex items-center gap-3 font-mono text-xs shadow-lg">
+              <div className="w-4 h-4 border-2 border-vermilion border-t-transparent animate-spin"></div>
+              <span className="font-bold text-ink uppercase">[ LOADING TELEMETRY CORPUS... ]</span>
             </div>
           </div>
         )}
+
       </div>
-    </div>
     </div>
   );
 };

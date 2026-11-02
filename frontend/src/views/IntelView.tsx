@@ -307,148 +307,127 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
   }, [selectedCve]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 sm:p-6 lg:p-8 bg-[#F4F1FF] text-[#22213A]">
-      <div className="max-w-[1520px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+      <div className="max-w-[1520px] mx-auto space-y-4">
 
         {/* ------------------------------------------------------------- */}
         {/* 1. HEADER & TOP CONTROLS */}
         {/* ------------------------------------------------------------- */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#6C4CF1] to-[#9B82FC] flex items-center justify-center text-white shadow-sm shadow-indigo-200">
-                <span className="material-symbols-outlined text-[20px]">security_update_warning</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-[#22213A] flex items-center gap-2.5">
-                  <span>Vulnerability Intelligence</span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#EAE4FF] text-[#6C4CF1] border border-[#6C4CF1]/20">
-                    NIST NVD v2.0 + EPSS
-                  </span>
-                </h1>
-                <p className="text-xs text-[#77758E] mt-0.5">
-                  Evidence-based vulnerability mapping with CVSS 3.1 vectors, EPSS exploit likelihood, and automated AI mitigation advisory.
-                </p>
-              </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-vermilion font-extrabold text-sm">04 //</span>
+              <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                VULNERABILITY INTELLIGENCE & CVE CORPUS
+              </h1>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 border border-hairline bg-boneLight text-charcoal font-mono">
+                NIST NVD v2.0 + EPSS
+              </span>
             </div>
+            <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+              Evidence-based vulnerability mapping with CVSS 3.1 vectors, EPSS exploit likelihood, and automated AI mitigation advisory.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Scan Scope Picker */}
             <div className="relative">
               <select
                 value={selectedScanId}
                 onChange={(e) => setSelectedScanId(e.target.value)}
-                className="bg-white text-xs font-semibold text-[#22213A] border border-purple-100/90 rounded-xl px-3.5 py-2 pr-8 shadow-sm hover:border-[#6C4CF1]/40 transition-all outline-none cursor-pointer appearance-none"
+                className="bg-pureWhite text-xs font-mono font-semibold text-ink border border-hairline px-3 py-1.5 shadow-xs hover:border-ink transition-colors outline-none cursor-pointer"
               >
-                <option value="all">🌐 All Scans & Global Catalog</option>
+                <option value="all">🌐 [ ALL SCANS & GLOBAL CATALOG ]</option>
                 {scans.map((s) => (
                   <option key={s.id} value={s.id}>
                     🎯 {s.target} ({s.id.slice(0, 14)})
                   </option>
                 ))}
               </select>
-              <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[16px] text-[#9896AA] pointer-events-none">
-                expand_more
-              </span>
             </div>
 
-            {/* Sync Feeds Button */}
             <button
               onClick={handleSyncFeeds}
               disabled={syncing}
-              className="bg-white border border-purple-100/90 hover:border-[#6C4CF1]/40 text-[#22213A] px-3.5 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all hover:shadow hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50"
+              className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
-              <span className={`material-symbols-outlined text-[16px] text-[#6C4CF1] ${syncing ? 'animate-spin' : ''}`}>
-                sync
-              </span>
-              <span>{syncing ? 'Syncing...' : 'Sync NIST Feeds'}</span>
+              <span>{syncing ? '[ SYNCING... ]' : '[ SYNC NIST FEEDS ]'}</span>
+            </button>
+
+            <button
+              onClick={loadIntelligence}
+              disabled={loading}
+              className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer"
+            >
+              [ REFRESH NVD ]
             </button>
           </div>
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* 2. EXECUTIVE KPI CARDS (Fluid Soft-Glow Surfaces) */}
+        {/* 2. EXECUTIVE KPI CARDS */}
         {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total CVEs */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-[0_4px_20px_-4px_rgba(108,76,241,0.05)] hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#77758E] uppercase tracking-wider">Total Discovered CVEs</span>
-              <div className="w-8 h-8 rounded-lg bg-[#F4F1FF] text-[#6C4CF1] flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">dataset</span>
-              </div>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">
+              <span>TOTAL DISCOVERED CVES</span>
+              <span className="text-signalGreen font-bold font-mono">[CORRELATED: {stats.correlated}]</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-[#22213A]">{stats.total}</span>
-              <span className="text-[11px] font-semibold text-[#6C4CF1] bg-[#F4F1FF] px-1.5 py-0.5 rounded">
-                {stats.correlated} correlated
-              </span>
+              <span className="text-3xl font-condensed font-bold text-ink leading-none">{stats.total}</span>
+              <span className="text-[10px] font-mono text-charcoal">ENTRIES</span>
             </div>
-            <div className="text-[11px] text-[#9896AA] mt-1.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Active evidence repository verified</span>
+            <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
+              <span className="w-1.5 h-1.5 bg-signalGreen inline-block"></span>
+              <span>Active Evidence Repository Verified</span>
             </div>
           </div>
 
           {/* Critical Severity Threats */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-rose-100/70 shadow-[0_4px_20px_-4px_rgba(220,70,85,0.06)] hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#77758E] uppercase tracking-wider">Critical Exposures</span>
-              <div className="w-8 h-8 rounded-lg bg-rose-50 text-[#DC4655] flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">crisis_alert</span>
-              </div>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-vermilion uppercase tracking-wider font-mono">
+              <span>CRITICAL EXPOSURES</span>
+              <span className="text-vermilion font-bold font-mono">[CVSS ≥ 9.0]</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-[#DC4655]">{stats.critical}</span>
-              <span className="text-[11px] font-semibold text-[#DC4655] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
-                CVSS ≥ 9.0
-              </span>
+              <span className="text-3xl font-condensed font-bold text-vermilion leading-none">{stats.critical}</span>
+              <span className="text-[10px] font-mono text-charcoal">ACTIVE</span>
             </div>
-            <div className="text-[11px] text-[#9896AA] mt-1.5 flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DC4655]"></span>
-              </span>
-              <span>Immediate patch action recommended</span>
+            <div className="text-[9px] text-vermilion mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
+              <span className="w-1.5 h-1.5 bg-vermilion animate-pulse inline-block"></span>
+              <span>Immediate Mitigation Recommended</span>
             </div>
           </div>
 
           {/* Average CVSS Severity */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-[0_4px_20px_-4px_rgba(108,76,241,0.05)] hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#77758E] uppercase tracking-wider">Average Severity</span>
-              <div className="w-8 h-8 rounded-lg bg-[#FAF9FF] text-[#6C4CF1] flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">speed</span>
-              </div>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">
+              <span>AVERAGE SEVERITY</span>
+              <span className="text-charcoal font-mono">[CVSS v3.1]</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-[#22213A]">{stats.avgCvss}</span>
-              <span className="text-[11px] font-semibold text-[#77758E]">/ 10.0</span>
+              <span className="text-3xl font-condensed font-bold text-ink leading-none">{stats.avgCvss}</span>
+              <span className="text-[10px] font-mono text-charcoal">/ 10.0</span>
             </div>
-            <div className="text-[11px] text-[#9896AA] mt-1.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px] text-amber-500">warning</span>
-              <span>CVSS v3.1 Common Vulnerability Metric</span>
+            <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
+              <span>Mean Topological Threat Baseline</span>
             </div>
           </div>
 
           {/* Peak Exploit Probability (EPSS) */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 border border-purple-100/70 shadow-[0_4px_20px_-4px_rgba(108,76,241,0.05)] hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#77758E] uppercase tracking-wider">Peak Exploit (EPSS)</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[18px]">trending_up</span>
-              </div>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">
+              <span>PEAK EXPLOIT LIKELIHOOD</span>
+              <span className="text-signalGreen font-mono">[{stats.highEpss} HIGH RISK]</span>
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-[#22213A]">{stats.peakEpss}%</span>
-              <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                {stats.highEpss} high risk
-              </span>
+              <span className="text-3xl font-condensed font-bold text-ink leading-none">{stats.peakEpss}%</span>
+              <span className="text-[10px] font-mono text-charcoal">EPSS PROB</span>
             </div>
-            <div className="text-[11px] text-[#9896AA] mt-1.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[13px] text-emerald-600">verified</span>
-              <span>FIRST.org real-time exploit model</span>
+            <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
+              <span className="w-1.5 h-1.5 bg-signalGreen inline-block"></span>
+              <span>FIRST.org Exploit Prediction Model</span>
             </div>
           </div>
         </div>
@@ -456,31 +435,31 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
         {/* ------------------------------------------------------------- */}
         {/* 3. MASTER-DETAIL WORKSPACE */}
         {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
           {/* ----------------- LEFT: CVE STREAM (7 COLS) ----------------- */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-3">
             
             {/* Target Scope Context Banner */}
             {selectedScanId !== 'all' && (
-              <div className="p-3.5 rounded-2xl bg-white/90 backdrop-blur-sm border border-purple-100/80 shadow-xs flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="font-bold text-[#22213A]">
-                    Scope Target: {scans.find(s => s.id === selectedScanId)?.target || 'Active Target'}
+              <div className="p-3 bg-pureWhite border border-hairline shadow-xs flex items-center justify-between text-xs font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
+                  <span className="font-bold text-ink">
+                    TARGET: {scans.find(s => s.id === selectedScanId)?.target || 'Active Target'}
                   </span>
-                  <span className="text-[#77758E] font-mono text-[11px] bg-[#F4F1FF] px-2 py-0.5 rounded-lg border border-purple-100/60">
-                    {selectedScanId}
+                  <span className="text-charcoal text-[10px] bg-boneDark px-1.5 py-0.5 border border-hairline">
+                    {selectedScanId.slice(0, 18)}
                   </span>
                 </div>
-                <div className="text-[11px] text-[#77758E]">
+                <div className="text-[10px]">
                   {stats.correlated > 0 ? (
-                    <span className="text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
-                      {stats.correlated} CVEs Correlated to Host
+                    <span className="text-vermilion font-bold">
+                      [{stats.correlated} CVES CORRELATED TO HOST]
                     </span>
                   ) : (
-                    <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
-                      0 Known CVEs on Discovered Ports
+                    <span className="text-signalGreen font-bold">
+                      [0 CORRELATED CVES ON DISCOVERED PORTS]
                     </span>
                   )}
                 </div>
@@ -488,49 +467,49 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             )}
 
             {/* Search & Filter Bar */}
-            <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-purple-100/80 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="bg-pureWhite p-3 border border-hairline shadow-xs flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
               {/* Search input */}
-              <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2 bg-[#FAF9FF] rounded-xl border border-purple-100/70 focus-within:border-[#6C4CF1] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#6C4CF1]/15 transition-all shadow-none">
-                <span className="material-symbols-outlined text-[18px] text-[#9896AA] select-none flex-shrink-0">search</span>
+              <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 bg-[#FAF8F5] border border-hairline">
+                <span className="text-charcoal font-bold text-[11px] select-none font-mono">SEARCH:</span>
                 <input
                   type="text"
                   placeholder="Filter by CVE ID, technology banner, or affected asset..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-transparent border-0 border-none p-0 text-xs text-[#22213A] focus:ring-0 focus:outline-none focus:border-0 placeholder:text-[#9896AA] shadow-none"
+                  className="w-full bg-transparent border-none p-0 text-xs text-ink focus:outline-none placeholder:text-pencil font-mono"
                 />
                 {search && (
                   <button
                     onClick={() => setSearch('')}
-                    className="text-[#9896AA] hover:text-[#22213A] p-0.5 rounded-full hover:bg-purple-100/50 transition-colors flex-shrink-0"
+                    className="text-charcoal hover:text-ink font-bold text-xs"
                     title="Clear search"
                   >
-                    <span className="material-symbols-outlined text-[15px]">close</span>
+                    [✕]
                   </button>
                 )}
               </div>
 
               {/* Segmented Filter Pills */}
-              <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none font-mono text-[10px]">
                 {[
-                  { id: 'ALL', label: 'All Intel' },
-                  { id: 'CORRELATED', label: 'Correlated' },
-                  { id: 'CRITICAL', label: 'Critical' },
+                  { id: 'ALL', label: 'ALL INTEL' },
+                  { id: 'CORRELATED', label: 'CORRELATED' },
+                  { id: 'CRITICAL', label: 'CRITICAL' },
                   { id: 'HIGH_EPSS', label: 'EPSS ≥ 50%' },
-                  { id: 'CONFIRMED', label: 'Confirmed' },
+                  { id: 'CONFIRMED', label: 'CONFIRMED' },
                 ].map((tab) => {
                   const isActive = filter === tab.id;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setFilter(tab.id as any)}
-                      className={`whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                      className={`whitespace-nowrap px-2.5 py-1 font-bold border transition-colors cursor-pointer ${
                         isActive
-                          ? 'bg-[#6C4CF1] text-white shadow-sm shadow-indigo-200'
-                          : 'text-[#77758E] hover:text-[#22213A] hover:bg-[#FAF9FF]'
+                          ? 'bg-ink text-white border-ink'
+                          : 'bg-pureWhite text-charcoal border-hairline hover:text-ink hover:bg-boneDark'
                       }`}
                     >
-                      {tab.label}
+                      [ {tab.label} ]
                     </button>
                   );
                 })}
@@ -538,12 +517,12 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </div>
 
             {/* CVE Cards List */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {loading ? (
-                <div className="py-24 text-center space-y-3 bg-white/70 backdrop-blur-sm rounded-2xl border border-purple-100/60">
-                  <div className="w-10 h-10 border-3 border-[#6C4CF1] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-xs font-semibold text-[#77758E]">
-                    Aggregating correlated intelligence & NIST telemetry...
+                <div className="py-20 text-center space-y-2 bg-pureWhite border border-hairline p-6">
+                  <div className="w-5 h-5 border-2 border-vermilion border-t-transparent animate-spin mx-auto"></div>
+                  <p className="text-xs text-charcoal font-mono">
+                    [ AGGREGATING CORRELATED INTELLIGENCE & NIST TELEMETRY... ]
                   </p>
                 </div>
               ) : filteredCves.length > 0 ? (
@@ -559,77 +538,74 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                         setSelectedCve(cve);
                         setAiExplanation(null);
                       }}
-                      className={`group relative p-4 sm:p-5 rounded-2xl bg-white transition-all duration-200 cursor-pointer border ${
+                      className={`relative p-3.5 bg-pureWhite transition-colors cursor-pointer border ${
                         isSelected
-                          ? 'border-[#6C4CF1] ring-2 ring-[#6C4CF1]/20 shadow-[0_8px_30px_-6px_rgba(108,76,241,0.15)] bg-gradient-to-r from-purple-50/20 via-white to-white'
-                          : 'border-purple-100/70 hover:border-[#6C4CF1]/40 hover:shadow-md hover:-translate-y-0.5'
+                          ? 'border-ink bg-boneLight shadow-xs'
+                          : 'border-hairline hover:border-ink hover:bg-[#FAF8F5]'
                       }`}
                     >
-                      {/* Left accent strip for critical status */}
+                      {/* Left accent strip */}
                       <div
-                        className={`absolute left-0 top-3 bottom-3 w-1.5 rounded-r-full transition-all ${
+                        className={`absolute left-0 top-0 bottom-0 w-1 ${
                           isSelected
-                            ? 'bg-[#6C4CF1]'
+                            ? 'bg-ink'
                             : isCrit
-                            ? 'bg-[#DC4655]'
-                            : 'bg-amber-400 group-hover:bg-[#6C4CF1]/60'
+                            ? 'bg-vermilion'
+                            : 'bg-amber-400'
                         }`}
                       />
 
-                      <div className="pl-2.5">
+                      <div className="pl-2 space-y-1.5 font-mono">
                         {/* Top row: CVE ID + Severity badge + EPSS score */}
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-xs font-black tracking-tight text-[#22213A]">
+                            <span className="text-xs font-bold text-ink">
                               {cve.id}
                             </span>
                             
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+                              className={`px-1.5 py-0.5 text-[9px] font-bold border ${
                                 isCrit
-                                  ? 'bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/20'
-                                  : 'bg-[#FFF7E8] text-[#C78A27] border border-[#C78A27]/20'
+                                  ? 'bg-vermilion text-white border-vermilion'
+                                  : 'bg-amber-50 text-amber-900 border-amber-300'
                               }`}
                             >
-                              <span className={`w-1.5 h-1.5 rounded-full ${isCrit ? 'bg-[#DC4655]' : 'bg-[#C78A27]'}`}></span>
-                              <span>{cve.severity} {cve.cvss}</span>
+                              [{cve.severity} {cve.cvss}]
                             </span>
 
                             {isConfirmed ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[11px]">verified</span>
-                                <span>Confirmed Target</span>
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-signalGreenBg text-signalGreen border border-signalGreen">
+                                [CONFIRMED TARGET]
                               </span>
                             ) : cve.isCorrelated ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                Potential Threat
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-boneDark text-ink border border-hairline">
+                                [CORRELATED]
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
-                                Catalog Baseline
+                              <span className="px-1.5 py-0.5 text-[9px] text-charcoal border border-hairline bg-pureWhite">
+                                [CATALOG]
                               </span>
                             )}
 
                             {(cve.isWeaponized || cve.metasploitModule) && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/30 flex items-center gap-1 shadow-sm animate-pulse">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#DC4655]"></span>
-                                <span>⚡ MSF WEAPONIZED</span>
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-white text-vermilion border border-vermilion">
+                                [⚡ MSF WEAPONIZED]
                               </span>
                             )}
 
                             {cve.cisaKev && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-300">
-                                CISA KEV
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-boneDark text-ink border border-hairline">
+                                [CISA KEV]
                               </span>
                             )}
                           </div>
 
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                              className={`text-[9px] font-bold px-1.5 py-0.5 border ${
                                 cve.epss >= 0.5
-                                  ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                  : 'bg-purple-50 text-[#6C4CF1] border-purple-200/50'
+                                  ? 'bg-white text-vermilion border-vermilion'
+                                  : 'bg-boneDark text-charcoal border-hairline'
                               }`}
                             >
                               EPSS {(cve.epss * 100).toFixed(0)}%
@@ -638,25 +614,23 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                         </div>
 
                         {/* Title */}
-                        <h4 className="text-sm font-bold text-[#22213A] mt-2 group-hover:text-[#6C4CF1] transition-colors leading-snug">
+                        <h4 className="text-xs font-bold text-ink font-grotesk leading-snug">
                           {cve.title}
                         </h4>
 
                         {/* Snippet */}
-                        <p className="text-xs text-[#77758E] mt-1 line-clamp-2 leading-relaxed">
+                        <p className="text-[11px] text-charcoal line-clamp-2 leading-relaxed">
                           {cve.description}
                         </p>
 
                         {/* Footer tags */}
-                        <div className="flex items-center justify-between text-xs text-[#77758E] mt-3 pt-2.5 border-t border-purple-50/80 gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[14px] text-[#6C4CF1]">inventory_2</span>
-                            <span className="font-semibold text-[#22213A]">{cve.product} {cve.version || ''}</span>
+                        <div className="flex items-center justify-between text-[10px] text-charcoal pt-1.5 border-t border-hairlineLight gap-2">
+                          <div className="truncate">
+                            PRODUCT: <strong className="text-ink">{cve.product} {cve.version || ''}</strong>
                           </div>
 
-                          <div className="flex items-center gap-1 text-[11px] font-mono text-[#9896AA]">
-                            <span className="material-symbols-outlined text-[13px]">dns</span>
-                            <span className="truncate max-w-[200px]">{cve.affectedAsset}</span>
+                          <div className="truncate shrink-0 font-mono text-[9px]">
+                            ASSET: <span className="text-ink">{cve.affectedAsset}</span>
                           </div>
                         </div>
                       </div>
@@ -664,20 +638,15 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   );
                 })
               ) : (
-                <div className="py-20 text-center space-y-3 bg-white rounded-2xl border border-purple-100/60 p-6 shadow-sm">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F4F1FF] flex items-center justify-center mx-auto text-[#6C4CF1]">
-                    <span className="material-symbols-outlined text-2xl">
-                      {filter === 'CORRELATED' ? 'verified_user' : 'search_off'}
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-[#22213A]">
+                <div className="py-16 text-center space-y-2 bg-[#FAF8F5] border border-dashed border-hairline p-6 font-mono">
+                  <div className="text-xs font-bold text-ink uppercase tracking-wider">
                     {filter === 'CORRELATED'
                       ? `No Known CVEs on ${scans.find(s => s.id === selectedScanId)?.target || 'Target'}`
                       : 'No Matching CVE Records Found'}
-                  </h4>
-                  <p className="text-xs text-[#77758E] max-w-sm mx-auto">
+                  </div>
+                  <p className="text-[10px] text-charcoal max-w-sm mx-auto">
                     {filter === 'CORRELATED'
-                      ? 'The listeners (ports 80, 443, 22) discovered on this host do not exhibit known unpatched CVE signatures in the local intelligence corpus.'
+                      ? 'The listeners discovered on this host do not exhibit known unpatched CVE signatures in the local intelligence corpus.'
                       : 'Try clearing your search query or selecting a different filter category to inspect broader vulnerability intelligence.'}
                   </p>
                   <button
@@ -685,9 +654,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                       setFilter('ALL');
                       setSearch('');
                     }}
-                    className="mt-2 text-xs font-semibold px-4 py-1.5 rounded-xl bg-[#F4F1FF] text-[#6C4CF1] hover:bg-[#EAE4FF] transition-colors"
+                    className="mt-2 text-xs font-mono font-bold px-3 py-1 bg-pureWhite border border-hairline hover:bg-boneDark transition-colors cursor-pointer"
                   >
-                    {filter === 'CORRELATED' ? 'Browse Global NIST Intelligence Feed' : 'Reset Filter'}
+                    [ RESET FILTER ]
                   </button>
                 </div>
               )}
@@ -695,68 +664,64 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           </div>
 
           {/* ----------------- RIGHT: DEEP INTELLIGENCE DOSSIER (5 COLS) ----------------- */}
-          <div className="lg:col-span-5 bg-white/95 backdrop-blur-md rounded-2xl border border-purple-100/80 p-5 sm:p-6 shadow-[0_8px_30px_-6px_rgba(108,76,241,0.06)] space-y-5 sticky top-6">
+          <div className="lg:col-span-5 bg-pureWhite border border-hairline p-5 shadow-xs space-y-4 sticky top-4 font-mono">
             {selectedCve ? (
               <>
                 {/* Dossier Header */}
-                <div className="pb-4 border-b border-purple-100/60">
+                <div className="pb-3 border-b border-hairline">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] text-[#9896AA] font-bold uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-[#6C4CF1]">verified_user</span>
-                      <span>Verified Vulnerability Dossier</span>
+                    <span className="text-[10px] text-vermilion font-bold uppercase tracking-wider">
+                      DOSSIER // {selectedCve.id}
                     </span>
 
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => handleCopy(selectedCve.id)}
-                        className="text-[11px] font-semibold text-[#6C4CF1] bg-[#F4F1FF] hover:bg-[#EAE4FF] px-2.5 py-1 rounded-lg border border-[#6C4CF1]/20 flex items-center gap-1 transition-all"
+                        className="text-[10px] font-bold text-ink bg-boneLight hover:bg-boneDark px-2 py-0.5 border border-hairline transition-colors cursor-pointer"
                         title="Copy CVE ID"
                       >
-                        <span className="material-symbols-outlined text-[13px]">
-                          {copiedId === selectedCve.id ? 'check' : 'content_copy'}
-                        </span>
-                        <span>{copiedId === selectedCve.id ? 'Copied' : selectedCve.id}</span>
+                        <span>{copiedId === selectedCve.id ? '[ COPIED ]' : '[ COPY ID ]'}</span>
                       </button>
 
                       <a
                         href={`https://nvd.nist.gov/vuln/detail/${selectedCve.id}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1 text-[#9896AA] hover:text-[#6C4CF1] hover:bg-[#F4F1FF] rounded-lg transition-all"
+                        className="text-[10px] font-bold text-ink bg-pureWhite hover:bg-boneDark px-2 py-0.5 border border-hairline transition-colors"
                         title="View Official NIST NVD Entry"
                       >
-                        <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                        [ NIST NVD ↗ ]
                       </a>
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-black text-[#22213A] mt-2">
+                  <h3 className="text-sm font-bold text-ink mt-2 font-grotesk">
                     {selectedCve.title}
                   </h3>
-                  <p className="text-xs text-[#77758E] mt-1 leading-relaxed">
+                  <p className="text-[11px] text-charcoal mt-1 leading-relaxed">
                     {selectedCve.description}
                   </p>
                 </div>
 
                 {/* Score & Probability Meters */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {/* CVSS Score Dial */}
-                  <div className="p-3.5 rounded-xl bg-gradient-to-br from-white to-[#FAF9FF] border border-purple-100/80">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[#77758E] uppercase">
+                  <div className="p-3 bg-boneLight border border-hairline">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase">
                       <span>CVSS v3.1</span>
-                      <span className={selectedCve.cvss >= 9 ? 'text-[#DC4655]' : 'text-amber-600'}>
-                        {selectedCve.severity}
+                      <span className={selectedCve.cvss >= 9 ? 'text-vermilion font-bold' : 'text-ink font-bold'}>
+                        [{selectedCve.severity}]
                       </span>
                     </div>
-                    <div className="mt-2 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-[#22213A]">{selectedCve.cvss}</span>
-                      <span className="text-xs text-[#9896AA] font-bold">/ 10.0</span>
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-2xl font-bold font-condensed text-ink">{selectedCve.cvss}</span>
+                      <span className="text-[10px] text-charcoal">/ 10.0</span>
                     </div>
                     {/* Visual Meter Bar */}
-                    <div className="w-full bg-[#EAE4FF] h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div className="w-full bg-boneDark border border-hairline h-1.5 mt-1.5">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          selectedCve.cvss >= 9 ? 'bg-[#DC4655]' : selectedCve.cvss >= 7 ? 'bg-amber-500' : 'bg-[#6C4CF1]'
+                        className={`h-full ${
+                          selectedCve.cvss >= 9 ? 'bg-vermilion' : 'bg-ink'
                         }`}
                         style={{ width: `${(selectedCve.cvss / 10) * 100}%` }}
                       />
@@ -764,23 +729,23 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   </div>
 
                   {/* EPSS Score Dial */}
-                  <div className="p-3.5 rounded-xl bg-gradient-to-br from-white to-[#FAF9FF] border border-purple-100/80">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[#77758E] uppercase">
-                      <span>EPSS Exploit</span>
-                      <span className="text-[#6C4CF1]">
-                        {selectedCve.epss >= 0.5 ? 'Active' : 'Moderate'}
+                  <div className="p-3 bg-boneLight border border-hairline">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase">
+                      <span>EPSS EXPLOIT</span>
+                      <span className="text-ink font-bold">
+                        [{selectedCve.epss >= 0.5 ? 'HIGH' : 'MODERATE'}]
                       </span>
                     </div>
-                    <div className="mt-2 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-[#22213A]">
+                    <div className="mt-1 flex items-baseline gap-1">
+                      <span className="text-2xl font-bold font-condensed text-ink">
                         {(selectedCve.epss * 100).toFixed(0)}%
                       </span>
-                      <span className="text-xs text-[#9896AA] font-bold">Likelihood</span>
+                      <span className="text-[10px] text-charcoal">PROB</span>
                     </div>
                     {/* Visual Meter Bar */}
-                    <div className="w-full bg-[#EAE4FF] h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div className="w-full bg-boneDark border border-hairline h-1.5 mt-1.5">
                       <div
-                        className="h-full rounded-full bg-[#6C4CF1] transition-all duration-500"
+                        className="h-full bg-ink"
                         style={{ width: `${selectedCve.epss * 100}%` }}
                       />
                     </div>
@@ -789,122 +754,103 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
 
                 {/* Metasploit Weaponization Callout */}
                 {(selectedCve.isWeaponized || selectedCve.metasploitModule) && (
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-rose-50/80 via-white to-rose-50/40 border border-rose-300/80 shadow-sm space-y-2">
+                  <div className="p-3 bg-pureWhite border border-vermilion space-y-1.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-black text-rose-700 tracking-tight">
-                        <span className="material-symbols-outlined text-[16px] text-rose-600">bolt</span>
-                        <span>CONFIRMED METASPLOIT WEAPONIZATION</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-600 text-white">
+                      <span className="text-[10px] font-bold text-vermilion uppercase tracking-wider">
+                        ⚡ CONFIRMED METASPLOIT WEAPONIZATION
+                      </span>
+                      <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-vermilion text-white">
                         RED TEAM READY
                       </span>
                     </div>
                     {selectedCve.metasploitModule && (
-                      <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                          Exploit Module Path:
-                        </div>
-                        <div className="font-mono text-xs font-bold text-rose-900 bg-white p-2 rounded-lg border border-rose-200 select-all flex items-center justify-between">
-                          <span>{selectedCve.metasploitModule}</span>
-                          <button
-                            onClick={() => handleCopy(selectedCve.metasploitModule || '', 'Module Path')}
-                            className="text-slate-400 hover:text-rose-600 transition-colors p-1"
-                            title="Copy Module Path"
-                          >
-                            <span className="material-symbols-outlined text-sm">content_copy</span>
-                          </button>
-                        </div>
+                      <div className="font-mono text-[10px] font-bold text-ink bg-boneLight p-2 border border-hairline select-all flex items-center justify-between">
+                        <span className="truncate">{selectedCve.metasploitModule}</span>
+                        <button
+                          onClick={() => handleCopy(selectedCve.metasploitModule || '', 'Module Path')}
+                          className="text-charcoal hover:text-ink font-bold cursor-pointer shrink-0 pl-2"
+                          title="Copy Module Path"
+                        >
+                          [ COPY ]
+                        </button>
                       </div>
                     )}
-                    <p className="text-[11px] text-rose-700/90 leading-relaxed font-medium">
+                    <p className="text-[10px] text-charcoal leading-relaxed">
                       An active Metasploit module exists in the public domain. Traversal friction for this vulnerability has been reduced by 60% in the topological Attack Graph.
                     </p>
                   </div>
                 )}
 
                 {/* CVSS Vector Semantic Breakdown */}
-                <div className="space-y-2">
-                  <div className="text-[11px] font-bold text-[#77758E] uppercase tracking-wider flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px] text-[#6C4CF1]">alt_route</span>
-                    <span>Attack Vector & Complexity Breakdown</span>
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold text-charcoal uppercase tracking-wider">
+                    ATTACK VECTOR & COMPLEXITY BREAKDOWN
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     {parsedVector.map((v, i) => (
                       <span
                         key={i}
-                        className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg border ${v.color} flex items-center gap-1`}
+                        className="text-[9px] font-mono px-2 py-0.5 border border-hairline bg-boneLight text-ink"
                         title={v.label}
                       >
-                        <span className="font-bold opacity-75">{v.label}:</span>
-                        <span>{v.value}</span>
+                        <strong>{v.label}:</strong> {v.value}
                       </span>
                     ))}
                   </div>
                 </div>
 
                 {/* Target Asset Correlation */}
-                <div className="p-3.5 rounded-xl bg-[#FAF9FF] border border-purple-100/80 space-y-1.5">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#77758E] uppercase tracking-wider">
-                    <span>Observed Infrastructure Target</span>
-                    <span className="text-[#6C4CF1] font-mono">{selectedCve.isCorrelated ? 'Live Active' : 'Global Reference'}</span>
+                <div className="p-3 bg-boneLight border border-hairline space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider">
+                    <span>OBSERVED INFRASTRUCTURE TARGET</span>
+                    <span className="text-signalGreen font-bold">{selectedCve.isCorrelated ? '[ LIVE ACTIVE ]' : '[ GLOBAL CATALOG ]'}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-[#6C4CF1]">devices</span>
-                    <span className="text-xs font-bold text-[#22213A] font-mono">{selectedCve.affectedAsset}</span>
+                  <div className="text-xs font-bold text-ink font-mono">
+                    {selectedCve.affectedAsset}
                   </div>
                   {selectedCve.matchRationale && (
-                    <p className="text-[11px] text-[#77758E] leading-relaxed border-t border-purple-100/40 pt-1.5 mt-1">
+                    <p className="text-[10px] text-charcoal leading-relaxed pt-1 border-t border-hairlineLight">
                       {selectedCve.matchRationale}
                     </p>
                   )}
                 </div>
 
                 {/* Remediation & Actionable Fix */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50/40 to-white border border-emerald-200/60 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-emerald-600">health_and_safety</span>
-                      <span>Remediation Roadmap</span>
-                    </span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/60 px-1.5 py-0.5 rounded">
-                      Action Required
-                    </span>
+                <div className="p-3 bg-boneLight border border-hairline space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-ink uppercase tracking-wider">
+                    <span>REMEDIATION ROADMAP</span>
+                    <span className="text-vermilion font-bold">[ ACTION REQUIRED ]</span>
                   </div>
-                  <p className="text-xs text-[#22213A] font-medium leading-relaxed">
+                  <p className="text-xs text-ink leading-relaxed">
                     {selectedCve.fix}
                   </p>
                 </div>
 
                 {/* AI Advisory Action */}
-                <div className="space-y-3 pt-1">
+                <div className="space-y-2 pt-1">
                   <button
                     onClick={() => requestAiExplanation(selectedCve)}
                     disabled={explainingAi}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#6C4CF1] to-[#8060FF] hover:from-[#5940D8] hover:to-[#6C4CF1] text-white font-semibold text-xs tracking-wide transition-all shadow-md shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                    className="w-full py-2 bg-vermilion hover:bg-crimson text-white font-mono font-bold text-xs tracking-wider border border-hairline transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    <span className={`material-symbols-outlined text-[17px] ${explainingAi ? 'animate-spin' : ''}`}>
-                      {explainingAi ? 'progress_activity' : 'psychology'}
-                    </span>
-                    <span>{explainingAi ? 'Synthesizing AI Advisory...' : 'Synthesize AI Threat Briefing'}</span>
+                    <span>{explainingAi ? '[ SYNTHESIZING AI ADVISORY... ]' : '[ SYNTHESIZE AI THREAT BRIEFING ➔ ]'}</span>
                   </button>
 
                   {/* AI Response Narrative Container */}
                   {aiExplanation && (
-                    <div className="p-4 rounded-xl bg-[#FAF9FF] border border-[#6C4CF1]/25 text-xs text-[#22213A] leading-relaxed max-h-[300px] overflow-y-auto space-y-2.5 shadow-inner">
-                      <div className="flex items-center justify-between pb-2 border-b border-purple-100/60">
-                        <span className="text-[10px] font-bold text-[#6C4CF1] uppercase tracking-wider flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[13px]">smart_toy</span>
-                          <span>{aiProviderUsed || 'DRISHTI Cyber AI Core'}</span>
+                    <div className="p-3.5 bg-boneLight border border-hairline text-xs text-ink leading-relaxed max-h-[300px] overflow-y-auto space-y-2 scrollbar-tactical">
+                      <div className="flex items-center justify-between pb-2 border-b border-hairline">
+                        <span className="text-[10px] font-bold text-ink uppercase tracking-wider">
+                          [ {aiProviderUsed || 'DRISHTI CYBER AI CORE'} ]
                         </span>
                         <button
                           onClick={() => handleCopy(aiExplanation, 'AI Advisory')}
-                          className="text-[10px] font-semibold text-[#77758E] hover:text-[#6C4CF1] flex items-center gap-1"
+                          className="text-[10px] font-bold text-charcoal hover:text-ink cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[12px]">content_copy</span>
-                          <span>Copy Brief</span>
+                          [ COPY BRIEF ]
                         </button>
                       </div>
-                      <div className="whitespace-pre-wrap font-sans text-xs text-[#22213A]">
+                      <div className="whitespace-pre-wrap font-mono text-xs text-ink leading-relaxed">
                         {aiExplanation}
                       </div>
                     </div>
@@ -912,12 +858,14 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 </div>
               </>
             ) : (
-              <div className="py-24 text-center text-[#77758E] space-y-2">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4F1FF] flex items-center justify-center mx-auto text-[#6C4CF1]">
-                  <span className="material-symbols-outlined text-2xl">touch_app</span>
+              <div className="py-20 text-center text-charcoal space-y-2 bg-[#FAF8F5] border border-dashed border-hairline p-6">
+                <div className="w-10 h-10 border border-hairline bg-pureWhite flex items-center justify-center mx-auto text-vermilion font-bold text-base">
+                  ?
                 </div>
-                <h4 className="text-sm font-bold text-[#22213A]">Select a Vulnerability</h4>
-                <p className="text-xs text-[#77758E] max-w-xs mx-auto">
+                <h4 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                  Select a Vulnerability
+                </h4>
+                <p className="text-[10px] text-charcoal max-w-xs mx-auto font-mono">
                   Click any CVE record from the stream to inspect in-depth vectors, EPSS metrics, and generate AI remediation roadmaps.
                 </p>
               </div>

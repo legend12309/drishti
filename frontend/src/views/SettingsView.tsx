@@ -77,127 +77,154 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigate, showToas
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-[#F4F1FF] text-[#22213A]">
-      <div className="max-w-[1100px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+      <div className="max-w-[1200px] mx-auto space-y-4">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Editorial Top Command Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-[#6C4CF1]">tune</span>
-              <h1 className="text-2xl font-bold tracking-tight text-[#22213A]">
-                Engine Configuration & Providers
+            <div className="flex items-center space-x-2">
+              <span className="text-vermilion font-extrabold text-sm">10 //</span>
+              <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                ENGINE CONFIGURATION & SECURITY CREDENTIALS
               </h1>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 border border-hairline bg-boneLight text-charcoal">
+                ZERO-EGRESS AIR-GAP READY
+              </span>
             </div>
-            <p className="text-sm text-[#77758E] mt-1">
-              Manage LLM API providers, local model fallbacks, and zero-egress operational boundaries.
+            <p className="text-[10px] text-charcoal mt-0.5">
+              Manage LLM API provider credentials, local model fallbacks, and air-gapped zero-egress operational boundaries.
             </p>
           </div>
 
           <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="bg-[#6C4CF1] hover:bg-[#5940D8] text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+            className="bg-vermilion hover:bg-crimson text-white px-4 py-2 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">save</span>
-            <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
+            <span>{saving ? '[ PERSISTING... ]' : '[ SAVE CONFIGURATION ➔ ]'}</span>
           </button>
         </div>
 
-        {/* Active Engine Card */}
-        <div className="bg-white rounded-2xl border border-[#E8E4F2] p-6 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#F4F1FF] text-[#6C4CF1] flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-2xl">memory</span>
+        {/* Active Engine Telemetry Card */}
+        <div className="bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-boneDark border border-hairline text-ink flex items-center justify-center shrink-0 font-bold text-base">
+              ⚙
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-[#22213A]">
-                  Active Engine: {engineMode.mode}
+                <span className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                  ACTIVE ENGINE RUNTIME: {engineMode.mode}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-md bg-[#EAF8F1] text-[#299B75] border border-[#299B75]/20 text-[10px] font-bold uppercase">
-                  Connected
+                <span className="px-2 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen text-[9px] font-bold uppercase">
+                  OPERATIONAL
                 </span>
               </div>
-              <p className="text-xs text-[#77758E] mt-1">
+              <div className="text-xs text-charcoal mt-1 font-mono">
+                Provider: <strong className="text-ink">{engineMode.provider}</strong>
+              </div>
+              <p className="text-[11px] text-charcoal mt-1 leading-relaxed max-w-2xl font-mono">
                 {engineMode.description}
               </p>
             </div>
           </div>
+
+          <div className="text-right text-[10px] font-mono border-t md:border-t-0 md:border-l border-hairlineLight pt-3 md:pt-0 md:pl-5 shrink-0 space-y-1">
+            <div className="text-charcoal uppercase">ARCHITECTURE</div>
+            <div className="font-bold text-ink">HYBRID LOCAL / CLOUD</div>
+            <div className="text-signalGreen font-bold">FALLBACK CPU ACTIVE</div>
+          </div>
         </div>
 
-        {/* API Keys Configuration Form */}
-        <div className="bg-white rounded-2xl border border-[#E8E4F2] p-8 shadow-sm space-y-6">
-          <h3 className="text-xs font-bold text-[#22213A] uppercase tracking-wider pb-3 border-b border-[#E8E4F2]">
-            AI Provider Credentials
-          </h3>
+        {/* API Credentials Configuration Panel */}
+        <div className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-hairline bg-boneDark -mx-6 -mt-6 p-4">
+            <span className="text-[10px] font-bold text-ink uppercase tracking-wider">
+              AI PROVIDER CREDENTIALS & SECURE ENCLAVE STORAGE
+            </span>
+            <span className="text-[9px] text-charcoal font-mono">
+              AES-256-GCM ENCRYPTED AT REST
+            </span>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#77758E] block mb-1.5">
-                Google Gemini API Key
+              <label className="text-[10px] font-bold uppercase tracking-wider text-charcoal block mb-1 font-mono flex items-center justify-between">
+                <span>Google Gemini API Key</span>
+                <span className="text-[9px] text-pencil font-normal">Fast Multimodal</span>
               </label>
               <input
                 type="password"
                 value={googleKey}
                 onChange={(e) => setGoogleKey(e.target.value)}
                 placeholder="AIzaSy..."
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] text-sm text-[#22213A] focus:border-[#6C4CF1] outline-none font-mono"
+                className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#77758E] block mb-1.5">
-                Groq Cloud API Key
+              <label className="text-[10px] font-bold uppercase tracking-wider text-charcoal block mb-1 font-mono flex items-center justify-between">
+                <span>Groq Cloud API Key</span>
+                <span className="text-[9px] text-pencil font-normal">Ultra-Low Latency LPU</span>
               </label>
               <input
                 type="password"
                 value={groqKey}
                 onChange={(e) => setGroqKey(e.target.value)}
                 placeholder="gsk_..."
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] text-sm text-[#22213A] focus:border-[#6C4CF1] outline-none font-mono"
+                className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#77758E] block mb-1.5">
-                NVIDIA NIM API Key
+              <label className="text-[10px] font-bold uppercase tracking-wider text-charcoal block mb-1 font-mono flex items-center justify-between">
+                <span>NVIDIA NIM API Key</span>
+                <span className="text-[9px] text-pencil font-normal">GPU Accelerated Microservice</span>
               </label>
               <input
                 type="password"
                 value={nvidiaKey}
                 onChange={(e) => setNvidiaKey(e.target.value)}
                 placeholder="nvapi-..."
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] text-sm text-[#22213A] focus:border-[#6C4CF1] outline-none font-mono"
+                className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#77758E] block mb-1.5">
-                HuggingFace Token
+              <label className="text-[10px] font-bold uppercase tracking-wider text-charcoal block mb-1 font-mono flex items-center justify-between">
+                <span>HuggingFace Token</span>
+                <span className="text-[9px] text-pencil font-normal">Open-Weights Inference</span>
               </label>
               <input
                 type="password"
                 value={huggingfaceKey}
                 onChange={(e) => setHuggingfaceKey(e.target.value)}
                 placeholder="hf_..."
-                className="w-full px-4 py-2.5 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] text-sm text-[#22213A] focus:border-[#6C4CF1] outline-none font-mono"
+                className="w-full px-3 py-2 bg-[#FAF8F5] border border-hairline text-xs text-ink focus:border-vermilion outline-none font-mono"
               />
             </div>
           </div>
 
+          {/* Air-Gap Offline Toggle */}
           <div 
             onClick={() => setForceLocal(!forceLocal)}
-            className="pt-4 border-t border-[#E8E4F2] flex items-center justify-between cursor-pointer group"
+            className="pt-4 border-t border-hairline flex items-center justify-between cursor-pointer group bg-boneLight p-4"
           >
             <div>
-              <div className="text-sm font-bold text-[#22213A] group-hover:text-[#6C4CF1] transition-colors">
-                Enforce Local Offline Mode
+              <div className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2 font-grotesk">
+                <span>ENFORCE ZERO-EGRESS AIR-GAP OFFLINE MODE</span>
+                {forceLocal && (
+                  <span className="text-[9px] bg-vermilion text-white px-2 py-0.5 font-bold uppercase font-mono">
+                    AIR-GAP ACTIVE
+                  </span>
+                )}
               </div>
-              <div className="text-xs text-[#77758E] mt-0.5">
-                Disallow external HTTP network egress for LLM operations. Enforces zero-cloud privacy.
+              <div className="text-[10px] text-charcoal mt-1 font-mono">
+                Strictly prohibits all outbound external HTTP API calls. All embedding, clustering, and heuristic evaluations execute 100% locally on CPU.
               </div>
             </div>
+
             <button
               type="button"
               role="switch"
@@ -206,13 +233,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigate, showToas
                 e.stopPropagation();
                 setForceLocal(!forceLocal);
               }}
-              className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#6C4CF1]/20 ${
-                forceLocal ? 'bg-[#6C4CF1]' : 'bg-[#E8E4F2]'
+              className={`w-14 h-7 border border-hairline transition-colors relative cursor-pointer ${
+                forceLocal ? 'bg-vermilion' : 'bg-pureWhite'
               }`}
             >
               <span
-                className={`w-5 h-5 rounded-full bg-white block absolute top-0.5 shadow-sm transition-transform duration-200 ease-in-out ${
-                  forceLocal ? 'translate-x-6' : 'translate-x-0.5'
+                className={`w-5 h-5 bg-ink border border-pureWhite block absolute top-0.5 transition-transform duration-150 ${
+                  forceLocal ? 'translate-x-7 bg-pureWhite' : 'translate-x-0.5'
                 }`}
               />
             </button>

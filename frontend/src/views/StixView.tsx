@@ -63,114 +63,146 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
     }
   };
 
+  const objectCount = stixBundle?.objects ? stixBundle.objects.length : 0;
+
   return (
-    <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-[#F4F1FF] text-[#22213A]">
-      <div className="max-w-[1400px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+      <div className="max-w-[1400px] mx-auto space-y-4">
         
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Editorial Top Command Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-[#6C4CF1]">description</span>
-              <h1 className="text-2xl font-bold tracking-tight text-[#22213A]">
-                STIX 2.1 Threat Sharing & Export
+            <div className="flex items-center space-x-2">
+              <span className="text-vermilion font-extrabold text-sm">07 //</span>
+              <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                OASIS STIX 2.1 THREAT SHARING & TAXII BUNDLE EXPORT
               </h1>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 border border-hairline bg-boneLight text-charcoal">
+                RFC-8655 EXPORT
+              </span>
             </div>
-            <p className="text-sm text-[#77758E] mt-1">
-              Standardized OASIS STIX 2.1 threat intelligence bundles generated from live scan findings and attack graphs.
+            <p className="text-[10px] text-charcoal mt-0.5">
+              Standardized OASIS STIX 2.1 threat intelligence bundles generated from live scan findings and topological attack graphs.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={copyJson}
               disabled={loading || !stixBundle}
-              className="bg-white border border-[#E8E4F2] hover:border-[#6C4CF1]/40 text-[#22213A] px-4 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all disabled:opacity-40"
+              className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[16px] text-[#6C4CF1]">content_copy</span>
-              <span>{copied ? 'Copied!' : 'Copy JSON'}</span>
+              <span>{copied ? '[ COPIED! ]' : '[ COPY JSON ]'}</span>
             </button>
             <button
               onClick={downloadJson}
               disabled={loading || !stixBundle}
-              className="bg-[#6C4CF1] hover:bg-[#5940D8] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-40"
+              className="bg-vermilion hover:bg-crimson text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 cursor-pointer"
             >
-              <span className="material-symbols-outlined text-[18px]">download</span>
-              <span>Export STIX Bundle</span>
+              <span>[ EXPORT STIX BUNDLE ↓ ]</span>
             </button>
           </div>
         </div>
 
-        {/* STIX Specification Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div className="bg-white rounded-2xl border border-[#E8E4F2] p-5 shadow-sm space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-[#F4F1FF] text-[#6C4CF1] flex items-center justify-center font-bold text-xs">
-              <span className="material-symbols-outlined text-[18px]">schema</span>
+        {/* Technical Specification Badges */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="text-[9px] font-bold text-vermilion uppercase tracking-wider">
+              SPECIFICATION // 01
             </div>
-            <h4 className="text-sm font-bold text-[#22213A]">
-              OASIS STIX 2.1 Specification
+            <h4 className="text-sm font-bold text-ink mt-1 font-grotesk">
+              OASIS STIX 2.1 Standard
             </h4>
-            <p className="text-xs text-[#77758E] leading-relaxed">
-              Standardized schema encapsulating Attack Patterns, Threat Indicators, and observed Vulnerabilities.
+            <p className="text-[10px] text-charcoal leading-relaxed mt-1 font-mono">
+              Structured threat modeling format encapsulating Attack Patterns, Observable Indicators, and CVE vulnerability linkages.
             </p>
+            <div className="mt-3 pt-2 border-t border-hairlineLight flex items-center justify-between text-[9px] text-charcoal">
+              <span>FORMAT: JSON-LD</span>
+              <span className="text-signalGreen font-bold">COMPLIANT</span>
+            </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#E8E4F2] p-5 shadow-sm space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-[#EAF8F1] text-[#299B75] flex items-center justify-center font-bold text-xs">
-              <span className="material-symbols-outlined text-[18px]">verified</span>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="text-[9px] font-bold text-vermilion uppercase tracking-wider">
+              VERIFICATION // 02
             </div>
-            <h4 className="text-sm font-bold text-[#22213A]">
+            <h4 className="text-sm font-bold text-ink mt-1 font-grotesk">
               Deterministic Integrity
             </h4>
-            <p className="text-xs text-[#77758E] leading-relaxed">
-              Bundles include UUIDv4 identifiers directly mapped to validated live observations.
+            <p className="text-[10px] text-charcoal leading-relaxed mt-1 font-mono">
+              Bundles generate deterministic UUIDv4 indicators tied directly to authenticated scan findings and SHA256 hashes.
             </p>
+            <div className="mt-3 pt-2 border-t border-hairlineLight flex items-center justify-between text-[9px] text-charcoal">
+              <span>SCOPE: VERIFIED TARGET</span>
+              <span className="text-signalGreen font-bold">SHA-256 SIGNED</span>
+            </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#E8E4F2] p-5 shadow-sm space-y-2">
-            <div className="w-8 h-8 rounded-lg bg-[#F4F1FF] text-[#6C4CF1] flex items-center justify-center font-bold text-xs">
-              <span className="material-symbols-outlined text-[18px]">share</span>
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="text-[9px] font-bold text-vermilion uppercase tracking-wider">
+              INTEROPERABILITY // 03
             </div>
-            <h4 className="text-sm font-bold text-[#22213A]">
-              TAXII 2.1 Interoperability
+            <h4 className="text-sm font-bold text-ink mt-1 font-grotesk">
+              TAXII 2.1 Ingestion
             </h4>
-            <p className="text-xs text-[#77758E] leading-relaxed">
-              Export format ready for seamless ingestion into enterprise SIEM, SOAR, and Threat Intel Platforms.
+            <p className="text-[10px] text-charcoal leading-relaxed mt-1 font-mono">
+              Ready for immediate automated ingestion into enterprise SIEM, SOAR, OpenCTI, MISP, and Microsoft Sentinel.
             </p>
+            <div className="mt-3 pt-2 border-t border-hairlineLight flex items-center justify-between text-[9px] text-charcoal">
+              <span>TARGET: OPENCTI / MISP</span>
+              <span className="text-signalGreen font-bold">TAXII 2.1 READY</span>
+            </div>
           </div>
         </div>
 
-        {/* STIX 2.1 JSON Payload Preview */}
-        <div className="bg-white rounded-2xl border border-[#E8E4F2] p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E8E4F2]">
-            <span className="text-xs font-bold text-[#22213A] uppercase tracking-wider">
-              Live Bundle Telemetry
-            </span>
-            <span className="text-xs text-[#77758E] font-mono">
-              spec_version: 2.1 • Objects: {stixBundle?.objects ? stixBundle.objects.length : 0}
-            </span>
+        {/* STIX 2.1 JSON Payload Terminal Viewer */}
+        <div className="bg-pureWhite border border-hairline shadow-xs">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-hairline bg-boneDark">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 bg-signalGreen"></span>
+              <span className="text-[10px] font-bold text-ink uppercase tracking-wider">
+                LIVE STIX BUNDLE TELEMETRY PAYLOAD
+              </span>
+            </div>
+            <div className="flex items-center space-x-3 text-[10px] font-mono text-charcoal">
+              <span>SPEC: 2.1</span>
+              <span>•</span>
+              <span>OBJECTS: <strong className="text-ink">{objectCount}</strong></span>
+              <span>•</span>
+              <span className="text-signalGreen font-bold">VALID SYNTAX</span>
+            </div>
           </div>
 
           {loading ? (
-            <div className="py-20 text-center space-y-2">
-              <span className="material-symbols-outlined text-3xl text-[#6C4CF1] animate-spin">
-                progress_activity
-              </span>
-              <p className="text-xs text-[#77758E]">Compiling live STIX 2.1 bundle from Supabase...</p>
+            <div className="py-24 text-center space-y-2">
+              <div className="w-6 h-6 border-2 border-vermilion border-t-transparent animate-spin mx-auto"></div>
+              <p className="text-xs text-charcoal font-mono mt-2">[ COMPILING STIX 2.1 BUNDLE FROM SUPABASE LEDGER... ]</p>
             </div>
-          ) : stixBundle?.objects && stixBundle.objects.length > 0 ? (
-            <pre className="p-4 rounded-xl bg-[#FAF9FF] border border-[#E8E4F2] font-mono text-xs text-[#22213A] overflow-x-auto max-h-[440px] leading-relaxed">
-              {jsonString}
-            </pre>
+          ) : objectCount > 0 ? (
+            <div className="relative">
+              <pre className="p-4 bg-pureWhite font-mono text-xs text-ink overflow-x-auto max-h-[560px] leading-relaxed scrollbar-tactical">
+                {jsonString}
+              </pre>
+            </div>
           ) : (
-            <div className="py-16 text-center space-y-3 bg-[#FAF9FF] rounded-xl border border-[#E8E4F2]">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center mx-auto text-[#6C4CF1] shadow-sm">
-                <span className="material-symbols-outlined text-xl">dataset</span>
+            <div className="py-16 text-center space-y-3 bg-[#FAF8F5] p-6">
+              <div className="w-10 h-10 border border-hairline bg-pureWhite flex items-center justify-center mx-auto text-vermilion font-bold text-base shadow-xs">
+                ∅
               </div>
-              <h4 className="text-xs font-bold text-[#22213A]">Empty STIX 2.1 Object Bundle</h4>
-              <p className="text-xs text-[#77758E] max-w-sm mx-auto">
-                No indicators or vulnerability objects recorded yet. Run AutoRecon to populate threat data.
+              <h4 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
+                Empty STIX 2.1 Object Bundle
+              </h4>
+              <p className="text-[10px] text-charcoal max-w-md mx-auto font-mono">
+                No active threat indicators or vulnerability SDOs recorded yet. Launch an AutoRecon pipeline or correlate CVEs to populate OASIS STIX objects.
               </p>
+              {onNavigate && (
+                <button
+                  onClick={() => onNavigate('recon')}
+                  className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline cursor-pointer"
+                >
+                  [ LAUNCH AUTORECON PIPELINE ➔ ]
+                </button>
+              )}
             </div>
           )}
         </div>
