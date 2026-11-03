@@ -62,15 +62,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title={`${item.index} ${item.label}`}
             >
               <span
-                className={`text-[9px] font-mono leading-none ${
-                  isActive ? 'font-bold text-signalGreen' : 'text-pencil'
+                className={`text-[10.5px] font-mono leading-none ${
+                  isActive ? 'font-black text-signalGreen' : 'text-charcoal font-semibold'
                 }`}
               >
                 {item.index}
               </span>
               <span
-                className={`text-[8px] font-mono tracking-wider mt-0.5 uppercase ${
-                  isActive ? 'font-bold text-ink' : 'font-medium'
+                className={`text-[10px] font-mono tracking-wider mt-0.5 uppercase ${
+                  isActive ? 'font-black text-ink' : 'font-bold text-charcoal'
                 }`}
               >
                 {item.label}
@@ -81,13 +81,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Rail Footer Hardware Telemetry */}
-      <div className="flex flex-col items-center space-y-1 pt-2 border-t border-hairline">
-        <span className="text-[9px] font-mono text-signalGreen font-bold flex items-center gap-1">
+      <div className="flex flex-col items-center space-y-1.5 pt-2 border-t border-hairline">
+        <span className="text-[10px] font-mono text-signalGreen font-black flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-signalGreen animate-ping"></span>
           <span>14ms</span>
         </span>
         <div
-          className="w-4 h-4 border border-hairline flex items-center justify-center text-[7px] text-ink font-bold bg-pureWhite shadow-xs"
+          className="w-4 h-4 border border-hairline flex items-center justify-center text-[9px] text-ink font-bold bg-pureWhite shadow-xs"
           title="Hardware Cryptographic Enclave Verified"
         >
           ■
