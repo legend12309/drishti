@@ -609,19 +609,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           border-top: 2px solid rgba(230, 46, 37, 0.45);
           box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.98);
         }
-        @keyframes ringPulse {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        #eyeOrbit {
+          border-radius: 50% !important;
+          -webkit-border-radius: 50% !important;
+          overflow: hidden !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: transparent !important;
         }
-        .hud-dial-spin {
-          animation: ringPulse 40s linear infinite;
+        #eyeOrbit * {
+          border-radius: 50% !important;
         }
-        @keyframes ringCounterSpin {
-          0% { transform: rotate(360deg); }
-          100% { transform: rotate(0deg); }
-        }
-        .hud-dial-counter {
-          animation: ringCounterSpin 30s linear infinite;
+        #eyeCanvas {
+          border-radius: 50% !important;
         }
         .barcode-strip {
           letter-spacing: -1.5px;
@@ -789,17 +789,26 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             <div className="absolute -top-5 text-[7.5px] font-mono tracking-widest text-[#EF4444]/90 pointer-events-none">AZM 000° // APERTURE_NORTH</div>
             <div className="absolute -bottom-5 text-[7.5px] font-mono tracking-widest text-[#475569] pointer-events-none">AZM 180° // APERTURE_SOUTH</div>
 
-            {/* Outer HUD Concentric Framing Rings & Calibrated Dial Compass */}
-            <div className="absolute w-[330px] h-[330px] rounded-full border border-dashed border-[#2563EB]/40 pointer-events-none hud-dial-spin"></div>
-            <div className="absolute w-[310px] h-[310px] rounded-full border border-[#E62E25]/30 pointer-events-none hud-dial-counter"></div>
-            <div className="absolute w-[292px] h-[292px] rounded-full border border-[#10B981]/25 pointer-events-none shadow-[0_0_25px_rgba(16,185,129,0.15)]"></div>
-
             {/* PURE CIRCULAR BIOMETRIC LENS / IRIS PORTAL VIEWPORT */}
-            <div className="relative w-[280px] h-[280px] rounded-full overflow-hidden bg-[#070b14] border-2 border-cyan-400/40 shadow-[0_0_40px_rgba(37,99,235,0.35),inset_0_0_45px_rgba(0,0,0,0.95)] flex items-center justify-center z-20" id="eyeOrbit">
+            <div
+              className="relative w-[280px] h-[280px] overflow-hidden flex items-center justify-center z-20"
+              id="eyeOrbit"
+              style={{ borderRadius: '50%' }}
+            >
               {/* Unified Eye Rendering HTML5 Canvas */}
-              <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" width={280} height={280} id="eyeCanvas" />
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full block"
+                width={280}
+                height={280}
+                id="eyeCanvas"
+                style={{ borderRadius: '50%' }}
+              />
               {/* Optical Glass Antireflective Depth Layer */}
-              <div className="absolute inset-0 rounded-full shadow-[inset_0_0_50px_rgba(0,0,0,0.9),inset_0_15px_30px_rgba(0,0,0,0.7),inset_0_-15px_30px_rgba(0,0,0,0.7)] pointer-events-none z-25"></div>
+              <div
+                className="absolute inset-0 shadow-[inset_0_0_35px_rgba(0,0,0,0.85)] pointer-events-none z-25"
+                style={{ borderRadius: '50%' }}
+              ></div>
               {/* Organic Circular Eyelids for natural physiological blinking */}
               <div ref={eyelidTopRef} className="eyelid eyelid-top" id="eyelidTop" style={{ transform: 'translateY(-100%)' }}></div>
               <div ref={eyelidBottomRef} className="eyelid eyelid-bottom" id="eyelidBottom" style={{ transform: 'translateY(100%)' }}></div>
