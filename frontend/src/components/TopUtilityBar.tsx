@@ -39,7 +39,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const displayTarget = target && target !== 'vvdx.in' ? target : 'curezy.in';
+  const displayTarget = target && target.trim() !== '' && target !== 'vvdx.in' ? target.trim() : '';
 
   return (
     <header
@@ -77,8 +77,17 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       <div className="flex items-center justify-center space-x-2 flex-1 max-w-md mx-4">
         <div className="flex items-center border border-hairline bg-boneLight px-3 py-1 shadow-xs space-x-2 text-xs">
           <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider">TARGET:</span>
-          <span className="font-bold text-cyan font-mono">{displayTarget}</span>
-          <span className="w-1.5 h-1.5 bg-cyan animate-pulse"></span>
+          {displayTarget ? (
+            <>
+              <span className="font-bold text-cyan font-mono">{displayTarget}</span>
+              <span className="w-1.5 h-1.5 bg-cyan animate-pulse"></span>
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-charcoal/80 font-mono text-[11px]">[ NO TARGET ARMED ]</span>
+              <span className="w-1.5 h-1.5 bg-pencil"></span>
+            </>
+          )}
         </div>
 
         <span className="hidden md:inline-block border border-hairline px-2 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">

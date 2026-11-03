@@ -38,13 +38,24 @@ interface ChallengeData {
 }
 
 export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) => {
-  const [target, setTarget] = useState('curezy.in');
+  const [target, setTarget] = useState<string>(() => localStorage.getItem('drishti_target_domain') || '');
   const [activeTab, setActiveTab] = useState<'timeline' | 'assets' | 'findings'>('timeline');
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('Awaiting target assessment');
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Synchronize target if updated in Dashboard or other components
+  useEffect(() => {
+    const handleTargetUpdated = (e: any) => {
+      if (typeof e.detail === 'string' && e.detail !== target) {
+        setTarget(e.detail);
+      }
+    };
+    window.addEventListener('drishti_target_updated', handleTargetUpdated);
+    return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
+  }, [target]);
 
   // Phase 11 Orchestrator State
   const [orchestratorWorkflow, setOrchestratorWorkflow] = useState<any | null>(null);
@@ -322,8 +333,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         const latest = data.scans[0];
         setCurrentScanId(latest.id);
         localStorage.setItem(STORAGE_KEY, latest.id);
-        const t = latest.target || 'scanme.nmap.org';
-        setTarget(t);
+        const savedDomain = localStorage.getItem('drishti_target_domain');
+        const t = savedDomain && savedDomain.trim() ? savedDomain.trim() : (latest.target || '');
+        if (savedDomain && savedDomain.trim()) {
+          setTarget(savedDomain.trim());
+        } else if (latest.target) {
+          setTarget(latest.target);
+          localStorage.setItem('drishti_target_domain', latest.target);
+        }
         setProgress(latest.progress || 0);
         setStatusText(latest.current_step || 'Awaiting target assessment');
 
@@ -369,7 +386,13 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             const latest = data.scans[0];
             setCurrentScanId(latest.id);
             localStorage.setItem(STORAGE_KEY, latest.id);
-            setTarget(latest.target || 'scanme.nmap.org');
+            const savedDomain = localStorage.getItem('drishti_target_domain');
+            if (savedDomain && savedDomain.trim()) {
+              setTarget(savedDomain.trim());
+            } else if (latest.target) {
+              setTarget(latest.target);
+              localStorage.setItem('drishti_target_domain', latest.target);
+            }
             setProgress(latest.progress || 100);
             setStatusText(latest.current_step || 'Assessment recorded');
 
@@ -480,6 +503,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
    * Dispatches either Passive OSINT (frictionless) or Full Active Recon (DAG)
    */
   const startAutoRecon = async () => {
+    const trimmedTarget = target.trim();
+    if (!trimmedTarget) {
+      if (showToast) {
+        showToast('warning', 'Target Domain Required', 'Please enter a target domain (e.g. yourcompany.com or scanme.nmap.org) before launching reconnaissance.');
+      }
+      return;
+    }
+
     if (reconMode === 'PASSIVE') {
       setScanning(true);
       setProgress(15);
@@ -760,8 +791,13 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 <input
                   type="text"
                   value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  placeholder="e.g. curezy.in or scanme.nmap.org"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTarget(val);
+                    localStorage.setItem('drishti_target_domain', val);
+                    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val }));
+                  }}
+                  placeholder="e.g. targetcompany.com or scanme.nmap.org"
                   className="w-full px-3 py-2 bg-pureWhite border border-hairline text-xs text-ink focus:border-signalGreen outline-none font-mono"
                 />
                 <span className="absolute right-2 top-2 text-[9px] font-bold text-signalGreen bg-signalGreenBg border border-signalGreen/40 px-2 py-0.5 uppercase tracking-wider font-mono">
@@ -797,33 +833,41 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
           {/* Verification Status Banner */}
           <div className={`p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-            isCurrentScopeAuthorized
+            !target.trim()
+              ? 'bg-boneLight border-hairline text-charcoal'
+              : isCurrentScopeAuthorized
               ? 'bg-signalGreenBg border-signalGreen text-signalGreen'
               : 'bg-red-50 border-vermilion text-vermilion'
           }`}>
             <div className="flex items-start gap-3">
               <div className="font-bold text-sm">
-                {isCurrentScopeAuthorized ? '✓' : '⚠️'}
+                {!target.trim() ? 'ℹ️' : isCurrentScopeAuthorized ? '✓' : '⚠️'}
               </div>
               <div>
                 <div className="font-bold text-ink flex items-center gap-2 text-[11px]">
                   <span>
-                    {reconMode === 'PASSIVE'
+                    {!target.trim()
+                      ? 'NO PERIMETER TARGET ARMED'
+                      : reconMode === 'PASSIVE'
                       ? 'DOMAIN CLEARANCE: FRICTIONLESS OSINT (NO DNS TXT REQUIRED)'
                       : isCurrentScopeAuthorized
                       ? 'ACTIVE DOMAIN SCOPE VERIFIED // RFC 8655'
                       : 'ACTIVE INTRUSION SCOPE UNVERIFIED // DNS TXT CHALLENGE REQUIRED'}
                   </span>
                   <span className={`text-[9px] font-bold px-2 py-0.5 border uppercase ${
-                    isCurrentScopeAuthorized
+                    !target.trim()
+                      ? 'bg-pureWhite text-charcoal border-hairline'
+                      : isCurrentScopeAuthorized
                       ? 'bg-pureWhite text-signalGreen border-signalGreen'
                       : 'bg-pureWhite text-vermilion border-vermilion'
                   }`}>
-                    {reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : isCurrentScopeAuthorized ? 'ACTIVE (FULL_ACTIVE)' : 'VERIFICATION PENDING'}
+                    {!target.trim() ? 'STANDBY' : reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : isCurrentScopeAuthorized ? 'ACTIVE (FULL_ACTIVE)' : 'VERIFICATION PENDING'}
                   </span>
                 </div>
                 <div className="text-[10px] text-charcoal mt-0.5 font-mono">
-                  {reconMode === 'PASSIVE'
+                  {!target.trim()
+                    ? 'Enter a target domain above to begin passive reconnaissance or active intrusion probing.'
+                    : reconMode === 'PASSIVE'
                     ? `Target '${target}' is authorized for instant passive intelligence. No intrusive packets will touch target servers.`
                     : isCurrentScopeAuthorized
                     ? `Target '${target}' is authorized and verified for active port scanning, technology enumeration, and vulnerability auditing.`

@@ -57,7 +57,17 @@ export default function App() {
     return DEFAULT_OPERATOR;
   });
 
-  const [activeTarget, setActiveTarget] = useState<string>('curezy.in');
+  const [activeTarget, setActiveTarget] = useState<string>(() => localStorage.getItem('drishti_target_domain') || '');
+
+  useEffect(() => {
+    const handleTargetChange = (e: any) => {
+      if (typeof e.detail === 'string') {
+        setActiveTarget(e.detail);
+      }
+    };
+    window.addEventListener('drishti_target_updated', handleTargetChange);
+    return () => window.removeEventListener('drishti_target_updated', handleTargetChange);
+  }, []);
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);

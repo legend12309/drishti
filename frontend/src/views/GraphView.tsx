@@ -103,7 +103,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
 
   // Injected hypothetical simulation if perimeter is fully patched
   const simulateHypotheticalAttack = () => {
-    const origin = graphNodes.find(n => n.node_type === 'domain')?.id || scans[0]?.target || 'curezy.in';
+    const origin = graphNodes.find(n => n.node_type === 'domain')?.id || scans[0]?.target || localStorage.getItem('drishti_target_domain') || 'target-domain.com';
     const destination = 'CoreDB';
     const simPath: CandidatePath = {
       id: 'sim-path-01',

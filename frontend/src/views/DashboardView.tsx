@@ -16,7 +16,7 @@ interface TelemetryLog {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showToast }) => {
-  const [targetDomain, setTargetDomain] = useState<string>('curezy.in');
+  const [targetDomain, setTargetDomain] = useState<string>(() => localStorage.getItem('drishti_target_domain') || '');
   const [activeDefenseLayer, setActiveDefenseLayer] = useState<'CF' | 'NGINX' | 'IPTABLES' | 'PATCH'>('CF');
   const [selectedCve, setSelectedCve] = useState<string>('CVE-2024-4577');
 
@@ -26,13 +26,50 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const [loadingData, setLoadingData] = useState<boolean>(true);
 
   // Probe testing state
-  const [probeUrl, setProbeUrl] = useState<string>('https://curezy.in/cgi-bin/php-cgi?%add+allow_url_include=1');
+  const [probeUrl, setProbeUrl] = useState<string>(() => {
+    const saved = localStorage.getItem('drishti_target_domain') || '';
+    return saved ? `https://${saved}/cgi-bin/php-cgi?%add+allow_url_include=1` : '';
+  });
   const [probing, setProbing] = useState<boolean>(false);
   const [probeSecured, setProbeSecured] = useState<boolean>(true);
   const [probeLatency, setProbeLatency] = useState<number>(18);
   const [synthesizing, setSynthesizing] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // Synchronize targetDomain if updated in ReconView or other tabs
+  useEffect(() => {
+    const handleTargetUpdated = (e: any) => {
+      if (typeof e.detail === 'string' && e.detail !== targetDomain) {
+        setTargetDomain(e.detail);
+        if (!probeUrl || probeUrl.includes(targetDomain)) {
+          setProbeUrl(e.detail ? `https://${e.detail}/cgi-bin/php-cgi?%add+allow_url_include=1` : '');
+        }
+      }
+    };
+    window.addEventListener('drishti_target_updated', handleTargetUpdated);
+    return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
+  }, [targetDomain, probeUrl]);
+
+  const handleTargetChange = (val: string) => {
+    setTargetDomain(val);
+    localStorage.setItem('drishti_target_domain', val);
+    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val }));
+    setProbeUrl(val ? `https://${val}/cgi-bin/php-cgi?%add+allow_url_include=1` : '');
+  };
+
+  const handleRunRecon = () => {
+    const trimmed = targetDomain.trim();
+    if (!trimmed) {
+      if (showToast) {
+        showToast('warning', 'Perimeter Target Required', 'Please enter a target domain (e.g. targetcompany.com or scanme.nmap.org) before launching reconnaissance.');
+      }
+      return;
+    }
+    localStorage.setItem('drishti_target_domain', trimmed);
+    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: trimmed }));
+    onNavigate('recon');
+  };
 
   // Fetch real data from backend
   const loadDashboardData = useCallback(async () => {
@@ -231,9 +268,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               <input
                 type="text"
                 value={targetDomain}
-                onChange={(e) => setTargetDomain(e.target.value)}
-                placeholder="e.g. curezy.in"
-                className="px-3 py-1 bg-boneLight text-cyan font-bold font-mono text-sm border border-hairline focus:border-cyan outline-none"
+                onChange={(e) => handleTargetChange(e.target.value)}
+                placeholder="e.g. targetcompany.com or scanme.nmap.org"
+                className="px-3 py-1 bg-boneLight text-cyan font-bold font-mono text-sm border border-hairline focus:border-cyan outline-none min-w-[280px]"
               />
             </div>
             <p className="text-[10px] text-charcoal font-mono">
@@ -262,7 +299,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             </div>
 
             <button
-              onClick={() => onNavigate('recon')}
+              onClick={handleRunRecon}
               className="bg-vermilion hover:bg-crimson text-white px-4 py-2.5 text-xs font-mono font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
             >
               <span>⚡</span>
@@ -311,7 +348,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     <span className="w-2 h-2 bg-signalGreen inline-block"></span>
                   </div>
                   <div className="text-sm font-bold text-ink truncate">{node}</div>
-                  <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain}</div>
+                  <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain || 'UNASSIGNED'}</div>
                 </div>
               ))}
             </div>
@@ -322,7 +359,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 <span>[ STATUS: ZERO HOSTILE ATTACK VECTORS TRAVERSED // PRISTINE ENCLAVE ]</span>
               </div>
               <p className="text-charcoal text-[11px] max-w-lg mx-auto">
-                No active breach vectors discovered for <strong className="text-ink">{targetDomain}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
+                No active breach vectors discovered for <strong className="text-ink">{targetDomain || 'current perimeter'}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
               </p>
               <div className="pt-2 flex items-center justify-center gap-3">
                 <button
@@ -404,7 +441,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             {/* Synthesized Rule Box */}
             <div className="bg-boneLight border border-hairline p-4 space-y-2 relative font-mono text-xs">
               <div className="flex items-center justify-between text-[10px] text-charcoal pb-2 border-b border-hairlineLight">
-                <span>COMPILED TARGET: {targetDomain} // RULE ID: SHIELD-AUTONOMOUS-01</span>
+                <span>COMPILED TARGET: {targetDomain || 'UNASSIGNED TARGET'} // RULE ID: SHIELD-AUTONOMOUS-01</span>
                 <button
                   onClick={() => copyToClipboard('block http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include"')}
                   className="px-2 py-0.5 bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink text-[9px] font-bold cursor-pointer"
@@ -429,6 +466,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                   type="text"
                   value={probeUrl}
                   onChange={(e) => setProbeUrl(e.target.value)}
+                  placeholder="https://targetcompany.com/test-endpoint"
                   className="bg-pureWhite px-2.5 py-1 text-ink border border-hairline text-xs font-mono w-full outline-none focus:border-ink"
                 />
               </div>
@@ -542,7 +580,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                         <span>{f.tech?.slice(0, 24) || `FINDING-${f.id}`}</span>
                       </td>
                       <td className="py-3.5 px-4 text-ink font-bold border-r border-hairlineLight">
-                        {f.host || targetDomain} ({f.ip || 'Resolved'})
+                        {f.host || targetDomain || 'TARGET HOST'} ({f.ip || 'Resolved'})
                       </td>
                       <td className="py-3.5 px-4 text-vermilion font-bold border-r border-hairlineLight">
                         {f.risk} // Score: {f.score || '3.5'}
@@ -570,7 +608,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                           [ 0 RECORDED VULNERABILITIES • SOFTWARE IS 100% PRISTINE AND CLEAN ]
                         </div>
                         <div className="text-[11px] text-charcoal">
-                          Perimeter <strong className="text-ink">{targetDomain}</strong> has zero logged breach vectors. Ready for fresh reconnaissance.
+                          Perimeter <strong className="text-ink">{targetDomain || 'target'}</strong> has zero logged breach vectors. Ready for fresh reconnaissance.
                         </div>
                         <div className="pt-2">
                           <button
