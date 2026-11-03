@@ -43,79 +43,81 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
   return (
     <header
-      className="h-12 w-full border-b border-hairline bg-pureWhite px-3.5 flex items-center justify-between text-xs tracking-wider shrink-0 z-30 select-none font-mono"
+      className="h-13 w-full border-b border-hairline bg-pureWhite px-4 sm:px-6 flex items-center justify-between text-xs shrink-0 z-30 select-none font-mono tracking-tight shadow-xs"
       data-purpose="top-command-bar"
     >
-      {/* Left Hacker Identity & System Status */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
-        <div className="w-7 h-7 border border-hairline flex items-center justify-center bg-boneLight shadow-xs shrink-0">
-          <span className="text-signalGreen font-bold text-xs select-none">#_</span>
+      {/* 1. Left: Brand & Enclave Security State */}
+      <div className="flex items-center space-x-3 shrink-0">
+        <div className="w-8 h-8 border border-hairline flex items-center justify-center bg-boneDark text-signalGreen font-bold text-xs shadow-xs">
+          #_
         </div>
-        <div className="flex items-baseline space-x-1.5 font-grotesk font-bold text-sm tracking-widest text-ink">
-          <span className="text-signalGreen">DRISHTI</span>
-          <span className="text-charcoal text-xs font-mono font-normal tracking-normal hidden md:inline">
-            // ROOT@COCKPIT:~#
+
+        <div className="flex items-center space-x-2">
+          <span className="font-grotesk font-extrabold text-sm tracking-widest text-ink uppercase">
+            DRISHTI
+          </span>
+          <span className="text-pencil text-[10px] font-mono hidden md:inline">
+            // CYBER LAB
           </span>
         </div>
-        <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 border border-signalGreen/40 bg-signalGreenBg text-[10px] text-signalGreen font-mono font-bold">
+
+        <div className="h-4 w-px bg-hairline hidden sm:block"></div>
+
+        <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 border border-signalGreen/40 bg-signalGreenBg text-[10px] text-signalGreen font-bold">
           <span className="w-1.5 h-1.5 bg-signalGreen animate-pulse"></span>
-          <span>[ CORE ARMED ]</span>
+          <span>[ LIVE HUD ]</span>
         </div>
-        <span className="hidden lg:inline-block border border-hairline px-1.5 py-0.5 text-[9px] font-mono text-cyan bg-cyanBg font-semibold">
-          MODE: PROWLER-STEALTH
-        </span>
-        <span className="hidden xl:inline-block border border-hairline px-1.5 py-0.5 text-[9px] font-mono text-charcoal bg-boneLight font-medium">
-          ENCLAVE: ZERO-EGRESS
+
+        <span className="hidden xl:inline-block border border-hairline px-2 py-0.5 text-[9px] font-mono text-charcoal bg-boneLight font-medium">
+          AIR-GAP ENCLAVE
         </span>
       </div>
 
-      {/* Center Target Acquisition & Quick Probe */}
-      <div className="flex items-center space-x-1.5 sm:space-x-2">
-        <div className="border border-hairline bg-pureWhite px-2.5 py-1 text-ink font-mono text-xs flex items-center space-x-2 shadow-xs">
-          <span className="text-charcoal font-semibold text-[10px]">TARGET:</span>
-          <span className="font-bold text-cyan">{displayTarget}</span>
-          <span className="text-[9px] text-signalGreen font-bold bg-signalGreenBg px-1 border border-signalGreen/30">
-            ARMED
-          </span>
+      {/* 2. Center: Active Target Focus HUD */}
+      <div className="flex items-center justify-center space-x-2 flex-1 max-w-md mx-4">
+        <div className="flex items-center border border-hairline bg-boneLight px-3 py-1 shadow-xs space-x-2 text-xs">
+          <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider">TARGET:</span>
+          <span className="font-bold text-cyan font-mono">{displayTarget}</span>
+          <span className="w-1.5 h-1.5 bg-cyan animate-pulse"></span>
         </div>
-        <span className="hidden sm:inline-block border border-hairline text-charcoal text-[10px] px-1.5 py-1 tracking-tighter bg-boneDark font-medium">
-          [ RFC-8655 AUTH ]
+
+        <span className="hidden md:inline-block border border-hairline px-2 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">
+          RFC 8655 READY
         </span>
+
         <button
           onClick={onCreateScan}
-          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-2.5 sm:px-3 py-1 text-xs uppercase tracking-wider transition-colors duration-75 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer"
+          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider transition-colors duration-75 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
           title="Launch Autonomous Recon Pipeline"
         >
           <span>⚡</span>
-          <span className="hidden sm:inline">[ EXECUTE RECON ]</span>
-        </button>
-        <button
-          onClick={onNavigateToIntel}
-          className="hidden md:inline-block border border-hairline hover:border-cyan text-ink hover:text-cyan font-mono px-2.5 py-1 text-xs uppercase tracking-wider transition-colors duration-75 bg-boneLight font-semibold cursor-pointer"
-          title="Synthesize AI Consensus Threat Brief"
-        >
-          [ AI INTEL BRIEF ]
+          <span className="hidden sm:inline">[ RUN AUDIT ]</span>
         </button>
       </div>
 
-      {/* Right Telemetry & Clearance Indicators */}
-      <div className="flex items-center space-x-2 sm:space-x-2.5 text-[11px] font-mono">
+      {/* 3. Right: Telemetry, CLI & Operator Credentials */}
+      <div className="flex items-center space-x-2.5 shrink-0 text-xs">
         <button
           onClick={onOpenCommandPalette}
-          className="border border-hairline bg-boneLight px-2 py-0.5 text-charcoal hover:text-ink font-semibold cursor-pointer hover:border-signalGreen"
+          className="border border-hairline bg-boneLight hover:bg-boneDark px-2.5 py-1 text-charcoal hover:text-ink font-semibold cursor-pointer text-[11px] transition-colors flex items-center space-x-1"
           title="Press ⌘K or Ctrl+K"
         >
-          [ ⌘K CLI ]
+          <span className="text-pencil font-bold text-[10px]">⌘K</span>
+          <span>[ CLI ]</span>
         </button>
-        <div className="hidden lg:inline-block text-ink font-bold px-2 py-0.5 border border-hairline bg-boneDark">
-          [ {utcTime || '2026.11.02 UTC'} ]
+
+        <div className="hidden lg:inline-flex items-center text-ink font-mono font-bold px-2.5 py-1 border border-hairline bg-boneLight text-[10px]">
+          [ {utcTime || '2026.11.03 UTC'} ]
         </div>
+
         <div
           onClick={onOpenProfile}
-          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2 py-0.5 font-bold tracking-tight text-[10px] cursor-pointer hover:bg-signalGreen hover:text-white transition-colors"
-          title={`Operator: ${operator?.name || 'Security Operator'} (${operator?.clearance || 'LEVEL 3'})`}
+          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2.5 py-1 font-bold text-[10px] cursor-pointer hover:bg-signalGreen hover:text-white transition-colors flex items-center space-x-1"
+          title={`Operator: ${operator?.name || 'Security Operator'} (${operator?.clearance || 'LEVEL 5'})`}
         >
-          [ CLEARANCE // TOP-SECRET ]
+          <span>OP:</span>
+          <span className="uppercase">{operator?.avatar_text || 'AM'}</span>
+          <span className="hidden sm:inline">// LVL 5</span>
         </div>
       </div>
     </header>
