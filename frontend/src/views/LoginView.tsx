@@ -12,6 +12,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const [mode, setMode] = useState<'passive' | 'active'>('passive');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isEntering, setIsEntering] = useState(false);
   const [flashOpacity, setFlashOpacity] = useState(0);
 
   // Live Telemetry States
@@ -608,6 +609,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     // Smoothly transition back to Red Eye (0.0)
     animateEyeColor(physicsRef.current.colorMorph, 0.0, 800);
     setIsSuccess(false);
+    setIsEntering(false);
+    setFlashOpacity(0);
 
     triggerBlink(160);
     generateVessels();
@@ -657,14 +660,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     rebootTimersRef.current.push(t1, t2, t3);
   };
 
-  // Auth Protocol Execution: Morphs from Red Eye into Blue Eye upon credential submission
+  // Auth Protocol Execution: Morphs from Red Eye into Blue Eye upon credential submission,
+  // then triggers the cinematic ocular flash warp transition entering the software.
   const simulateAuth = useCallback(() => {
-    if (isAuthenticating) return;
+    if (isAuthenticating || isEntering) return;
     setIsAuthenticating(true);
-
-    // Camera flash overlay
-    setFlashOpacity(0.45);
-    setTimeout(() => setFlashOpacity(0), 180);
 
     setButtonText('[ LOCKING IRIS & DERIVING ENCLAVE KEY... ]');
     physicsRef.current.targetPupilR = 14;
@@ -675,19 +675,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       text: 'ACTIVE_PERSON_SCAN: PHOTOMETRIC STEREO MATCHING // EXTRACTING 4096-BIT RETINA HASH...',
       className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
-    setBootProgress(90);
+    setBootProgress(70);
 
-    // Begin dynamic eye color transformation: morph from Red (0.0) -> Blue (1.0)
-    animateEyeColor(0.0, 1.0, 1600);
+    // 1. Smoothly morph from Red Eye (0.0) -> Sapphire Blue Eye (1.0)
+    animateEyeColor(0.0, 1.0, 1300);
 
     const t1 = setTimeout(() => {
       setAuthStatus({
         custom: true,
         text: 'DERIVING ZERO-KNOWLEDGE PROOF FROM SUBJECT BIOMETRIC ENTROPY...',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#FCA5A5] font-mono min-h-[14px] rounded-sm',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#60A5FA] font-mono min-h-[14px] rounded-sm',
       });
+      setBootProgress(88);
       physicsRef.current.targetPupilR = 19;
-    }, 900);
+    }, 700);
 
     const t2 = setTimeout(() => {
       setBootProgress(100);
@@ -704,46 +705,59 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
       setIsSuccess(true);
       physicsRef.current.targetPupilR = 22;
-      triggerBlink(150);
+      triggerBlink(140);
 
-      const op: OperatorProfile = {
-        id: 'local-operator-dev',
-        name: 'Alex Morgan',
-        email: 'root@drishti.sec',
-        role: 'SecOps Lead // Principal Cyber Analyst',
-        clearance: 'LEVEL 5 // TOP SECRET // AIR-GAP ENCLAVE',
-        organization: 'DRISHTI Cyber Intelligence Division',
-        avatar_text: 'AM',
-        permissions: [
-          'FULL_PASSIVE_RECON',
-          'ATTACK_GRAPH_PATHFINDING',
-          'PROMPT_GUARD_EVAL',
-          'STIX_BUNDLE_EXPORT',
-          'WAL_AUDIT_INSPECTION',
-          'SCOPE_CHALLENGE_ISSUER',
-        ],
-        client_ip: '127.0.0.1 (Local Cockpit)',
-        mfa_enabled: true,
-        hardware_key_bound: true,
-        default_scope: mode === 'passive' ? 'FULL_PASSIVE' : 'FULL_ACTIVE',
-        token_fingerprint: 'SHA256: 8f43...27aa4',
-      };
+      // 2. The Blue Eye is now prominently displayed. Give operator clear visual confirmation (~900ms),
+      // then trigger the cinematic Ocular Flash Warp transition into the software cockpit!
+      const t3 = setTimeout(() => {
+        setIsEntering(true);
+        physicsRef.current.targetPupilR = 85; // Dilate pupil to engulf center in optical singularity
+        setFlashOpacity(1); // Saturate viewport with blinding optic flash
 
-      localStorage.setItem('drishti_auth_token', tokenInput.trim() || 'ED25519-948A-AUTH-BIO-09');
-      localStorage.setItem('drishti_operator', JSON.stringify(op));
+        const op: OperatorProfile = {
+          id: 'local-operator-dev',
+          name: 'Alex Morgan',
+          email: 'root@drishti.sec',
+          role: 'SecOps Lead // Principal Cyber Analyst',
+          clearance: 'LEVEL 5 // TOP SECRET // AIR-GAP ENCLAVE',
+          organization: 'DRISHTI Cyber Intelligence Division',
+          avatar_text: 'AM',
+          permissions: [
+            'FULL_PASSIVE_RECON',
+            'ATTACK_GRAPH_PATHFINDING',
+            'PROMPT_GUARD_EVAL',
+            'STIX_BUNDLE_EXPORT',
+            'WAL_AUDIT_INSPECTION',
+            'SCOPE_CHALLENGE_ISSUER',
+          ],
+          client_ip: '127.0.0.1 (Local Cockpit)',
+          mfa_enabled: true,
+          hardware_key_bound: true,
+          default_scope: mode === 'passive' ? 'FULL_PASSIVE' : 'FULL_ACTIVE',
+          token_fingerprint: 'SHA256: 8f43...27aa4',
+        };
 
-      if (showToast) {
-        showToast('success', 'Biometric Signature Verified', 'Access granted to DRISHTI Cockpit.');
-      }
+        localStorage.setItem('drishti_auth_token', tokenInput.trim() || 'ED25519-948A-AUTH-BIO-09');
+        localStorage.setItem('drishti_operator', JSON.stringify(op));
 
-      setTimeout(() => {
-        setIsAuthenticating(false);
-        onLoginSuccess(op, tokenInput.trim());
-      }, 700);
-    }, 2100);
+        if (showToast) {
+          showToast('success', 'Biometric Enclave Verified', 'Access granted. Entering DRISHTI Cockpit...');
+        }
+
+        // 3. At the height of the white optic flash, complete handoff to main cockpit software
+        const t4 = setTimeout(() => {
+          setIsAuthenticating(false);
+          onLoginSuccess(op, tokenInput.trim());
+        }, 750);
+
+        authTimersRef.current.push(t4);
+      }, 950);
+
+      authTimersRef.current.push(t3);
+    }, 1400);
 
     authTimersRef.current.push(t1, t2);
-  }, [animateEyeColor, isAuthenticating, mode, onLoginSuccess, showToast, tokenInput, triggerBlink]);
+  }, [animateEyeColor, isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput, triggerBlink]);
 
   // Keyboard shortcut Ctrl+Enter or Cmd+Enter
   useEffect(() => {
@@ -767,11 +781,47 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* CRT Scanlines, Analog Noise, Vignette Screen Layer */}
       <div className="crt-overlay"></div>
 
-      {/* Fullscreen flash overlay on biometric capture / unlock */}
+      {/* ========================================== */}
+      {/* ENTERING SOFTWARE FLASH & WARP PORTAL OVERLAY */}
+      {/* ========================================== */}
+      {isEntering && (
+        <div
+          className="pointer-events-none fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
+          id="enteringWarpOverlay"
+        >
+          {/* Expanding Ocular Shockwave Rings from the Center of the Eye */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-300/90 shadow-[0_0_60px_#38BDF8] shockwave-entering"></div>
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/90 shadow-[0_0_50px_#0284C7] shockwave-entering"
+            style={{ animationDelay: '140ms' }}
+          ></div>
+
+          {/* Anamorphic Horizontal Sci-Fi Optic Streak Beam */}
+          <div className="absolute h-[3px] w-full bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_40px_#38BDF8] anamorphic-beam"></div>
+
+          {/* High-Impact Tactical Entrance HUD Text */}
+          <div className="relative z-10 flex flex-col items-center gap-2 text-center entrance-text-fade">
+            <div className="text-[10px] md:text-[11px] font-mono tracking-[0.35em] text-[#030407] font-black bg-cyan-200/95 px-3 py-1 rounded-sm shadow-[0_0_24px_rgba(56,189,248,0.9)]">
+              // BIOMETRIC_HANDSHAKE: CONFIRMED
+            </div>
+            <div className="text-[19px] md:text-[26px] font-mono font-black tracking-[0.28em] text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.95)]">
+              ENTERING DRISHTI COCKPIT
+            </div>
+            <div className="text-[9px] md:text-[10px] font-mono tracking-[0.2em] text-[#0284C7] font-bold bg-white/90 px-2.5 py-0.5 rounded-sm">
+              AIR-GAP ENCLAVE GRANTED // LEVEL 5 ACCESS
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen blinding white optic flash overlay that saturates the viewport before entering the app */}
       <div
-        className="pointer-events-none fixed inset-0 z-50 bg-[#E62E25] transition-opacity duration-300"
+        className="pointer-events-none fixed inset-0 z-[60] bg-white transition-opacity ease-in"
         id="flashOverlay"
-        style={{ opacity: flashOpacity }}
+        style={{
+          opacity: flashOpacity,
+          transitionDuration: isEntering ? '600ms' : '200ms',
+        }}
       ></div>
 
       {/* Local Scoped Keyframe & Technical Styles */}
@@ -907,12 +957,93 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           ring: 0 !important;
           --tw-ring-color: transparent !important;
         }
+
+        /* Entering Software Flash Warp Animation */
+        @keyframes portalWarp {
+          0% {
+            transform: scale(1);
+            filter: brightness(1) drop-shadow(0 0 20px rgba(56, 189, 248, 0.4));
+          }
+          30% {
+            transform: scale(1.35);
+            filter: brightness(1.8) drop-shadow(0 0 50px rgba(56, 189, 248, 0.9));
+          }
+          100% {
+            transform: scale(6.2);
+            filter: brightness(4) contrast(1.5) drop-shadow(0 0 100px #38bdf8);
+          }
+        }
+        .portal-entering-warp {
+          animation: portalWarp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes shockwaveExpand {
+          0% {
+            width: 140px;
+            height: 140px;
+            opacity: 1;
+            border-width: 4px;
+          }
+          100% {
+            width: 220vw;
+            height: 220vw;
+            opacity: 0;
+            border-width: 1px;
+          }
+        }
+        .shockwave-entering {
+          animation: shockwaveExpand 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes beamExpand {
+          0% {
+            transform: scaleX(0.01) scaleY(0.4);
+            opacity: 0.2;
+          }
+          45% {
+            transform: scaleX(1) scaleY(2);
+            opacity: 1;
+          }
+          100% {
+            transform: scaleX(2) scaleY(5);
+            opacity: 0;
+          }
+        }
+        .anamorphic-beam {
+          animation: beamExpand 750ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes entranceTextAnim {
+          0% {
+            opacity: 0;
+            transform: scale(0.92);
+          }
+          35% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          80% {
+            opacity: 1;
+            transform: scale(1.03);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.08);
+          }
+        }
+        .entrance-text-fade {
+          animation: entranceTextAnim 750ms ease-out forwards;
+        }
       `}</style>
 
       {/* ========================================== */}
       {/* 1. TOP HEADER // HARDCORE CYBER-HUD & DEFCON TELEMETRY */}
       {/* ========================================== */}
-      <header className="relative z-30 w-full mb-1">
+      <header
+        className={`relative z-30 w-full mb-1 transition-all duration-500 ${
+          isEntering ? 'opacity-0 -translate-y-4 pointer-events-none' : 'opacity-100'
+        }`}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center bg-[#060911]/90 border border-[#1E293B]/80 px-4 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.9)] backdrop-blur-md rounded-sm">
           {/* Left Section (4 cols): System ID, Kernel & Enclave Diagnostics */}
           <div className="lg:col-span-4 flex flex-col gap-1 text-[11px] tracking-[0.08em]">
@@ -1051,7 +1182,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* ========================================== */}
       <main className="relative z-30 flex flex-col items-center justify-center flex-1 w-full my-auto overflow-hidden py-0.5">
         {/* Status Bar Pill with Clean Margin to prevent top collision */}
-        <div className="flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#64748B] pointer-events-none bg-[#070B14]/90 px-4 py-1 border border-[#1E293B] mb-2.5 shadow-[0_2px_15px_rgba(0,0,0,0.8)] backdrop-blur-sm rounded-full">
+        <div
+          className={`flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#64748B] pointer-events-none bg-[#070B14]/90 px-4 py-1 border border-[#1E293B] mb-2.5 shadow-[0_2px_15px_rgba(0,0,0,0.8)] backdrop-blur-sm rounded-full transition-all duration-500 ${
+            isEntering ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100'
+          }`}
+        >
           <span>SUBJECT: <span className="text-[#60A5FA] font-bold" id="subjectStatusText">HUMAN_HOST_ACTIVE</span></span>
           <span className="text-[#334155]">|</span>
           <span>CONFIDENCE: <span className="text-white font-bold font-mono" id="confVal">99.14%</span></span>
@@ -1064,7 +1199,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         {/* Main Biometric Row: Perfectly balanced 5-component flex layout */}
         <div className="relative w-full max-w-6xl flex items-center justify-center px-2 gap-4 lg:gap-6">
           {/* LEFT FLANK: Scrolling Memory Hex Dump */}
-          <aside className="hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0">
+          <aside
+            className={`hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0 transition-all duration-500 ${
+              isEntering ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-ping"></span>
@@ -1100,7 +1239,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           </aside>
 
           {/* LEFT TELEMETRY READOUT (Flanking the eye, non-overlapping) */}
-          <div className="hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-right shrink-0 select-none">
+          <div
+            className={`hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-right shrink-0 select-none transition-all duration-500 ${
+              isEntering ? 'opacity-0 -translate-x-4 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             <div className="border-b border-[#1E293B]/60 pb-0.5 text-[7.5px] font-bold text-[#EF4444] tracking-widest">// OPTO_ACQUISITION</div>
             <div>
               <span className="text-[#64748B] block text-[7.5px]">FACIAL_DEPTH</span>
@@ -1129,7 +1272,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           </div>
 
           {/* CENTER: PURE CIRCULAR OCULAR ARENA (Without Square Corners) */}
-          <div className="relative w-[340px] h-[340px] flex items-center justify-center shrink-0" id="scanArena" ref={arenaRef}>
+          <div
+            className={`relative w-[340px] h-[340px] flex items-center justify-center shrink-0 ${
+              isEntering ? 'portal-entering-warp z-40' : ''
+            }`}
+            id="scanArena"
+            ref={arenaRef}
+          >
             {/* Precision Azimuth Degree Radial Marks (Cleanly integrated on outer ring) */}
             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#030407] px-2 text-[7.5px] font-mono tracking-widest text-[#EF4444]/90 pointer-events-none z-30 select-none border border-[#EF4444]/30 rounded-sm">
               AZM 000° // APERTURE_NORTH
@@ -1145,7 +1294,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
             {/* PURE CIRCULAR BIOMETRIC LENS / IRIS PORTAL VIEWPORT */}
             <div
-              className={`relative w-[280px] h-[280px] rounded-full overflow-hidden bg-[#070b14] border-2 transition-all duration-700 flex items-center justify-center z-20 ${portalGlow}`}
+              className={`relative w-[280px] h-[280px] rounded-full overflow-hidden bg-[#070b14] border-2 transition-all duration-700 flex items-center justify-center z-20 ${portalGlow} ${
+                isEntering
+                  ? 'shadow-[0_0_100px_rgba(56,189,248,1),inset_0_0_60px_rgba(255,255,255,0.9)] border-cyan-300'
+                  : ''
+              }`}
               id="eyeOrbit"
             >
               {/* Unified Eye Rendering HTML5 Canvas */}
@@ -1177,7 +1330,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           </div>
 
           {/* RIGHT TELEMETRY READOUT (Flanking the eye, non-overlapping) */}
-          <div className="hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-left shrink-0 select-none">
+          <div
+            className={`hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-left shrink-0 select-none transition-all duration-500 ${
+              isEntering ? 'opacity-0 translate-x-4 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             <div className="border-b border-[#1E293B]/60 pb-0.5 text-[7.5px] font-bold text-[#38BDF8] tracking-widest">// ENCLAVE_LOCK</div>
             <div>
               <span className="text-[#64748B] block text-[7.5px]">CORNEA_REFRACT</span>
@@ -1206,7 +1363,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           </div>
 
           {/* RIGHT FLANK: Live Packet Sniffer & Security Hash Stream */}
-          <aside className="hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0">
+          <aside
+            className={`hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0 transition-all duration-500 ${
+              isEntering ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] animate-ping"></span>
@@ -1242,7 +1403,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         {/* ========================================== */}
         {/* 3. HACKER CLI AUTHENTICATION TERMINAL PROMPT */}
         {/* ========================================== */}
-        <div className="relative z-30 w-[490px] max-w-full mt-3 flex flex-col gap-1.5">
+        <div
+          className={`relative z-30 w-[490px] max-w-full mt-3 flex flex-col gap-1.5 transition-all duration-500 ${
+            isEntering ? 'opacity-0 translate-y-8 pointer-events-none' : 'opacity-100'
+          }`}
+        >
           {/* Recon Scope Selector Buttons (Clear of any bottom ring overlap) */}
           <div className="flex items-center justify-between px-1 text-[10px] tracking-[0.1em] text-[#64748B] font-medium">
             <button
@@ -1390,7 +1555,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* ========================================== */}
       {/* 4. BOTTOM EDITORIAL FOOTER & HARDWARE SPECS WITH ACTIVE STATUS LEDS */}
       {/* ========================================== */}
-      <footer className="relative z-30 flex flex-col items-center justify-end w-full pb-1">
+      <footer
+        className={`relative z-30 flex flex-col items-center justify-end w-full pb-1 transition-all duration-500 ${
+          isEntering ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100'
+        }`}
+      >
         {/* Active Status LED Triad Bar */}
         <div className="flex items-center gap-6 mb-1.5 text-[8px] font-mono tracking-widest text-[#64748B]">
           <div className="flex items-center gap-1.5">

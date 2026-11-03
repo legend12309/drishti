@@ -58,6 +58,16 @@ export default function App() {
   });
 
   const [activeTarget, setActiveTarget] = useState<string>(() => localStorage.getItem('drishti_target_domain') || '');
+  const [entranceFlash, setEntranceFlash] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (entranceFlash) {
+      const timer = setTimeout(() => {
+        setEntranceFlash(false);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [entranceFlash]);
 
   useEffect(() => {
     const handleTargetChange = (e: any) => {
@@ -146,6 +156,7 @@ export default function App() {
         onLoginSuccess={(op) => {
           setOperator(op);
           setIsAuthenticated(true);
+          setEntranceFlash(true);
         }}
         showToast={showToast}
       />
@@ -153,7 +164,24 @@ export default function App() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col bg-bone border border-hairline select-none overflow-hidden text-ink font-mono">
+    <div className="w-full h-screen flex flex-col bg-bone border border-hairline select-none overflow-hidden text-ink font-mono relative">
+      {/* Seamless Entrance Flash Dissipation from Biometric Ocular Login */}
+      {entranceFlash && (
+        <div
+          className="pointer-events-none fixed inset-0 z-[9999] bg-white"
+          style={{
+            animation: 'flashExit 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          }}
+        >
+          <style>{`
+            @keyframes flashExit {
+              0% { opacity: 1; }
+              35% { opacity: 0.85; filter: blur(3px); }
+              100% { opacity: 0; filter: blur(10px); visibility: hidden; }
+            }
+          `}</style>
+        </div>
+      )}
       {/* Top Tactical Command Bar (Swiss Editorial Archival Header) */}
       <TopUtilityBar
         operator={operator}
