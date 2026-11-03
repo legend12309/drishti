@@ -34,7 +34,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const [bootDiagLabel, setBootDiagLabel] = useState('CIPHER_SUITE: CHACHA20-POLY1305 // NEURAL_TAP: SYNCED');
   const [engineBadge, setEngineBadge] = useState({
     text: 'DEFCON-1: [RECON_ACTIVE]',
-    className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold',
+    className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold rounded-sm',
   });
   const [buttonText, setButtonText] = useState('[ EXECUTE COCKPIT LOGIN ⌘↵ ]');
   const [authStatus, setAuthStatus] = useState<{
@@ -319,7 +319,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       scleraGrad.addColorStop(0.55, '#f5efe6');
       scleraGrad.addColorStop(0.8, '#e7ddd0');
       scleraGrad.addColorStop(0.95, '#b9aa9b');
-      scleraGrad.addColorStop(1.0, '#5f5446');
+      scleraGrad.addColorStop(1.0, '#605045');
       ctx.fillStyle = scleraGrad;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
@@ -576,14 +576,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setAuthStatus({
         custom: true,
         text: 'CLINICAL_INTERCEPT_ACTIVE // ESCALATING_PRIVILEGES // INGESTING_BIOMETRIC_SEED',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] bg-[#E62E25]/15 border border-[#E62E25]/40 font-bold py-0.5 min-h-[14px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] bg-[#E62E25]/15 border border-[#E62E25]/40 font-bold py-0.5 min-h-[14px] rounded-sm',
       });
       triggerBlink(90);
     } else {
       setAuthStatus({
         custom: true,
         text: 'AWAITING_BIOMETRIC_TOKEN_VALIDATION // AUTH_CHALLENGE_ID: 981-FC7',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] border border-[#1E293B] py-0.5 min-h-[14px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] border border-[#1E293B] py-0.5 min-h-[14px] rounded-sm',
       });
     }
   };
@@ -614,14 +614,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setBootProgress(10);
     setEngineBadge({
       text: 'COLD_REBOOT_TRIGGERED',
-      className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/25 text-[#EF4444] border border-[#E62E25]/60 font-bold',
+      className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/25 text-[#EF4444] border border-[#E62E25]/60 font-bold rounded-sm',
     });
     setBootDiagLabel('PURGING CRYPTOGRAPHIC SENSORS & FLUSHING BUFFER...');
     setButtonText('[ EXECUTE COCKPIT LOGIN ⌘↵ ]');
     setAuthStatus({
       custom: true,
       text: 'SYS_REBOOT_TRIGGERED // RETESTING OPTO-ELECTRONIC MATRIX',
-      className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] bg-[#E62E25]/15 border border-[#E62E25]/40 font-bold py-0.5 min-h-[14px]',
+      className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] bg-[#E62E25]/15 border border-[#E62E25]/40 font-bold py-0.5 min-h-[14px] rounded-sm',
     });
 
     setStages({ step1: false, step2: false, step3: false, step4: false });
@@ -643,13 +643,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setStages({ step1: true, step2: true, step3: true, step4: false });
       setEngineBadge({
         text: 'DEFCON-1: [RECON_ACTIVE]',
-        className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold',
+        className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold rounded-sm',
       });
       setBootDiagLabel('CIPHER_SUITE: CHACHA20-POLY1305 // NEURAL_TAP: SYNCED');
       setAuthStatus({
         custom: true,
         text: 'CALIBRATION COMPLETE // SUBJECT LOCKED // READY FOR JWT INGESTION',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] border border-[#1E293B] py-0.5 min-h-[14px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] border border-[#1E293B] py-0.5 min-h-[14px] rounded-sm',
       });
       triggerBlink(120);
     }, 1500);
@@ -673,7 +673,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setAuthStatus({
       custom: true,
       text: 'ACTIVE_PERSON_SCAN: PHOTOMETRIC STEREO MATCHING // EXTRACTING 4096-BIT RETINA HASH...',
-      className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px]',
+      className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
     setBootProgress(90);
 
@@ -684,7 +684,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setAuthStatus({
         custom: true,
         text: 'DERIVING ZERO-KNOWLEDGE PROOF FROM SUBJECT BIOMETRIC ENTROPY...',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#FCA5A5] font-mono min-h-[14px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#FCA5A5] font-mono min-h-[14px] rounded-sm',
       });
       physicsRef.current.targetPupilR = 19;
     }, 900);
@@ -694,12 +694,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setStages({ step1: true, step2: true, step3: true, step4: true });
       setEngineBadge({
         text: 'DEFCON-5: [ONLINE_ROOT]',
-        className: 'text-[9px] px-1.5 py-0.5 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50 font-bold',
+        className: 'text-[9px] px-1.5 py-0.5 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50 font-bold rounded-sm',
       });
       setAuthStatus({
         custom: true,
         text: 'ACCESS GRANTED // BIOMETRIC SIGNATURE VERIFIED // ROOT SHELL UNLOCKED',
-        className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px]',
+        className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm',
       });
       setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
       setIsSuccess(true);
@@ -758,7 +758,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
   // Computed styles based on morph progress (t: 0 = Red, 1 = Blue/Emerald)
   const t = eyeColorProgress;
-  const bracketBorderColor = t > 0.5 ? '#10B981' : '#E62E25';
   const portalGlow = t > 0.5
     ? 'shadow-[0_0_40px_rgba(37,99,235,0.45),inset_0_0_45px_rgba(0,0,0,0.95)] border-blue-500/60'
     : 'shadow-[0_0_40px_rgba(230,46,37,0.45),inset_0_0_45px_rgba(0,0,0,0.95)] border-rose-500/60';
@@ -882,17 +881,43 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           transform: scaleY(1.3);
           display: inline-block;
         }
+
+        /* CLI Terminal Input override to prevent white background box */
+        .cli-terminal-input,
+        input.cli-terminal-input,
+        input[type="text"].cli-terminal-input {
+          background-color: transparent !important;
+          background: transparent !important;
+          color: #E5E7EB !important;
+          border: none !important;
+          box-shadow: none !important;
+          outline: none !important;
+          padding: 0 !important;
+          -webkit-appearance: none !important;
+        }
+        .cli-terminal-input:focus,
+        input.cli-terminal-input:focus,
+        input[type="text"].cli-terminal-input:focus {
+          background-color: transparent !important;
+          background: transparent !important;
+          color: #E5E7EB !important;
+          border: none !important;
+          box-shadow: none !important;
+          outline: none !important;
+          ring: 0 !important;
+          --tw-ring-color: transparent !important;
+        }
       `}</style>
 
       {/* ========================================== */}
       {/* 1. TOP HEADER // HARDCORE CYBER-HUD & DEFCON TELEMETRY */}
       {/* ========================================== */}
       <header className="relative z-30 w-full mb-1">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center bg-[#060911]/90 border border-[#1E293B]/80 px-4 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.9)] backdrop-blur-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center bg-[#060911]/90 border border-[#1E293B]/80 px-4 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.9)] backdrop-blur-md rounded-sm">
           {/* Left Section (4 cols): System ID, Kernel & Enclave Diagnostics */}
           <div className="lg:col-span-4 flex flex-col gap-1 text-[11px] tracking-[0.08em]">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-block w-2.5 h-2.5 bg-[#E62E25] animate-ping" id="sysStatusBeacon"></span>
+              <span className="inline-block w-2.5 h-2.5 bg-[#E62E25] animate-ping rounded-full" id="sysStatusBeacon"></span>
               <span className="text-white font-black tracking-[0.14em] glitch-chroma">
                 SYS_ID // DRISHTI_SEC_ENGINE_V2.0
               </span>
@@ -902,8 +927,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             </div>
             <div className="flex items-center gap-2.5 text-[9.5px] text-[#64748B]">
               <span>KERNEL: <span className="text-[#CBD5E1] font-semibold">SEC-ARCH-09.r4</span></span>
-              <span className="text-[#10B981] font-mono px-1 bg-[#10B981]/10 border border-[#10B981]/30">[SELINUX_ENFORCING]</span>
-              <span className="text-[#38BDF8] font-mono px-1 bg-[#2563EB]/15 border border-[#2563EB]/40">[RPC_TLS1.3]</span>
+              <span className="text-[#10B981] font-mono px-1 bg-[#10B981]/10 border border-[#10B981]/30 rounded-sm">[SELINUX_ENFORCING]</span>
+              <span className="text-[#38BDF8] font-mono px-1 bg-[#2563EB]/15 border border-[#2563EB]/40 rounded-sm">[RPC_TLS1.3]</span>
               <span className="text-[#475569]">CYCLE: <span className="text-[#E5E7EB]" id="telemetryCycle">{telemetryCycle}</span></span>
             </div>
           </div>
@@ -913,7 +938,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             <div className="grid grid-cols-4 w-full gap-1.5 text-[9px] tracking-[0.05em] font-mono">
               {/* Stage 1 */}
               <div
-                className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
+                className={`px-1 py-1 text-center flex items-center justify-center gap-1 rounded-sm ${
                   stages.step1
                     ? 'bg-[#08101C] border border-[#10B981]/40'
                     : 'bg-[#080B12] border border-[#1E293B] text-[#475569]'
@@ -926,7 +951,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
               {/* Stage 2 */}
               <div
-                className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
+                className={`px-1 py-1 text-center flex items-center justify-center gap-1 rounded-sm ${
                   stages.step2
                     ? 'bg-[#08101C] border border-[#10B981]/40'
                     : 'bg-[#080B12] border border-[#1E293B] text-[#475569]'
@@ -939,7 +964,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
               {/* Stage 3 */}
               <div
-                className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
+                className={`px-1 py-1 text-center flex items-center justify-center gap-1 rounded-sm ${
                   stages.step4
                     ? 'bg-[#08101C] border border-[#10B981]/40'
                     : stages.step3
@@ -960,7 +985,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
               {/* Stage 4 */}
               <div
-                className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
+                className={`px-1 py-1 text-center flex items-center justify-center gap-1 rounded-sm ${
                   stages.step4
                     ? 'bg-[#08101C] border border-[#10B981]/70 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                     : 'bg-[#080B12] border border-[#1E293B] text-[#475569]'
@@ -975,7 +1000,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
             {/* Progress track & Micro diagnostic readouts */}
             <div className="w-full flex flex-col gap-0.5">
-              <div className="w-full h-1.5 bg-[#090D18] border border-[#1E293B] relative overflow-hidden flex">
+              <div className="w-full h-1.5 bg-[#090D18] border border-[#1E293B] relative overflow-hidden flex rounded-sm">
                 <div
                   className={`h-full ${stages.step4 ? 'bg-[#10B981]' : 'bg-[#10B981]'} transition-all duration-300`}
                   id="bootProgressBar"
@@ -996,20 +1021,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           {/* Right Section (3 cols): Exploits, Live Distance, Re-Calibrate Trigger */}
           <div className="lg:col-span-3 flex flex-col items-end gap-1 text-[10px]">
             <div className="flex items-center gap-2">
-              <span className="text-[8.5px] px-1.5 py-0.2 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 font-bold">
+              <span className="text-[8.5px] px-1.5 py-0.2 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 font-bold rounded-sm">
                 PAYLOADS: 0
               </span>
               <span className="text-[#64748B]">
                 DIST: <span className="text-[#E5E7EB] font-bold font-mono" id="subjectDistance">{depth}</span>
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-[#E62E25]/25 text-[#EF4444] border border-[#E62E25]/60 font-bold tracking-wider animate-pulse" id="lockStatusBadge">
+              <span className="text-[9px] px-1.5 py-0.5 bg-[#E62E25]/25 text-[#EF4444] border border-[#E62E25]/60 font-bold tracking-wider animate-pulse rounded-sm" id="lockStatusBadge">
                 [TARGET_LOCKED]
               </span>
             </div>
             <div>
               <button
                 type="button"
-                className="flex items-center gap-1.5 text-[9px] text-[#94A3B8] hover:text-white px-2 py-0.5 border border-[#334155]/80 hover:border-[#EF4444] bg-[#0A0E18] hover:bg-[#E62E25]/20 transition-all cursor-pointer shadow-sm font-mono"
+                className="flex items-center gap-1.5 text-[9px] text-[#94A3B8] hover:text-white px-2 py-0.5 border border-[#334155]/80 hover:border-[#EF4444] bg-[#0A0E18] hover:bg-[#E62E25]/20 transition-all cursor-pointer shadow-sm font-mono rounded-sm"
                 onClick={rebootSequence}
                 title="Re-run engine self-test and camera sweep"
               >
@@ -1022,11 +1047,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       </header>
 
       {/* ========================================== */}
-      {/* 2. CENTER STAGE: PURE CIRCULAR BIOMETRIC PORTAL WITH LIVE CONSOLE FLANKS */}
+      {/* 2. CENTER STAGE: PURE CIRCULAR BIOMETRIC PORTAL WITH BALANCED LATERAL TELEMETRY */}
       {/* ========================================== */}
-      <main className="relative z-30 flex flex-col items-center justify-center flex-1 w-full my-auto overflow-hidden">
-        {/* Status Bar Pill above eye */}
-        <div className="flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#64748B] pointer-events-none bg-[#070B14]/90 px-3 py-1 border border-[#1E293B] mb-1.5 shadow-[0_2px_15px_rgba(0,0,0,0.8)] backdrop-blur-sm">
+      <main className="relative z-30 flex flex-col items-center justify-center flex-1 w-full my-auto overflow-hidden py-0.5">
+        {/* Status Bar Pill with Clean Margin to prevent top collision */}
+        <div className="flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#64748B] pointer-events-none bg-[#070B14]/90 px-4 py-1 border border-[#1E293B] mb-2.5 shadow-[0_2px_15px_rgba(0,0,0,0.8)] backdrop-blur-sm rounded-full">
           <span>SUBJECT: <span className="text-[#60A5FA] font-bold" id="subjectStatusText">HUMAN_HOST_ACTIVE</span></span>
           <span className="text-[#334155]">|</span>
           <span>CONFIDENCE: <span className="text-white font-bold font-mono" id="confVal">99.14%</span></span>
@@ -1036,16 +1061,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           <span>LIVENESS: <span className="text-[#10B981] font-bold font-mono" id="livenessVal">0.998</span></span>
         </div>
 
-        {/* Main Biometric Stage with Lateral Hacker Data Streams */}
-        <div className="relative w-full max-w-6xl flex items-center justify-center px-2 gap-3 lg:gap-6">
-          {/* LEFT FLANK: Scrolling Memory Hex Dump & Interrupt Stream */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative">
+        {/* Main Biometric Row: Perfectly balanced 5-component flex layout */}
+        <div className="relative w-full max-w-6xl flex items-center justify-center px-2 gap-4 lg:gap-6">
+          {/* LEFT FLANK: Scrolling Memory Hex Dump */}
+          <aside className="hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0">
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-ping"></span>
                 <span className="text-[#EF4444]">// MEM_DUMP_0x7FFF</span>
               </div>
-              <span className="text-[7.5px] px-1 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/40">L1_CACHE</span>
+              <span className="text-[7.5px] px-1 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/40 rounded-sm">L1_CACHE</span>
             </div>
             <div className="relative flex-1 overflow-hidden">
               <div className="stream-scroll space-y-1 text-[#475569]">
@@ -1068,41 +1093,52 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 <div className="flex justify-between"><span className="text-[#94A3B8]">0x7FFF89B2:</span> <span className="text-[#CBD5E1]">55 48 89 E5</span></div>
               </div>
             </div>
-            <div className="mt-1 pt-1 border-t border-[#1E293B]/80 text-[7.5px] text-[#64748B] flex justify-between items-center">
+            <div className="mt-1 pt-1 border-t border-[#1E293B]/80 text-[7.5px] text-[#64748B] flex justify-between items-center font-semibold">
               <span>HEAP: <span className="text-white font-bold">42.1MB</span></span>
               <span className="text-[#10B981] font-bold">CANARY: SECURE</span>
             </div>
           </aside>
 
-          {/* CENTER: Viewport Container for the Optic Array & Reticle Matrix */}
-          <div className="relative w-[500px] max-w-full h-[320px] flex items-center justify-center mx-auto" id="scanArena" ref={arenaRef}>
-            {/* Cybernetic Targeting HUD Corner Brackets */}
-            <div
-              className="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 pointer-events-none transition-colors duration-500"
-              style={{ borderColor: bracketBorderColor }}
-            ></div>
-            <div
-              className="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 pointer-events-none transition-colors duration-500"
-              style={{ borderColor: bracketBorderColor }}
-            ></div>
-            <div
-              className="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 pointer-events-none transition-colors duration-500"
-              style={{ borderColor: bracketBorderColor }}
-            ></div>
-            <div
-              className="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 pointer-events-none transition-colors duration-500"
-              style={{ borderColor: bracketBorderColor }}
-            ></div>
+          {/* LEFT TELEMETRY READOUT (Flanking the eye, non-overlapping) */}
+          <div className="hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-right shrink-0 select-none">
+            <div className="border-b border-[#1E293B]/60 pb-0.5 text-[7.5px] font-bold text-[#EF4444] tracking-widest">// OPTO_ACQUISITION</div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">FACIAL_DEPTH</span>
+              <span className="text-white font-bold" id="depthVal">{depth}</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">IRIS_SCAN</span>
+              <span className="text-[#EF4444] font-bold" id="irisScanVal">{irisScan} MATCH</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">PUPIL_DILATION</span>
+              <span className="text-[#CBD5E1] font-medium" id="pupilDilVal">{pupilDil}</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">IPD_METRIC</span>
+              <span className="text-[#94A3B8]" id="ipdVal">63.8mm</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">VESSEL_HASH</span>
+              <span className="text-[#F87171] font-mono font-bold">0x9E4B..7A</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">SACCADE_FRQ</span>
+              <span className="text-[#38BDF8] font-bold">3.4Hz</span>
+            </div>
+          </div>
 
-            {/* Precision Azimuth Degree Radial Marks */}
-            <div className="absolute -top-5 text-[7.5px] font-mono tracking-widest text-[#EF4444]/90 pointer-events-none">
+          {/* CENTER: PURE CIRCULAR OCULAR ARENA (Without Square Corners) */}
+          <div className="relative w-[340px] h-[340px] flex items-center justify-center shrink-0" id="scanArena" ref={arenaRef}>
+            {/* Precision Azimuth Degree Radial Marks (Cleanly integrated on outer ring) */}
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#030407] px-2 text-[7.5px] font-mono tracking-widest text-[#EF4444]/90 pointer-events-none z-30 select-none border border-[#EF4444]/30 rounded-sm">
               AZM 000° // APERTURE_NORTH
             </div>
-            <div className="absolute -bottom-5 text-[7.5px] font-mono tracking-widest text-[#475569] pointer-events-none">
+            <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-[#030407] px-2 text-[7.5px] font-mono tracking-widest text-[#64748B] pointer-events-none z-30 select-none border border-[#1E293B] rounded-sm">
               AZM 180° // APERTURE_SOUTH
             </div>
 
-            {/* Outer HUD Concentric Framing Rings */}
+            {/* Pure Circular Concentric HUD Rings */}
             <div className="absolute w-[330px] h-[330px] rounded-full border border-dashed border-[#2563EB]/40 pointer-events-none hud-dial-spin"></div>
             <div className="absolute w-[310px] h-[310px] rounded-full border border-[#E62E25]/30 pointer-events-none hud-dial-counter"></div>
             <div className="absolute w-[292px] h-[292px] rounded-full border border-[#10B981]/25 pointer-events-none shadow-[0_0_25px_rgba(16,185,129,0.15)]"></div>
@@ -1138,36 +1174,45 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 style={{ transform: 'translateY(100%)' }}
               ></div>
             </div>
+          </div>
 
-            {/* Precision Telemetry Overlay around Eye (Left Flank) */}
-            <div className="absolute -left-12 top-1/2 -translate-y-1/2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-left pointer-events-none hidden md:block">
-              <div className="text-[#94A3B8]">FACIAL_DEPTH // <span className="text-white font-bold" id="depthVal">{depth}</span></div>
-              <div className="text-[#EF4444] font-bold">IRIS_SCAN: <span id="irisScanVal">{irisScan}</span> MATCH</div>
-              <div>PUPIL_DIL: <span className="text-[#CBD5E1]" id="pupilDilVal">{pupilDil}</span></div>
-              <div>IPD_METRIC: <span className="text-[#94A3B8]" id="ipdVal">63.8mm</span></div>
-              <div className="text-[#64748B]">VESSEL_HASH: <span className="text-[#F87171] font-mono">0x9E4B..7A</span></div>
-              <div className="text-[#2563EB]">SACCADE_FRQ: <span className="text-white font-bold">3.4Hz</span></div>
+          {/* RIGHT TELEMETRY READOUT (Flanking the eye, non-overlapping) */}
+          <div className="hidden sm:flex flex-col justify-center w-[135px] gap-2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-left shrink-0 select-none">
+            <div className="border-b border-[#1E293B]/60 pb-0.5 text-[7.5px] font-bold text-[#38BDF8] tracking-widest">// ENCLAVE_LOCK</div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">CORNEA_REFRACT</span>
+              <span className="text-[#10B981] font-bold">OK [NOMINAL]</span>
             </div>
-
-            {/* Precision Telemetry Overlay around Eye (Right Flank) */}
-            <div className="absolute -right-12 top-1/2 -translate-y-1/2 text-[8.5px] text-[#475569] font-mono leading-relaxed tracking-wider text-right pointer-events-none hidden md:block">
-              <div>CORNEA_REFRACT // <span className="text-[#10B981] font-bold">OK</span></div>
-              <div className="text-[#E62E25] font-bold">BIOMETRIC_LOCK: <span id="biolockStatus">{biolockStatus}</span></div>
-              <div>GAZE_VECTOR: <span className="text-white font-mono" id="gazeVectorVal">{gazeVector}</span></div>
-              <div>SPECTRAL_IR: <span className="text-[#EF4444] font-bold">COHERENT</span></div>
-              <div className="text-[#64748B]">TRIANGULATION: <span className="text-[#10B981] font-semibold">LOCKED</span></div>
-              <div className="text-[#60A5FA]">ENTROPY_POOL: <span className="text-white font-mono">0x88F1</span></div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">BIOMETRIC_LOCK</span>
+              <span className="text-[#E62E25] font-bold" id="biolockStatus">{biolockStatus}</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">GAZE_VECTOR</span>
+              <span className="text-white font-mono font-bold" id="gazeVectorVal">{gazeVector}</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">SPECTRAL_IR</span>
+              <span className="text-[#EF4444] font-bold">COHERENT</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">TRIANGULATION</span>
+              <span className="text-[#10B981] font-semibold">LOCKED</span>
+            </div>
+            <div>
+              <span className="text-[#64748B] block text-[7.5px]">ENTROPY_POOL</span>
+              <span className="text-white font-mono font-bold">0x88F1</span>
             </div>
           </div>
 
           {/* RIGHT FLANK: Live Packet Sniffer & Security Hash Stream */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative">
+          <aside className="hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0">
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8] animate-ping"></span>
                 <span className="text-[#38BDF8]">// PKT_SNIFFER_ETH0</span>
               </div>
-              <span className="text-[7.5px] px-1 bg-[#2563EB]/20 text-[#38BDF8] border border-[#2563EB]/40">PROMISC</span>
+              <span className="text-[7.5px] px-1 bg-[#2563EB]/20 text-[#38BDF8] border border-[#2563EB]/40 rounded-sm">PROMISC</span>
             </div>
             <div className="relative flex-1 overflow-hidden">
               <div className="stream-scroll-fast space-y-1 text-[#475569]">
@@ -1187,7 +1232,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 <div className="flex justify-between"><span className="text-[#EF4444]">ECDSA:</span> <span className="text-[#10B981] font-bold">SIGN_VERIFIED</span></div>
               </div>
             </div>
-            <div className="mt-1 pt-1 border-t border-[#1E293B]/80 text-[7.5px] text-[#64748B] flex justify-between items-center">
+            <div className="mt-1 pt-1 border-t border-[#1E293B]/80 text-[7.5px] text-[#64748B] flex justify-between items-center font-semibold">
               <span>THROUGHPUT: <span className="text-white font-bold">2.8 MB/s</span></span>
               <span className="text-[#38BDF8] font-bold">MTU: 1500</span>
             </div>
@@ -1197,8 +1242,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         {/* ========================================== */}
         {/* 3. HACKER CLI AUTHENTICATION TERMINAL PROMPT */}
         {/* ========================================== */}
-        <div className="relative z-30 w-[490px] max-w-full mt-2 flex flex-col gap-2">
-          {/* Recon Scope Selector Buttons */}
+        <div className="relative z-30 w-[490px] max-w-full mt-3 flex flex-col gap-1.5">
+          {/* Recon Scope Selector Buttons (Clear of any bottom ring overlap) */}
           <div className="flex items-center justify-between px-1 text-[10px] tracking-[0.1em] text-[#64748B] font-medium">
             <button
               type="button"
@@ -1233,7 +1278,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           </div>
 
           {/* Real Hacker CLI Console Input Terminal Box */}
-          <div className="relative w-full bg-[#060912]/95 border border-[#1E293B] shadow-[0_4px_25px_rgba(0,0,0,0.85)] p-2.5 flex flex-col gap-1.5">
+          <div className="relative w-full bg-[#060912]/95 border border-[#1E293B] shadow-[0_4px_25px_rgba(0,0,0,0.85)] p-2.5 flex flex-col gap-1.5 rounded-sm">
             {/* Terminal Titlebar & Command Path */}
             <div className="flex items-center justify-between text-[9px] text-[#64748B] border-b border-[#1E293B]/60 pb-1">
               <div className="flex items-center gap-1.5">
@@ -1257,14 +1302,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               </div>
             </div>
 
-            {/* Prompt & Input Field with Real Blinking Block Cursor */}
+            {/* Prompt & Input Field with Real Blinking Block Cursor & Transparent Field */}
             <div className="flex items-center gap-2 text-[11px] font-mono pt-0.5">
               <span className="text-[#10B981] font-bold whitespace-nowrap select-none">
                 ./authenticate_operator --token
               </span>
               <input
                 autoComplete="off"
-                className="w-full bg-transparent text-[#E5E7EB] font-mono tracking-wider outline-none border-none p-0 text-[11px] placeholder-[#475569] focus:ring-0"
+                className="cli-terminal-input w-full !bg-transparent !text-[#E5E7EB] font-mono tracking-wider !border-none !outline-none p-0 text-[11px] placeholder-[#475569] !ring-0 focus:!ring-0"
                 id="operatorInput"
                 onBlur={() => handleInputFocus(false)}
                 onFocus={() => handleInputFocus(true)}
@@ -1282,21 +1327,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               <span className="text-[#475569] select-none font-bold">FLAGS:</span>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--bypass-sandbox')}
               >
                 [--bypass-sandbox]
               </button>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--force-recon')}
               >
                 [--force-recon]
               </button>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--debug-dump')}
               >
                 [--debug-dump]
@@ -1307,7 +1352,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           {/* Primary Tactical Authorization Trigger */}
           <button
             type="button"
-            className={`w-full h-[38px] font-mono text-[11px] font-bold tracking-[0.16em] flex items-center justify-center gap-2 rounded-none transition-all cursor-pointer ${
+            className={`w-full h-[38px] font-mono text-[11px] font-bold tracking-[0.16em] flex items-center justify-center gap-2 rounded-sm transition-all cursor-pointer ${
               isSuccess
                 ? 'bg-[#10B981]/20 border border-[#10B981] text-[#10B981] shadow-[0_0_24px_rgba(16,185,129,0.5)] hover:bg-[#10B981]/30'
                 : 'bg-[#E62E25]/15 border border-[#E62E25] text-[#EF4444] shadow-[0_0_20px_rgba(230,46,37,0.35)] hover:bg-[#E62E25]/25 hover:text-white'
@@ -1332,7 +1377,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             </div>
           ) : (
             <div
-              className="text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] py-0.5 border border-[#1E293B] font-medium min-h-[14px]"
+              className="text-center text-[9px] tracking-[0.14em] text-[#94A3B8] bg-[#070B14] py-0.5 border border-[#1E293B] font-medium min-h-[14px] rounded-sm"
               id="authStatus"
             >
               <span className="text-[#60A5FA] font-bold">BIOMETRIC_CORE // SECURE_ENCLAVE_READY</span>
@@ -1347,7 +1392,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* ========================================== */}
       <footer className="relative z-30 flex flex-col items-center justify-end w-full pb-1">
         {/* Active Status LED Triad Bar */}
-        <div className="flex items-center gap-6 mb-2 text-[8px] font-mono tracking-widest text-[#64748B]">
+        <div className="flex items-center gap-6 mb-1.5 text-[8px] font-mono tracking-widest text-[#64748B]">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse"></span>
             <span className="text-[#EF4444] font-bold">RED: RECON_ACTIVE</span>
@@ -1363,7 +1408,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         </div>
 
         {/* Brand Typography with Chromatic Twitch */}
-        <div className="mb-2 text-center">
+        <div className="mb-1 text-center">
           <div className="glitch-chroma text-[15px] md:text-[17px] font-black text-[#E5E7EB] tracking-[0.35em]">
             D R I S H T I &nbsp;&nbsp;//&nbsp;&nbsp; V I S I O N &nbsp;&nbsp; C 2
           </div>
