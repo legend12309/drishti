@@ -99,6 +99,13 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
     return () => clearTimeout(timer);
   }, [target, reconMode, checkAuthorization]);
 
+  // Scope evaluation: Passive is authorized by any verified scope (including PASSIVE_OSINT).
+  // Active Assessment strictly requires FULL_ACTIVE.
+  const isCurrentScopeAuthorized =
+    reconMode === 'PASSIVE'
+      ? !!authStatus?.authorized
+      : !!(authStatus?.authorized && authStatus?.permitted_scope === 'FULL_ACTIVE');
+
   const loadFindingsForScan = useCallback(async (scanId: string, targetDomain: string) => {
     try {
       const findingsRes = await fetch(`/api/scans/${scanId}/findings`);
@@ -473,16 +480,12 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
    * Dispatches either Passive OSINT (frictionless) or Full Active Recon (DAG)
    */
   const startAutoRecon = async () => {
-    setScanning(true);
-    setProgress(15);
-    setStatusText(
-      reconMode === 'PASSIVE'
-        ? 'Resolving public DNS, CT logs, and RDAP metadata (Passive OSINT)...'
-        : 'Resolving perimeter scope & initializing active scanning pipeline...'
-    );
-    setActiveTab(reconMode === 'PASSIVE' ? 'findings' : 'timeline');
-
     if (reconMode === 'PASSIVE') {
+      setScanning(true);
+      setProgress(15);
+      setStatusText('Resolving public DNS, CT logs, and RDAP metadata (Passive OSINT)...');
+      setActiveTab('findings');
+
       try {
         const res = await fetch('/api/scans', {
           method: 'POST',
@@ -541,13 +544,35 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       return;
     }
 
-    // Enforce RFC 8655 Active Scope Authorization Check: Prompt for DNS TXT if unverified
-    if (!authStatus?.authorized) {
+    // Active Reconnaissance Path: Strictly enforce RFC 8655 DNS TXT Ownership Challenge
+    setScanning(true);
+    setProgress(15);
+    setStatusText('Validating RFC 8655 DNS authorization scope...');
+    setActiveTab('timeline');
+
+    // Perform fresh live scope check before active intrusion pipeline dispatch
+    let activeAuth: any = (authStatus?.authorized && authStatus?.permitted_scope === 'FULL_ACTIVE') ? authStatus : null;
+    try {
+      const authRes = await fetch(`/api/authorizations/check?target=${encodeURIComponent(target.trim())}&scope=FULL_ACTIVE`);
+      if (authRes.ok) {
+        const authData = await authRes.json();
+        setAuthStatus(authData);
+        if (authData.authorized && authData.permitted_scope === 'FULL_ACTIVE') {
+          activeAuth = authData;
+        } else {
+          activeAuth = null;
+        }
+      }
+    } catch (e) {
+      // Ignore network error and proceed to challenge prompt
+    }
+
+    if (!activeAuth || !activeAuth.authorized || activeAuth.permitted_scope !== 'FULL_ACTIVE') {
       setScanning(false);
       if (showToast) {
         showToast('warning', 'DNS Ownership Challenge Required', `Target '${target.trim()}' requires verified DNS TXT ownership before active port & intrusion probing.`);
       }
-      initiateDNSChallenge();
+      await initiateDNSChallenge();
       return;
     }
 
@@ -562,14 +587,21 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           target: target.trim(),
           scanners: requestedScanners,
           scope: requestedScope,
-          authorization_id: authStatus?.permitted_scope === 'FULL_ACTIVE' ? authStatus?.authorization_id : undefined,
+          authorization_id: activeAuth.authorization_id,
           allow_partial_completion: true,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'AutoRecon launch rejected');
+        const msg = err.detail || 'AutoRecon launch rejected';
+        if (msg.includes('DNS TXT') || msg.includes('not authorized') || msg.includes('authorization')) {
+          setScanning(false);
+          if (showToast) showToast('warning', 'DNS Verification Required', msg);
+          await initiateDNSChallenge();
+          return;
+        }
+        throw new Error(msg);
       }
 
       const data = await res.json();
@@ -616,17 +648,18 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           </div>
 
           <div className="flex items-center space-x-2">
-            {authStatus?.authorized ? (
+            {isCurrentScopeAuthorized ? (
               <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-signalGreenBg border border-signalGreen text-signalGreen text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 bg-signalGreen animate-pulse"></span>
-                <span>[ SCOPE AUTHORIZED ]</span>
+                <span>{reconMode === 'PASSIVE' ? '[ PASSIVE SCOPE: INSTANT ]' : '[ ACTIVE SCOPE AUTHORIZED // RFC 8655 ]'}</span>
               </div>
             ) : (
               <button
                 onClick={initiateDNSChallenge}
-                className="bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors shadow-xs cursor-pointer"
+                className="bg-vermilion hover:bg-crimson text-white border border-vermilion px-3 py-1.5 text-xs font-mono font-bold transition-colors shadow-xs cursor-pointer flex items-center space-x-1.5"
               >
-                [ VERIFY SCOPE (DNS) ]
+                <span className="w-1.5 h-1.5 bg-white animate-ping"></span>
+                <span>[ VERIFY DNS TXT FOR ACTIVE RECON ]</span>
               </button>
             )}
 
@@ -673,6 +706,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   type="button"
                   onClick={() => {
                     setReconMode('PASSIVE');
+                    setAuthStatus(null);
                     checkAuthorization(target, 'PASSIVE_OSINT');
                   }}
                   className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
@@ -687,6 +721,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   type="button"
                   onClick={() => {
                     setReconMode('ACTIVE');
+                    setAuthStatus(null);
                     checkAuthorization(target, 'FULL_ACTIVE');
                   }}
                   className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
@@ -762,44 +797,49 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
           {/* Verification Status Banner */}
           <div className={`p-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-            reconMode === 'PASSIVE' || authStatus?.authorized
+            isCurrentScopeAuthorized
               ? 'bg-signalGreenBg border-signalGreen text-signalGreen'
-              : 'bg-boneLight border-hairline text-charcoal'
+              : 'bg-red-50 border-vermilion text-vermilion'
           }`}>
             <div className="flex items-start gap-3">
               <div className="font-bold text-sm">
-                {reconMode === 'PASSIVE' || authStatus?.authorized ? '✓' : '!'}
+                {isCurrentScopeAuthorized ? '✓' : '⚠️'}
               </div>
               <div>
                 <div className="font-bold text-ink flex items-center gap-2 text-[11px]">
                   <span>
                     {reconMode === 'PASSIVE'
                       ? 'DOMAIN CLEARANCE: FRICTIONLESS OSINT (NO DNS TXT REQUIRED)'
-                      : authStatus?.authorized
-                      ? 'DOMAIN SCOPE VERIFIED'
-                      : 'SCOPE VERIFICATION REQUIRED'}
+                      : isCurrentScopeAuthorized
+                      ? 'ACTIVE DOMAIN SCOPE VERIFIED // RFC 8655'
+                      : 'ACTIVE INTRUSION SCOPE UNVERIFIED // DNS TXT CHALLENGE REQUIRED'}
                   </span>
-                  <span className="text-[9px] bg-pureWhite text-signalGreen font-bold px-2 py-0.5 border border-signalGreen uppercase">
-                    {reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : `ACTIVE (${authStatus?.permitted_scope || 'FULL_ACTIVE'})`}
+                  <span className={`text-[9px] font-bold px-2 py-0.5 border uppercase ${
+                    isCurrentScopeAuthorized
+                      ? 'bg-pureWhite text-signalGreen border-signalGreen'
+                      : 'bg-pureWhite text-vermilion border-vermilion'
+                  }`}>
+                    {reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : isCurrentScopeAuthorized ? 'ACTIVE (FULL_ACTIVE)' : 'VERIFICATION PENDING'}
                   </span>
                 </div>
                 <div className="text-[10px] text-charcoal mt-0.5 font-mono">
                   {reconMode === 'PASSIVE'
                     ? `Target '${target}' is authorized for instant passive intelligence. No intrusive packets will touch target servers.`
-                    : authStatus?.authorized
-                    ? `Target '${target}' is authorized and ready for deep discovery, port probing, and vulnerability auditing.`
-                    : `Active security probing requires explicit authorization via DNS challenge token to ensure RFC 8655 compliance.`}
+                    : isCurrentScopeAuthorized
+                    ? `Target '${target}' is authorized and verified for active port scanning, technology enumeration, and vulnerability auditing.`
+                    : `Active port scanning & vulnerability discovery on '${target}' requires verified domain ownership via RFC 8655 DNS TXT record.`}
                 </div>
               </div>
             </div>
 
             <div className="shrink-0 flex items-center gap-2">
-              {reconMode === 'ACTIVE' && !authStatus?.authorized && (
+              {reconMode === 'ACTIVE' && !isCurrentScopeAuthorized && (
                 <button
                   onClick={initiateDNSChallenge}
-                  className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer"
+                  className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  [ GENERATE TXT CHALLENGE ]
+                  <span>⚡</span>
+                  <span>[ PROMPT DNS TXT CHALLENGE ➔ ]</span>
                 </button>
               )}
             </div>
@@ -1110,42 +1150,61 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 </button>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-xs text-charcoal leading-relaxed font-mono">
-                  Publish the following DNS TXT record at your DNS provider (Cloudflare, Route53, GoDaddy) to prove administrative ownership of <strong className="text-ink">{target}</strong>.
+                  To authorize active intrusion scanning on <strong className="text-ink">{target}</strong>, publish the following DNS TXT record with your DNS provider (e.g. Cloudflare, GoDaddy, AWS Route 53, Namecheap, Hostinger).
                 </p>
                 
-                <div className="p-2.5 bg-boneLight border border-hairline space-y-2">
+                <div className="p-3 bg-boneLight border border-hairline space-y-2.5">
                   <div className="flex items-center justify-between text-[10px] text-charcoal">
-                    <span>RECORD NAME:</span>
-                    <button
-                      onClick={() => copyToClipboard(challengeData.challenge_record_name, 'record')}
-                      className="text-vermilion hover:underline font-bold cursor-pointer"
-                    >
-                      [ COPY RECORD ]
-                    </button>
+                    <span className="font-bold">1. RECORD TYPE:</span>
+                    <span className="px-2 py-0.5 bg-pureWhite border border-hairline text-ink font-bold">TXT</span>
                   </div>
-                  <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all">
-                    {challengeData.challenge_record_name}
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-charcoal">
+                      <span className="font-bold">2. HOST / RECORD NAME:</span>
+                      <button
+                        onClick={() => copyToClipboard(challengeData.challenge_record_name, 'record')}
+                        className="text-vermilion hover:underline font-bold cursor-pointer"
+                      >
+                        {copiedField === 'record' ? '[ COPIED ✓ ]' : '[ COPY RECORD ]'}
+                      </button>
+                    </div>
+                    <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all font-bold">
+                      {challengeData.challenge_record_name}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
+                      <span className="font-bold">3. TXT VALUE / TOKEN:</span>
+                      <button
+                        onClick={() => copyToClipboard(challengeData.verification_token, 'token')}
+                        className="text-vermilion hover:underline font-bold cursor-pointer"
+                      >
+                        {copiedField === 'token' ? '[ COPIED ✓ ]' : '[ COPY TOKEN ]'}
+                      </button>
+                    </div>
+                    <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all font-bold">
+                      {challengeData.verification_token}
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
-                    <span>TXT TOKEN VALUE:</span>
-                    <button
-                      onClick={() => copyToClipboard(challengeData.verification_token, 'token')}
-                      className="text-vermilion hover:underline font-bold cursor-pointer"
-                    >
-                      [ COPY TOKEN ]
-                    </button>
-                  </div>
-                  <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all">
-                    {challengeData.verification_token}
+                    <span className="font-bold">4. TTL (TIME TO LIVE):</span>
+                    <span className="text-charcoal font-mono">60 seconds / Automatic</span>
                   </div>
                 </div>
 
-                <p className="text-[10px] text-pencil font-mono">
-                  DNS propagation typically requires 30-120 seconds. Click Verify once the TXT record is live.
-                </p>
+                <div className="p-2.5 bg-boneLight border border-hairline text-[10px] text-charcoal space-y-1 font-mono">
+                  <div className="font-bold text-ink uppercase tracking-wider">[ WHERE DO I SEND / ENTER THIS? ]:</div>
+                  <div>• Open your domain DNS management dashboard (Cloudflare, GoDaddy, AWS Route 53, etc.).</div>
+                  <div>• Click <strong>Add Record</strong> and choose <strong>TXT</strong>.</div>
+                  <div>• In <strong>Name / Host</strong>, paste: <code className="bg-pureWhite px-1 border border-hairline text-ink">{challengeData.challenge_record_name.replace(`.${target}`, '')}</code> or <code className="bg-pureWhite px-1 border border-hairline text-ink">{challengeData.challenge_record_name}</code></div>
+                  <div>• In <strong>Value / Content</strong>, paste the token above.</div>
+                  <div>• Save and allow ~30-60 seconds for DNS propagation, then click below to verify.</div>
+                </div>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-hairline">
