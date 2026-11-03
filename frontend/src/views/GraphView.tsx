@@ -117,15 +117,21 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     loadGraphData();
   }, [loadGraphData]);
 
-  // Build Exactly TOP 3 Prioritized Attack Routes
+  // Build Exactly TOP 3 Prioritized Attack Routes with PASSIVE OSINT STAGE 01
   const topThreeRoutes: AttackRoute[] = useMemo(() => {
     const domain = currentTargetDomain;
 
-    // Route 1 (Critical): Web RCE to CoreDB
+    // Route 1 (Critical): Passive CT Logs -> Ingress -> HTTPS :443 -> PHP CGI RCE -> InternalAuth -> CoreDB
     const r1Raw = rawPaths[0];
-    const r1Nodes = r1Raw?.path_nodes && r1Raw.path_nodes.length >= 3
-      ? r1Raw.path_nodes
-      : [domain, `${domain}:443`, 'CVE-2024-4577 (PHP CGI RCE)', 'InternalAuth', 'CoreDB'];
+    const r1OsintNode = 'crt.sh (CT Log Discovery)';
+    const r1Nodes = [
+      r1OsintNode,
+      domain,
+      `${domain}:443`,
+      'CVE-2024-4577 (PHP CGI RCE)',
+      'InternalAuth',
+      'CoreDB',
+    ];
 
     const route1: AttackRoute = {
       id: 'route-1',
@@ -133,26 +139,33 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       badge: 'CRITICAL',
       timeEstimate: '0.40 MIN',
       resistanceCost: Number(r1Raw?.cumulative_cost || 0.40),
-      source_node: r1Nodes[0] || domain,
-      target_node: r1Nodes[r1Nodes.length - 1] || 'CoreDB',
+      source_node: r1OsintNode,
+      target_node: 'CoreDB',
       path_nodes: r1Nodes,
       exploitName: 'Remote Code Execution (PHP-CGI Parameter Injection)',
       exploitCve: 'CVE-2024-4577',
-      summary: `Adversary probes HTTPS ingress at ${domain}:443, weaponizes CVE-2024-4577 argument injection to gain remote shell execution, steals internal API keys from memory, and compromises the Core Database.`,
+      summary: `Adversary passively discovers ${domain} via public crt.sh Certificate Transparency logs, probes HTTPS port 443, weaponizes CVE-2024-4577 argument injection for remote code execution, steals internal JWT tokens, and compromises CoreDB.`,
       steps: [
-        { stage: '1. Ingress', label: domain, desc: 'Public entry point', nodeId: r1Nodes[0] || domain },
-        { stage: '2. Service', label: `${domain}:443`, desc: 'Exposed HTTPS listener', nodeId: r1Nodes[1] || `${domain}:443` },
-        { stage: '3. Exploit', label: 'CVE-2024-4577', desc: 'Weaponized PHP CGI RCE', nodeId: r1Nodes[2] || 'CVE-2024-4577 (PHP CGI RCE)' },
-        { stage: '4. Pivot', label: 'InternalAuth', desc: 'Compromised JWT / Token', nodeId: r1Nodes[3] || 'InternalAuth' },
-        { stage: '5. Objective', label: 'CoreDB', desc: 'Crown Jewel Database', nodeId: r1Nodes[r1Nodes.length - 1] || 'CoreDB' },
+        { stage: '1. Passive OSINT', label: 'crt.sh CT Logs', desc: 'Zero-packet SSL log discovery', nodeId: r1OsintNode },
+        { stage: '2. Ingress', label: domain, desc: 'Public entry point', nodeId: domain },
+        { stage: '3. Service', label: `${domain}:443`, desc: 'Exposed HTTPS listener', nodeId: `${domain}:443` },
+        { stage: '4. Exploit', label: 'CVE-2024-4577', desc: 'Weaponized PHP CGI RCE', nodeId: 'CVE-2024-4577 (PHP CGI RCE)' },
+        { stage: '5. Pivot', label: 'InternalAuth', desc: 'Compromised Token / JWT', nodeId: 'InternalAuth' },
+        { stage: '6. Objective', label: 'CoreDB', desc: 'Crown Jewel Database', nodeId: 'CoreDB' },
       ],
     };
 
-    // Route 2 (High): Web Proxy Traversal to PaymentGateway
+    // Route 2 (High): Passive DNS DoH -> Ingress -> HTTP :80 -> Apache Path Traversal -> NginxProxy -> PaymentGateway
     const r2Raw = rawPaths[1];
-    const r2Nodes = r2Raw?.path_nodes && r2Raw.path_nodes.length >= 3
-      ? r2Raw.path_nodes
-      : [domain, `${domain}:80`, 'CVE-2021-41773 (Apache Path Traversal)', 'NginxReverseProxy', 'PaymentGateway'];
+    const r2OsintNode = 'DNS DoH (Record Enumeration)';
+    const r2Nodes = [
+      r2OsintNode,
+      domain,
+      `${domain}:80`,
+      'CVE-2021-41773 (Apache Path Traversal)',
+      'NginxReverseProxy',
+      'PaymentGateway',
+    ];
 
     const route2: AttackRoute = {
       id: 'route-2',
@@ -160,26 +173,33 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       badge: 'HIGH',
       timeEstimate: '1.25 MIN',
       resistanceCost: Number(r2Raw?.cumulative_cost || 1.15),
-      source_node: r2Nodes[0] || domain,
-      target_node: r2Nodes[r2Nodes.length - 1] || 'PaymentGateway',
+      source_node: r2OsintNode,
+      target_node: 'PaymentGateway',
       path_nodes: r2Nodes,
       exploitName: 'Path Traversal & Environment Secret Disclosure',
       exploitCve: 'CVE-2021-41773',
-      summary: `Adversary triggers path traversal on HTTP port 80, extracts .env database credentials from the filesystem, hops through the internal Nginx Reverse Proxy, and accesses the Payment Gateway.`,
+      summary: `Adversary maps ${domain} IP infrastructure via passive DNS-over-HTTPS queries, detects unencrypted port 80, exploits Apache path traversal to dump .env secrets, and hops through Nginx proxy to breach the Payment Gateway.`,
       steps: [
-        { stage: '1. Ingress', label: domain, desc: 'Perimeter Apex', nodeId: r2Nodes[0] || domain },
-        { stage: '2. Service', label: `${domain}:80`, desc: 'Cleartext HTTP Port', nodeId: r2Nodes[1] || `${domain}:80` },
-        { stage: '3. Exploit', label: 'CVE-2021-41773', desc: 'Directory Traversal Exploit', nodeId: r2Nodes[2] || 'CVE-2021-41773 (Apache Path Traversal)' },
-        { stage: '4. Pivot', label: 'NginxReverseProxy', desc: 'Internal Proxy Jump', nodeId: r2Nodes[3] || 'NginxReverseProxy' },
-        { stage: '5. Objective', label: 'PaymentGateway', desc: 'Cardholder Data Gateway', nodeId: r2Nodes[r2Nodes.length - 1] || 'PaymentGateway' },
+        { stage: '1. Passive OSINT', label: 'DNS DoH Query', desc: 'Cloudflare RFC 8484 DoH records', nodeId: r2OsintNode },
+        { stage: '2. Ingress', label: domain, desc: 'Perimeter Apex Host', nodeId: domain },
+        { stage: '3. Service', label: `${domain}:80`, desc: 'Cleartext HTTP Port', nodeId: `${domain}:80` },
+        { stage: '4. Exploit', label: 'CVE-2021-41773', desc: 'Directory Traversal Exploit', nodeId: 'CVE-2021-41773 (Apache Path Traversal)' },
+        { stage: '5. Pivot', label: 'NginxReverseProxy', desc: 'Internal Proxy Jump', nodeId: 'NginxReverseProxy' },
+        { stage: '6. Objective', label: 'PaymentGateway', desc: 'Cardholder Data Gateway', nodeId: 'PaymentGateway' },
       ],
     };
 
-    // Route 3 (Elevated): Lateral Redis / SSH Key Injection
+    // Route 3 (Elevated): Passive RDAP -> Ingress -> Redis :6379 -> Root SSH Injection -> CrownVault
     const r3Raw = rawPaths[2];
-    const r3Nodes = r3Raw?.path_nodes && r3Raw.path_nodes.length >= 3
-      ? r3Raw.path_nodes
-      : [domain, `${domain}:6379`, 'Unauthenticated Redis Cache', 'DevOpsBastionSSH', 'CrownVault'];
+    const r3OsintNode = 'RDAP / ASN IP Allocation';
+    const r3Nodes = [
+      r3OsintNode,
+      domain,
+      `${domain}:6379`,
+      'Unauthenticated Redis Cache',
+      'DevOpsBastionSSH',
+      'CrownVault',
+    ];
 
     const route3: AttackRoute = {
       id: 'route-3',
@@ -187,18 +207,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       badge: 'ELEVATED',
       timeEstimate: '2.30 MIN',
       resistanceCost: Number(r3Raw?.cumulative_cost || 2.45),
-      source_node: r3Nodes[0] || domain,
-      target_node: r3Nodes[r3Nodes.length - 1] || 'CrownVault',
+      source_node: r3OsintNode,
+      target_node: 'CrownVault',
       path_nodes: r3Nodes,
       exploitName: 'Unauthenticated Redis Key Ingress & SSH Injection',
       exploitCve: 'CWE-306',
-      summary: `Adversary discovers unprotected Redis cache port 6379, writes an unauthorized public key into the root authorized_keys file, logs into the DevOps Bastion, and pivots to the Crown Vault.`,
+      summary: `Adversary traces ${domain} ASN allocation via public RDAP registries, locates open cache port 6379, writes root authorized_keys to disk, establishes SSH shell on DevOps Bastion, and pivots to the Crown Vault.`,
       steps: [
-        { stage: '1. Ingress', label: domain, desc: 'Perimeter Host', nodeId: r3Nodes[0] || domain },
-        { stage: '2. Service', label: `${domain}:6379`, desc: 'Redis Memory Cache', nodeId: r3Nodes[1] || `${domain}:6379` },
-        { stage: '3. Exploit', label: 'Redis CWE-306', desc: 'Missing Authentication', nodeId: r3Nodes[2] || 'Unauthenticated Redis Cache' },
-        { stage: '4. Pivot', label: 'DevOpsBastionSSH', desc: 'Root SSH Session', nodeId: r3Nodes[3] || 'DevOpsBastionSSH' },
-        { stage: '5. Objective', label: 'CrownVault', desc: 'Master Secret Enclave', nodeId: r3Nodes[r3Nodes.length - 1] || 'CrownVault' },
+        { stage: '1. Passive OSINT', label: 'RDAP / Netblock', desc: 'Registrar & ASN allocation', nodeId: r3OsintNode },
+        { stage: '2. Ingress', label: domain, desc: 'Perimeter Target Host', nodeId: domain },
+        { stage: '3. Service', label: `${domain}:6379`, desc: 'Redis Memory Cache', nodeId: `${domain}:6379` },
+        { stage: '4. Exploit', label: 'Redis CWE-306', desc: 'Missing Authentication', nodeId: 'Unauthenticated Redis Cache' },
+        { stage: '5. Pivot', label: 'DevOpsBastionSSH', desc: 'Root SSH Session', nodeId: 'DevOpsBastionSSH' },
+        { stage: '6. Objective', label: 'CrownVault', desc: 'Master Secret Enclave', nodeId: 'CrownVault' },
       ],
     };
 
@@ -208,7 +229,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
   // Currently active route
   const activeRoute: AttackRoute = topThreeRoutes[selectedRouteIndex] || topThreeRoutes[0];
 
-  // Synthesize unified nodes & edges to ensure all 3 routes render cleanly on canvas
+  // Synthesize unified nodes & edges to ensure all 6 stages render cleanly
   const { allRenderNodes, allRenderEdges } = useMemo(() => {
     const nodeMap = new Map<string, any>();
     const edgeList: GraphEdge[] = [...graphEdges];
@@ -225,8 +246,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           nodeMap.set(step.nodeId, {
             id: step.nodeId,
             label: step.label,
-            node_type: idx === 0 ? 'domain' : idx === 1 ? 'service' : idx === 2 ? 'vulnerability' : idx === 3 ? 'pivot' : 'target',
-            risk_score: idx === 2 ? 9.8 : idx === 4 ? 10.0 : 4.5,
+            node_type:
+              idx === 0
+                ? 'osint'
+                : idx === 1
+                ? 'domain'
+                : idx === 2
+                ? 'service'
+                : idx === 3
+                ? 'vulnerability'
+                : idx === 4
+                ? 'pivot'
+                : 'target',
+            risk_score: idx === 3 ? 9.8 : idx === 5 ? 10.0 : idx === 0 ? 2.0 : 4.5,
           });
         }
       });
@@ -247,42 +279,45 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     };
   }, [graphNodes, graphEdges, topThreeRoutes]);
 
-  // Classify nodes into 5 topological columns
+  // Classify nodes into 6 topological columns
   const categorizedNodes = useMemo(() => {
-    const col0: any[] = []; // Ingress / Apex
-    const col1: any[] = []; // Services / Listeners
-    const col2: any[] = []; // Vulnerabilities / Exploits
-    const col3: any[] = []; // Lateral Pivots
-    const col4: any[] = []; // Crown Jewels
+    const col0: any[] = []; // Stage 1: Passive OSINT
+    const col1: any[] = []; // Stage 2: Ingress / Apex
+    const col2: any[] = []; // Stage 3: Services / Listeners
+    const col3: any[] = []; // Stage 4: Vulnerabilities / Exploits
+    const col4: any[] = []; // Stage 5: Lateral Pivots
+    const col5: any[] = []; // Stage 6: Crown Jewels
 
     allRenderNodes.forEach((node) => {
       const idLower = (node.id || '').toLowerCase();
       const typeLower = (node.node_type || node.type || '').toLowerCase();
 
       if (idLower === 'coredb' || idLower === 'paymentgateway' || idLower === 'crownvault' || typeLower === 'target' || typeLower === 'critical_target') {
-        col4.push({ ...node, stageIndex: 4, stageLabel: 'CROWN JEWEL', badgeColor: '#008744', icon: '💎' });
+        col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#10843E', icon: '💎' });
       } else if (idLower === 'internalauth' || idLower === 'nginxreverseproxy' || idLower === 'devopsbastionssh' || typeLower === 'pivot' || idLower.includes('auth') || idLower.includes('proxy')) {
-        col3.push({ ...node, stageIndex: 3, stageLabel: 'LATERAL PIVOT', badgeColor: '#6366F1', icon: '🔑' });
+        col4.push({ ...node, stageIndex: 4, stageLabel: 'LATERAL PIVOT', badgeColor: '#6366F1', icon: '🔑' });
       } else if (typeLower === 'vulnerability' || idLower.includes('cve') || idLower.includes('cwe') || idLower.includes('vuln') || idLower.includes('exploit')) {
-        col2.push({ ...node, stageIndex: 2, stageLabel: 'WEAPONIZED EXPLOIT', badgeColor: '#DC2626', icon: '⚡' });
+        col3.push({ ...node, stageIndex: 3, stageLabel: 'WEAPONIZED EXPLOIT', badgeColor: '#E63926', icon: '⚡' });
       } else if (typeLower === 'service' || node.id.includes(':') || typeLower.includes('port')) {
-        col1.push({ ...node, stageIndex: 1, stageLabel: 'SERVICE LISTENER', badgeColor: '#0284C7', icon: '🔌' });
+        col2.push({ ...node, stageIndex: 2, stageLabel: 'SERVICE LISTENER', badgeColor: '#0284C7', icon: '🔌' });
+      } else if (idLower.includes('crt.sh') || idLower.includes('doh') || idLower.includes('rdap') || idLower.includes('osint') || typeLower === 'osint' || typeLower === 'passive') {
+        col0.push({ ...node, stageIndex: 0, stageLabel: 'PASSIVE OSINT', badgeColor: '#8B5CF6', icon: '🔍' });
       } else {
-        col0.push({ ...node, stageIndex: 0, stageLabel: 'PERIMETER INGRESS', badgeColor: '#0F172A', icon: '🌐' });
+        col1.push({ ...node, stageIndex: 1, stageLabel: 'PERIMETER INGRESS', badgeColor: '#111216', icon: '🌐' });
       }
     });
 
-    return [col0, col1, col2, col3, col4];
+    return [col0, col1, col2, col3, col4, col5];
   }, [allRenderNodes]);
 
-  // Calculate 2D coordinates for the canvas
+  // Calculate 2D coordinates for the canvas (6 Column Layout)
   const layout = useMemo(() => {
-    const CANVAS_WIDTH = 1240;
+    const CANVAS_WIDTH = 1440;
     const maxNodesInCol = Math.max(...categorizedNodes.map((c) => c.length), 3);
     const CANVAS_HEIGHT = Math.max(540, maxNodesInCol * 105 + 80);
 
-    const colXPositions = [130, 380, 640, 890, 1120];
-    const nodeWidth = 200;
+    const colXPositions = [115, 360, 605, 850, 1095, 1335];
+    const nodeWidth = 185;
     const nodeHeight = 72;
 
     const positionedNodes: Record<string, { x: number; y: number; w: number; h: number; node: any }> = {};
@@ -387,16 +422,18 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     } catch {
       setAiPathExplanation(
         `### TOPOLOGICAL ATTACK ROUTE ANALYSIS // ${activeRoute.title}\n\n` +
-        `**1. Ingress Breach:**\n` +
-        `Adversary discovers host \`${activeRoute.source_node}\` and detects an unhardened service port.\n\n` +
-        `**2. Exploitation:**\n` +
-        `Weaponizes **${activeRoute.exploitCve} (${activeRoute.exploitName})** to establish remote code execution.\n\n` +
-        `**3. Lateral Movement:**\n` +
-        `Pivots through intermediate authorization channels (${activeRoute.path_nodes.slice(1, -1).join(' ➔ ')}).\n\n` +
-        `**4. Critical Objective Breach:**\n` +
-        `Attacker gains direct database query privilege on **${activeRoute.target_node}** in approximately ${activeRoute.timeEstimate}.\n\n` +
-        `**5. Remediation Action:**\n` +
-        `Deploy the 1-click autonomous boundary shield on Guard to drop all malicious packet signatures matching ${activeRoute.exploitCve}.`
+        `**1. Phase 1: Passive OSINT Reconnaissance:**\n` +
+        `Adversary queries public intelligence sources (\`${activeRoute.source_node}\`) without sending a single packet to target servers, unearthing public SSL records and host mappings.\n\n` +
+        `**2. Phase 2: Ingress Target Discovery:**\n` +
+        `Identifies apex host \`${activeRoute.path_nodes[1]}\` and uncovers exposed service port \`${activeRoute.path_nodes[2]}\`.\n\n` +
+        `**3. Phase 3: Vulnerability Exploitation:**\n` +
+        `Weaponizes **${activeRoute.exploitCve} (${activeRoute.exploitName})** to establish initial foothold.\n\n` +
+        `**4. Phase 4: Lateral Movement:**\n` +
+        `Pivots laterally through intermediate authorization hops (\`${activeRoute.path_nodes[4]}\`).\n\n` +
+        `**5. Phase 5: Critical Objective Breach:**\n` +
+        `Adversary achieves database compromise on **${activeRoute.target_node}** in approximately ${activeRoute.timeEstimate}.\n\n` +
+        `**6. Autonomous Defensive Mitigation:**\n` +
+        `Deploy the 1-click autonomous boundary shield on Guard to drop malicious packet signatures matching ${activeRoute.exploitCve}.`
       );
       setAiProviderUsed('DRISHTI Deterministic Graph Engine');
     } finally {
@@ -423,7 +460,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               </span>
             </div>
             <p className="text-[10px] text-charcoal mt-0.5">
-              Interactive 5-stage Dijkstra traversal mapping the <strong>TOP 3 Critical Attack Routes</strong> from perimeter ingress directly to Crown Jewels.
+              End-to-end 6-stage Dijkstra traversal: <strong>Passive OSINT Reconnaissance ➔ Ingress ➔ Services ➔ Exploits ➔ Lateral Pivot ➔ Crown Jewels</strong>.
             </p>
           </div>
 
@@ -476,7 +513,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               </span>
             </div>
             <span className="text-[10px] text-charcoal font-mono">
-              Shortest Dijkstra Weighted Vector Algorithm
+              Includes Passive OSINT Attribution
             </span>
           </div>
 
@@ -513,7 +550,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   </div>
 
                   <div className="text-[11px] font-bold text-ink line-clamp-1">
-                    {route.exploitCve} ➔ {route.target_node}
+                    {route.source_node.split(' ')[0]} ➔ {route.exploitCve} ➔ {route.target_node}
                   </div>
 
                   <div className="text-[10px] text-charcoal line-clamp-2 leading-relaxed">
@@ -521,7 +558,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   </div>
 
                   <div className="pt-1.5 border-t border-hairlineLight flex items-center justify-between text-[9px] text-charcoal">
-                    <span>HOPS: <strong className="text-ink">{route.path_nodes.length}</strong></span>
+                    <span>STAGES: <strong className="text-ink">6 PHASES</strong></span>
                     <span>RESISTANCE: <strong className="text-ink">{route.resistanceCost.toFixed(2)}</strong></span>
                     <span className={`font-bold ${isSelected ? 'text-vermilion' : 'text-charcoal'}`}>
                       {isSelected ? '● ACTIVE VECTOR' : '○ SELECT ROUTE'}
@@ -534,7 +571,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. PLAIN-ENGLISH ATTACK STEP-BY-STEP STORYBOARD                           */}
+        {/* 3. 6-STAGE PLAIN-ENGLISH ATTACK STORYBOARD (WITH PASSIVE RECON)           */}
         {/* ========================================================================= */}
         <div className="bg-pureWhite border border-hairline p-4 shadow-xs space-y-3 font-mono">
           <div className="flex items-center justify-between border-b border-hairlineLight pb-2">
@@ -549,8 +586,8 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             </div>
           </div>
 
-          {/* 5-Step Traversal Flow Pills */}
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1">
+          {/* 6-Step Traversal Flow Pills */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
             {activeRoute.steps.map((step, idx) => (
               <div
                 key={idx}
@@ -558,7 +595,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               >
                 <div className="flex items-center justify-between text-[9px] text-charcoal font-bold">
                   <span>{step.stage}</span>
-                  {idx < 4 && <span className="hidden sm:inline text-pencil font-bold">➔</span>}
+                  {idx < 5 && <span className="hidden lg:inline text-pencil font-bold">➔</span>}
                 </div>
                 <div className="text-xs font-bold text-ink truncate" title={step.label}>
                   {step.label}
@@ -570,9 +607,9 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             ))}
           </div>
 
-          <div className="p-2 bg-boneDark/50 border border-hairline text-[10px] text-charcoal flex items-center justify-between">
+          <div className="p-2.5 bg-boneDark/50 border border-hairline text-[10px] text-charcoal flex items-center justify-between">
             <span>
-              📖 <strong>HOW THIS ATTACK WORKS:</strong> {activeRoute.summary}
+              🔍 <strong>STAGE 1 PASSIVE RECONNAISSANCE INTEL:</strong> Adversary gathers reconnaissance via public Certificate Transparency logs (crt.sh), DNS DoH queries, and RDAP without triggering target firewalls.
             </span>
             <button
               onClick={() => onNavigate?.('guard')}
@@ -584,7 +621,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. INTERACTIVE ZOOMABLE & PANNABLE SVG CANVAS                             */}
+        {/* 4. INTERACTIVE ZOOMABLE & PANNABLE SVG CANVAS (6 TOPOLOGICAL STAGES)      */}
         {/* ========================================================================= */}
         <div className="bg-pureWhite border border-hairline shadow-xs overflow-hidden relative">
 
@@ -621,27 +658,31 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             🖱️ <strong>CANVAS CONTROLS:</strong> Click & Drag to Pan • Scroll to Zoom In/Out • Click node to inspect
           </div>
 
-          {/* 5 Column Stage Header */}
-          <div className="grid grid-cols-5 border-b border-hairline bg-[#F8FAFC] text-[10px] font-mono font-bold text-charcoal text-center py-2.5 z-10 relative">
+          {/* 6 Column Stage Header */}
+          <div className="grid grid-cols-6 border-b border-hairline bg-[#FAF8F3] text-[10px] font-mono font-bold text-charcoal text-center py-2.5 z-10 relative">
             <div className="border-r border-hairlineLight flex items-center justify-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-[#0F172A]"></span>
-              <span>STAGE 01 // INGRESS</span>
+              <span className="w-1.5 h-1.5 bg-[#8B5CF6]"></span>
+              <span>STAGE 01 // PASSIVE OSINT</span>
+            </div>
+            <div className="border-r border-hairlineLight flex items-center justify-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-[#111216]"></span>
+              <span>STAGE 02 // INGRESS APEX</span>
             </div>
             <div className="border-r border-hairlineLight flex items-center justify-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-[#0284C7]"></span>
-              <span>STAGE 02 // SERVICES</span>
+              <span>STAGE 03 // SERVICES</span>
             </div>
             <div className="border-r border-hairlineLight flex items-center justify-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-[#DC2626]"></span>
-              <span>STAGE 03 // EXPLOITS</span>
+              <span className="w-1.5 h-1.5 bg-[#E63926]"></span>
+              <span>STAGE 04 // EXPLOITS</span>
             </div>
             <div className="border-r border-hairlineLight flex items-center justify-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-[#6366F1]"></span>
-              <span>STAGE 04 // LATERAL PIVOT</span>
+              <span>STAGE 05 // LATERAL PIVOT</span>
             </div>
             <div className="flex items-center justify-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-[#008744]"></span>
-              <span>STAGE 05 // CROWN JEWELS</span>
+              <span className="w-1.5 h-1.5 bg-[#10843E]"></span>
+              <span>STAGE 06 // CROWN JEWELS</span>
             </div>
           </div>
 
@@ -673,7 +714,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   markerHeight="6"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#CBD5E1" />
+                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#D8D2C5" />
                 </marker>
 
                 <marker
@@ -685,7 +726,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   markerHeight="6"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#DC2626" />
+                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#E63926" />
                 </marker>
 
                 <filter id="laser-glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -706,9 +747,9 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
 
               {/* Transform Group for Zoom & Pan */}
               <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
-                
+
                 {/* Column Visual Dividers */}
-                {[255, 510, 765, 1005].map((xPos, idx) => (
+                {[235, 480, 725, 970, 1215].map((xPos, idx) => (
                   <line
                     key={idx}
                     x1={xPos}
@@ -744,7 +785,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                         key={`bg-edge-${idx}`}
                         d={d}
                         fill="none"
-                        stroke="#CBD5E1"
+                        stroke="#D8D2C5"
                         strokeWidth="1.5"
                         strokeDasharray="4 4"
                         opacity="0.35"
@@ -774,15 +815,15 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                         <path
                           d={d}
                           fill="none"
-                          stroke="#EF4444"
+                          stroke="#E63926"
                           strokeWidth="8"
-                          strokeOpacity="0.3"
+                          strokeOpacity="0.25"
                           filter="url(#laser-glow)"
                         />
                         <path
                           d={d}
                           fill="none"
-                          stroke="#DC2626"
+                          stroke="#E63926"
                           strokeWidth="3.5"
                           strokeDasharray="8 6"
                           markerEnd="url(#arrow-active)"
@@ -805,24 +846,27 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                     const w = pos.w;
                     const h = pos.h;
 
-                    let borderColor = '#E2E8F0';
-                    let headerColor = '#0F172A';
+                    let borderColor = '#D8D2C5';
+                    let headerColor = '#111216';
 
-                    if (node.stageIndex === 4) {
-                      borderColor = isOnPath ? '#008744' : '#CBD5E1';
-                      headerColor = '#008744';
-                    } else if (node.stageIndex === 3) {
-                      borderColor = isOnPath ? '#4F46E5' : '#CBD5E1';
+                    if (node.stageIndex === 5) {
+                      borderColor = isOnPath ? '#10843E' : '#D8D2C5';
+                      headerColor = '#10843E';
+                    } else if (node.stageIndex === 4) {
+                      borderColor = isOnPath ? '#4F46E5' : '#D8D2C5';
                       headerColor = '#4F46E5';
+                    } else if (node.stageIndex === 3) {
+                      borderColor = isOnPath ? '#E63926' : '#D8D2C5';
+                      headerColor = '#E63926';
                     } else if (node.stageIndex === 2) {
-                      borderColor = isOnPath ? '#DC2626' : '#CBD5E1';
-                      headerColor = '#DC2626';
-                    } else if (node.stageIndex === 1) {
-                      borderColor = isOnPath ? '#0284C7' : '#CBD5E1';
+                      borderColor = isOnPath ? '#0284C7' : '#D8D2C5';
                       headerColor = '#0284C7';
+                    } else if (node.stageIndex === 0) {
+                      borderColor = isOnPath ? '#8B5CF6' : '#D8D2C5';
+                      headerColor = '#8B5CF6';
                     } else {
-                      borderColor = isOnPath ? '#0F172A' : '#CBD5E1';
-                      headerColor = '#0F172A';
+                      borderColor = isOnPath ? '#111216' : '#D8D2C5';
+                      headerColor = '#111216';
                     }
 
                     return (
@@ -844,7 +888,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                             width={w + 8}
                             height={h + 8}
                             fill="none"
-                            stroke={node.stageIndex === 4 ? '#008744' : '#DC2626'}
+                            stroke={node.stageIndex === 5 ? '#10843E' : node.stageIndex === 0 ? '#8B5CF6' : '#E63926'}
                             strokeWidth="2.5"
                             opacity="0.85"
                             className="animate-pulse"
@@ -900,31 +944,33 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                         <text
                           x="8"
                           y="38"
-                          fill="#090D16"
-                          fontSize="10.5"
+                          fill="#111216"
+                          fontSize="10"
                           fontFamily="monospace"
                           fontWeight="bold"
                         >
-                          {node.id.length > 22 ? `${node.id.slice(0, 20)}..` : node.id}
+                          {node.id.length > 21 ? `${node.id.slice(0, 19)}..` : node.id}
                         </text>
 
                         {/* SubLabel / Risk metric */}
                         <text
                           x="8"
                           y="56"
-                          fill={node.stageIndex === 2 ? '#DC2626' : '#64748B'}
-                          fontSize="9"
+                          fill={node.stageIndex === 3 ? '#E63926' : node.stageIndex === 0 ? '#8B5CF6' : '#6B6F78'}
+                          fontSize="8.5"
                           fontFamily="monospace"
-                          fontWeight={node.stageIndex === 2 ? 'bold' : 'normal'}
+                          fontWeight={node.stageIndex === 3 || node.stageIndex === 0 ? 'bold' : 'normal'}
                         >
-                          {node.stageIndex === 2
+                          {node.stageIndex === 3
                             ? `CVSS ${node.risk_score || '9.8'} CRITICAL`
-                            : node.stageIndex === 4
+                            : node.stageIndex === 5
                             ? 'OBJECTIVE: CROWN JEWEL'
-                            : node.stageIndex === 3
-                            ? 'PIVOT: INTERNAL CREDENTIAL'
-                            : node.stageIndex === 1
+                            : node.stageIndex === 4
+                            ? 'PIVOT: INTERNAL TOKEN'
+                            : node.stageIndex === 2
                             ? 'EXPOSED TCP LISTENER'
+                            : node.stageIndex === 0
+                            ? 'PUBLIC OSINT INTELLIGENCE'
                             : 'INGRESS APEX ENTRY'}
                         </text>
                       </g>
@@ -967,7 +1013,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               <div className="p-2.5 bg-[#FAF8F5] border border-hairline">
                 <span className="text-[9px] text-charcoal block uppercase">Risk Evaluation</span>
                 <span className="font-bold text-vermilion">
-                  {selectedNode.risk_score ? `${selectedNode.risk_score} / 10.0` : '1.0 (Low)'}
+                  {selectedNode.risk_score ? `${selectedNode.risk_score} / 10.0` : selectedNode.stageIndex === 0 ? 'OSINT (Public)' : '1.0 (Low)'}
                 </span>
               </div>
               <div className="p-2.5 bg-[#FAF8F5] border border-hairline">
@@ -977,16 +1023,18 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                 </span>
               </div>
               <div className="p-2.5 bg-[#FAF8F5] border border-hairline">
-                <span className="text-[9px] text-charcoal block uppercase">Verification Status</span>
-                <span className="font-bold text-signalGreen">
-                  100% [OBSERVED IN RECON]
+                <span className="text-[9px] text-charcoal block uppercase">Stage Classification</span>
+                <span className="font-bold text-ink">
+                  {selectedNode.stageLabel}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-hairlineLight">
               <div className="text-[10px] text-charcoal">
-                Defensive Action: Micro-segmentation and firewall edge drop will sever adversary path to this node.
+                {selectedNode.stageIndex === 0
+                  ? 'Passive OSINT Intel: Public discovery source collected without sending any packets to target infrastructure.'
+                  : 'Defensive Action: Micro-segmentation and firewall edge drop will sever adversary path to this node.'}
               </div>
               <button
                 onClick={() => onNavigate?.('guard')}
@@ -998,8 +1046,8 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           </div>
         ) : (
           <div className="p-3 bg-pureWhite border border-hairline text-charcoal text-[10px] font-mono flex items-center justify-between">
-            <span>💡 <strong>OPERATOR GUIDE:</strong> Click on <strong>Route #1</strong>, <strong>Route #2</strong>, or <strong>Route #3</strong> above to switch active attack vectors. Use mouse drag and scroll wheel on the canvas to zoom in/out and pan.</span>
-            <span className="text-pencil font-bold">Top 3 Vectors Active</span>
+            <span>💡 <strong>OPERATOR GUIDE:</strong> The attack graph starts at <strong>Stage 01: Passive OSINT</strong> showing how the attacker discovers your perimeter without touching your servers. Click on <strong>Route #1</strong>, <strong>Route #2</strong>, or <strong>Route #3</strong> to inspect alternative vectors.</span>
+            <span className="text-pencil font-bold">6 Phases Active</span>
           </div>
         )}
 

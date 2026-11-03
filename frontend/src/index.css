@@ -1,9 +1,11 @@
 :root {
-  --color-bg-base: #F4F6F9;
+  --color-bg-base: #F5F2EB;
   --color-card-surface: #FFFFFF;
-  --color-brand: #008744;
-  --color-vermilion: #DC2626;
+  --color-brand: #10843E;
+  --color-vermilion: #E63926;
   --color-cyan: #0284C7;
+  --color-hairline: #1E2024;
+  --color-hairline-light: #D8D2C5;
 }
 
 * {
@@ -18,15 +20,54 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background-color: #F4F6F9;
-  color: #090D16;
+  background-color: #F5F2EB;
+  color: #111216;
 }
 
 body {
-  background-color: #F4F6F9;
-  color: #090D16;
+  background-color: #F5F2EB;
+  color: #111216;
   font-family: 'JetBrains Mono', monospace;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* ========================================================================= */
+/* TACTILE ARCHIVAL POSTER PAPER & RISOGRAPH GRAIN TEXTURE                   */
+/* ========================================================================= */
+
+/* Physical paper tooth & fiber noise across the entire software */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.048;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperGrain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperGrain)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* Subtle unfolded poster crease & archival print lighting vignette */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.38;
+  background-image:
+    /* Fine subtle vertical crease */
+    linear-gradient(90deg, transparent 49.8%, rgba(18, 19, 22, 0.02) 50%, rgba(255, 255, 255, 0.06) 50.2%, transparent 50.4%),
+    /* Fine subtle horizontal crease */
+    linear-gradient(180deg, transparent 49.8%, rgba(18, 19, 22, 0.02) 50%, rgba(255, 255, 255, 0.06) 50.2%, transparent 50.4%),
+    /* Gentle paper parchment vignette */
+    radial-gradient(ellipse at 50% 48%, rgba(255, 255, 255, 0.3) 0%, rgba(245, 242, 235, 0.08) 60%, rgba(215, 208, 195, 0.28) 100%);
+  mix-blend-mode: multiply;
 }
 
 /* Material Symbols */
@@ -35,67 +76,67 @@ body {
   user-select: none;
 }
 
-/* High-Tech Hacker Tactical Grid in Light Mode */
+/* High-Tech Tactical Drafting Grid on Warm Archival Paper */
 .paper-grid {
   background-size: 24px 24px;
   background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(18, 19, 22, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 19, 22, 0.055) 1px, transparent 1px);
 }
 .paper-grid-dense {
   background-size: 12px 12px;
   background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(18, 19, 22, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 19, 22, 0.045) 1px, transparent 1px);
 }
 
-/* Technical Barcode Strips in Light Hacker Style */
+/* Technical Barcode Strips in Carbon Print & Vermilion */
 .barcode-strip {
   background: repeating-linear-gradient(
     90deg,
-    #090D16 0px,
-    #090D16 2px,
+    #111216 0px,
+    #111216 2px,
     transparent 2px,
     transparent 4px,
-    #090D16 4px,
-    #090D16 7px,
+    #111216 4px,
+    #111216 7px,
     transparent 7px,
     transparent 9px,
-    #008744 9px,
-    #008744 12px
+    #E63926 9px,
+    #E63926 12px
   );
   height: 14px;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 .barcode-strip-sm {
   background: repeating-linear-gradient(
     90deg,
-    #090D16 0px,
-    #090D16 1.5px,
+    #111216 0px,
+    #111216 1.5px,
     transparent 1.5px,
     transparent 3px,
-    #008744 3px,
-    #008744 5px,
+    #E63926 3px,
+    #E63926 5px,
     transparent 5px,
     transparent 6px
   );
   height: 10px;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
-/* Tactical Cyber Scrollbars (Light Lab Mode) */
+/* Editorial Print Scrollbars */
 .scrollbar-tactical::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 .scrollbar-tactical::-webkit-scrollbar-track {
-  background: #EAEFF5;
+  background: #ECE8DF;
 }
 .scrollbar-tactical::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #A8A398;
 }
 .scrollbar-tactical::-webkit-scrollbar-thumb:hover {
-  background: #008744;
+  background: #E63926;
 }
 
 ::-webkit-scrollbar {
@@ -103,23 +144,23 @@ body {
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #EAEFF5;
+  background: #ECE8DF;
 }
 ::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #A8A398;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #008744;
+  background: #E63926;
 }
 
-/* Form Inputs in Light Technical Hacker Aesthetic */
-input, select, textarea {
+/* Form Inputs in Archival Poster Aesthetic */
+input:not(.cli-terminal-input), select, textarea {
   background-color: #FFFFFF !important;
-  color: #090D16 !important;
-  border: 1px solid #0F172A !important;
+  color: #111216 !important;
+  border: 1px solid #1E2024 !important;
 }
-input:focus, select:focus, textarea:focus {
-  border-color: #008744 !important;
-  box-shadow: 0 0 0 1px #008744 !important;
+input:not(.cli-terminal-input):focus, select:focus, textarea:focus {
+  border-color: #E63926 !important;
+  box-shadow: 0 0 0 1px #E63926 !important;
   outline: none !important;
 }

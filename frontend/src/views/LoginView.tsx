@@ -113,7 +113,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       list.push({
         points,
         width: 0.7 + Math.random() * 1.5,
-        color: Math.random() > 0.35 ? '#B91C1C' : '#991B1B',
+        color: Math.random() > 0.35 ? '#BA2415' : '#8F1B0F',
         alpha: 0.65 + Math.random() * 0.35,
       });
     }
@@ -137,7 +137,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       list.push({
         points,
         width: 0.4 + Math.random() * 0.4,
-        color: '#DC2626',
+        color: '#E63926',
         alpha: 0.45 + Math.random() * 0.35,
       });
     }
@@ -155,13 +155,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       const roll = Math.random();
       let col: string;
       if (roll > 0.84) {
-        col = 'rgba(220, 38, 38, 0.85)'; // blood red nerve fiber
+        col = 'rgba(230, 57, 38, 0.88)'; // screenprint vermilion
       } else if (roll > 0.52) {
-        col = 'rgba(2, 132, 199, 0.8)';  // piercing electric cobalt
+        col = 'rgba(2, 132, 199, 0.8)';  // piercing cobalt
       } else if (roll > 0.25) {
-        col = 'rgba(224, 242, 254, 0.9)'; // cold pale ice steel
+        col = 'rgba(245, 242, 235, 0.9)'; // warm eggshell
       } else {
-        col = 'rgba(15, 23, 42, 0.85)';  // deep sinister obsidian
+        col = 'rgba(17, 18, 22, 0.88)';  // deep carbon ink
       }
       list.push({
         angle,
@@ -285,27 +285,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       ctx.arc(CENTER, CENTER, CENTER - 2, 0, Math.PI * 2);
       ctx.clip();
 
-      // 1. Sclera with realistic bloodshot gradients
+      // 1. Sclera with warm tactile paper tone & realistic bloodshot gradients
       const scleraGrad = ctx.createRadialGradient(CENTER, CENTER, 20, CENTER, CENTER, CENTER);
-      scleraGrad.addColorStop(0, '#FFFFFF');
-      scleraGrad.addColorStop(0.5, '#F8FAFC');
-      scleraGrad.addColorStop(0.75, '#FEE2E2');
-      scleraGrad.addColorStop(0.92, '#E2E8F0');
-      scleraGrad.addColorStop(1.0, '#CBD5E1');
+      scleraGrad.addColorStop(0, '#FFFFFC');
+      scleraGrad.addColorStop(0.5, '#F7F4EB');
+      scleraGrad.addColorStop(0.75, '#FDE8E4');
+      scleraGrad.addColorStop(0.92, '#E4DFD4');
+      scleraGrad.addColorStop(1.0, '#CFC8BA');
       ctx.fillStyle = scleraGrad;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
       // Hemorrhagic corner suffusion flushes
       const flushLeft = ctx.createRadialGradient(16, CENTER, 2, 36, CENTER, 110);
-      flushLeft.addColorStop(0, 'rgba(220, 38, 38, 0.65)');
-      flushLeft.addColorStop(0.6, 'rgba(185, 28, 28, 0.25)');
+      flushLeft.addColorStop(0, 'rgba(230, 57, 38, 0.65)');
+      flushLeft.addColorStop(0.6, 'rgba(186, 36, 21, 0.25)');
       flushLeft.addColorStop(1, 'transparent');
       ctx.fillStyle = flushLeft;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
       const flushRight = ctx.createRadialGradient(SIZE - 16, CENTER, 2, SIZE - 36, CENTER, 110);
-      flushRight.addColorStop(0, 'rgba(220, 38, 38, 0.65)');
-      flushRight.addColorStop(0.6, 'rgba(185, 28, 28, 0.25)');
+      flushRight.addColorStop(0, 'rgba(230, 57, 38, 0.65)');
+      flushRight.addColorStop(0.6, 'rgba(186, 36, 21, 0.25)');
       flushRight.addColorStop(1, 'transparent');
       ctx.fillStyle = flushRight;
       ctx.fillRect(0, 0, SIZE, SIZE);
@@ -343,11 +343,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       // Iris base radial gradient
       const irisGrad = ctx.createRadialGradient(irisX, irisY, p.pupilRadius * 0.7, irisX, irisY, IRIS_RADIUS);
-      irisGrad.addColorStop(0, '#0F172A');
+      irisGrad.addColorStop(0, '#111216');
       irisGrad.addColorStop(0.2, '#0369A1');
       irisGrad.addColorStop(0.55, '#0284C7');
       irisGrad.addColorStop(0.78, '#38BDF8');
-      irisGrad.addColorStop(0.92, '#DC2626');
+      irisGrad.addColorStop(0.92, '#E63926');
       irisGrad.addColorStop(1.0, '#090D16');
       ctx.fillStyle = irisGrad;
       ctx.beginPath();
@@ -484,14 +484,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setAuthStatus({
         custom: true,
         text: 'CLINICAL_INTERCEPT_ACTIVE // ESCALATING_PRIVILEGES // INGESTING_BIOMETRIC_SEED',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#DC2626] bg-[#FEF2F2] border border-[#DC2626]/40 font-bold py-1 min-h-[16px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#E63926] bg-[#FDF2F0] border border-[#E63926]/40 font-bold py-1 min-h-[16px]',
       });
       triggerBlink(80);
     } else {
       setAuthStatus({
         custom: true,
         text: 'AWAITING_BIOMETRIC_TOKEN_VALIDATION // AUTH_CHALLENGE_ID: 981-FC7',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#475569] bg-[#F1F5F9] border border-[#CBD5E1] py-1 font-semibold min-h-[16px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#484B53] bg-[#FAF8F3] border border-[#D8D2C5] py-1 font-semibold min-h-[16px]',
       });
     }
   };
@@ -519,13 +519,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setBootProgress(10);
     setEngineBadge({
       text: 'COLD_REBOOT_TRIGGERED',
-      className: 'text-[9px] px-1.5 py-0.5 bg-[#DC2626]/15 text-[#DC2626] border border-[#DC2626]/50 font-bold',
+      className: 'text-[9px] px-1.5 py-0.5 bg-[#E63926]/15 text-[#E63926] border border-[#E63926]/50 font-bold',
     });
     setBootDiagLabel('PURGING CRYPTOGRAPHIC SENSORS & FLUSHING BUFFER...');
     setAuthStatus({
       custom: true,
       text: 'SYS_REBOOT_TRIGGERED // RETESTING OPTO-ELECTRONIC MATRIX',
-      className: 'text-center text-[9px] tracking-[0.14em] text-[#DC2626] bg-[#FEF2F2] border border-[#DC2626]/40 font-bold py-1 min-h-[16px]',
+      className: 'text-center text-[9px] tracking-[0.14em] text-[#E63926] bg-[#FDF2F0] border border-[#E63926]/40 font-bold py-1 min-h-[16px]',
     });
 
     setStages({ step1: false, step2: false, step3: false, step4: false });
@@ -547,13 +547,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setStages({ step1: true, step2: true, step3: true, step4: false });
       setEngineBadge({
         text: 'DEFCON-1: [RECON_ACTIVE]',
-        className: 'text-[9px] px-1.5 py-0.5 bg-[#DC2626]/20 text-[#DC2626] border border-[#DC2626]/60 font-bold',
+        className: 'text-[9px] px-1.5 py-0.5 bg-[#E63926]/20 text-[#E63926] border border-[#E63926]/60 font-bold',
       });
       setBootDiagLabel('CIPHER_SUITE: CHACHA20-POLY1305 // NEURAL_TAP: SYNCED');
       setAuthStatus({
         custom: true,
         text: 'CALIBRATION COMPLETE // SUBJECT LOCKED // READY FOR JWT INGESTION',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#475569] bg-[#F1F5F9] border border-[#CBD5E1] py-1 font-semibold min-h-[16px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#484B53] bg-[#FAF8F3] border border-[#D8D2C5] py-1 font-semibold min-h-[16px]',
       });
       triggerBlink(110);
     }, 1500);
@@ -577,7 +577,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setAuthStatus({
       custom: true,
       text: 'ACTIVE_PERSON_SCAN: PHOTOMETRIC STEREO MATCHING // EXTRACTING 4096-BIT RETINA HASH...',
-      className: 'text-center text-[9px] tracking-[0.14em] text-[#DC2626] bg-[#FEF2F2] border border-[#DC2626]/50 font-bold py-1 min-h-[16px]',
+      className: 'text-center text-[9px] tracking-[0.14em] text-[#E63926] bg-[#FDF2F0] border border-[#E63926]/50 font-bold py-1 min-h-[16px]',
     });
     setBootProgress(90);
 
@@ -585,7 +585,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       setAuthStatus({
         custom: true,
         text: 'DERIVING ZERO-KNOWLEDGE PROOF FROM SUBJECT BIOMETRIC ENTROPY...',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#B91C1C] bg-[#FEF2F2] font-mono py-1 min-h-[16px]',
+        className: 'text-center text-[9px] tracking-[0.14em] text-[#BA2415] bg-[#FDF2F0] font-mono py-1 min-h-[16px]',
       });
       physicsRef.current.targetPupilRadius = 18;
     }, 900);
@@ -658,36 +658,36 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   }, [simulateAuth]);
 
   return (
-    <div className="relative flex flex-col justify-between w-full min-h-screen bg-[#FAF8FF] lab-grid-bg text-[#0F172A] select-none p-2 md:p-3 font-mono overflow-x-hidden">
+    <div className="relative flex flex-col justify-between w-full min-h-screen bg-[#F5F2EB] lab-grid-bg text-[#111216] select-none p-2 md:p-3 font-mono overflow-x-hidden">
       {/* Local Scoped Keyframe & Technical Styles */}
       <style>{`
-        /* Clinical Millimeter Grid Background */
+        /* Tactile Poster Paper & Millimeter Grid Background */
         .lab-grid-bg {
           background-image: 
-            linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-            linear-gradient(to right, rgba(220, 38, 38, 0.035) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(220, 38, 38, 0.035) 1px, transparent 1px);
+            linear-gradient(to right, rgba(18, 19, 22, 0.055) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(18, 19, 22, 0.055) 1px, transparent 1px),
+            linear-gradient(to right, rgba(230, 57, 38, 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(230, 57, 38, 0.04) 1px, transparent 1px);
           background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
         }
 
-        /* Subtle Technical Reticle Vignette */
+        /* Subtle Archival Print Reticle Vignette */
         .clinical-overlay {
           position: fixed;
           inset: 0;
           pointer-events: none;
           z-index: 45;
-          background: radial-gradient(circle at center, transparent 60%, rgba(203, 213, 225, 0.2) 90%, rgba(148, 163, 184, 0.35) 100%),
-                      linear-gradient(rgba(15, 23, 42, 0.015) 50%, rgba(255, 255, 255, 0.015) 50%);
+          background: radial-gradient(circle at center, transparent 60%, rgba(216, 210, 197, 0.25) 90%, rgba(180, 172, 158, 0.35) 100%),
+                      linear-gradient(rgba(18, 19, 22, 0.015) 50%, rgba(255, 255, 255, 0.015) 50%);
           background-size: 100% 100%, 100% 4px;
         }
 
         /* High-contrast Chromatic Jitter */
         @keyframes chromaticAlert {
-          0%, 100% { text-shadow: -1px 0 rgba(220, 38, 38, 0.5), 1px 0 rgba(2, 132, 199, 0.5); }
-          20% { text-shadow: -2px 0 rgba(220, 38, 38, 0.8), 2px 0 rgba(2, 132, 199, 0.8); }
-          40% { text-shadow: 1px -1px rgba(220, 38, 38, 0.4), -1px 1px rgba(5, 150, 105, 0.5); }
-          80% { text-shadow: -0.5px 0 rgba(220, 38, 38, 0.6), 0.5px 0 rgba(2, 132, 199, 0.6); }
+          0%, 100% { text-shadow: -1px 0 rgba(230, 57, 38, 0.5), 1px 0 rgba(2, 132, 199, 0.5); }
+          20% { text-shadow: -2px 0 rgba(230, 57, 38, 0.8), 2px 0 rgba(2, 132, 199, 0.8); }
+          40% { text-shadow: 1px -1px rgba(230, 57, 38, 0.4), -1px 1px rgba(16, 132, 62, 0.5); }
+          80% { text-shadow: -0.5px 0 rgba(230, 57, 38, 0.6), 0.5px 0 rgba(2, 132, 199, 0.6); }
         }
         .glitch-chroma {
           animation: chromaticAlert 3s infinite ease-in-out;
@@ -727,7 +727,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           left: 0;
           width: 100%;
           height: 50%;
-          background: #020617;
+          background: #111216;
           z-index: 28;
           pointer-events: none;
           transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.3, 1);
@@ -735,14 +735,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         .eyelid-upper {
           top: 0;
           transform-origin: top;
-          border-bottom: 2px solid rgba(220, 38, 38, 0.9);
+          border-bottom: 2px solid rgba(230, 57, 38, 0.9);
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
           transform: translateY(-101%);
         }
         .eyelid-lower {
           bottom: 0;
           transform-origin: bottom;
-          border-top: 2px solid rgba(220, 38, 38, 0.9);
+          border-top: 2px solid rgba(230, 57, 38, 0.9);
           box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.9);
           transform: translateY(101%);
         }
@@ -788,7 +788,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       {/* Fullscreen flash overlay on biometric capture / unlock */}
       <div
-        className="pointer-events-none fixed inset-0 z-50 bg-[#DC2626] transition-opacity duration-300"
+        className="pointer-events-none fixed inset-0 z-50 bg-[#E63926] transition-opacity duration-300"
         id="flashOverlay"
         style={{ opacity: flashOpacity }}
       ></div>
@@ -797,23 +797,23 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* 1. TOP HEADER // STERILE CLINICAL DEFENSE LAB HUD */}
       {/* ========================================== */}
       <header className="relative z-30 w-full mb-2">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center bg-white/95 border-2 border-[#CBD5E1] px-4 py-2.5 shadow-[0_4px_20px_rgba(15,23,42,0.06)] backdrop-blur-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center bg-[#FAF8F3]/95 border-2 border-[#D8D2C5] px-4 py-2.5 shadow-[0_4px_20px_rgba(18,19,22,0.06)] backdrop-blur-md">
           {/* Left Section (4 cols): System ID, Kernel & Enclave Diagnostics */}
           <div className="lg:col-span-4 flex flex-col gap-0.5 text-[11px] tracking-[0.06em]">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-block w-2.5 h-2.5 bg-[#DC2626] animate-ping" id="sysStatusBeacon"></span>
-              <span className="text-[#0F172A] font-extrabold tracking-[0.12em] glitch-chroma">
+              <span className="inline-block w-2.5 h-2.5 bg-[#E63926] animate-ping" id="sysStatusBeacon"></span>
+              <span className="text-[#111216] font-extrabold tracking-[0.12em] glitch-chroma">
                 LAB_ID // DRISHTI_CLINICAL_SYS_V3.1
               </span>
               <span className={engineBadge.className} id="engineBadge">
                 {engineBadge.text}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[9.5px] text-[#475569]">
-              <span>KERNEL: <span className="text-[#0F172A] font-bold">SEC-ARCH-09.r4</span></span>
-              <span className="text-[#059669] font-mono px-1 bg-[#059669]/10 border border-[#059669]/30 font-semibold">[SELINUX_ENFORCING]</span>
+            <div className="flex items-center gap-2 text-[9.5px] text-[#484B53]">
+              <span>KERNEL: <span className="text-[#111216] font-bold">SEC-ARCH-09.r4</span></span>
+              <span className="text-[#10843E] font-mono px-1 bg-[#10843E]/10 border border-[#10843E]/30 font-semibold">[SELINUX_ENFORCING]</span>
               <span className="text-[#0284C7] font-mono px-1 bg-[#0284C7]/10 border border-[#0284C7]/30 font-semibold">[RPC_TLS1.3]</span>
-              <span className="text-[#64748B]">CYCLE: <span className="text-[#0F172A] font-bold" id="telemetryCycle">{telemetryCycle}</span></span>
+              <span className="text-[#6B6F78]">CYCLE: <span className="text-[#111216] font-bold" id="telemetryCycle">{telemetryCycle}</span></span>
             </div>
           </div>
 
@@ -824,46 +824,46 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               <div
                 className={`px-1 py-1 text-center flex items-center justify-center gap-1 shadow-sm ${
                   stages.step1
-                    ? 'bg-[#F1F5F9] border border-[#059669]/50'
-                    : 'bg-[#F1F5F9] border border-[#CBD5E1]'
+                    ? 'bg-[#F5F2EB] border border-[#10843E]/50'
+                    : 'bg-[#F5F2EB] border border-[#D8D2C5]'
                 }`}
                 id="step1"
               >
-                <span className={stages.step1 ? 'text-[#047857] font-bold' : 'text-[#64748B] font-bold'}>01:CRYPTO</span>
-                {stages.step1 && <span className="text-[#059669] font-bold">✓</span>}
+                <span className={stages.step1 ? 'text-[#10843E] font-bold' : 'text-[#6B6F78] font-bold'}>01:CRYPTO</span>
+                {stages.step1 && <span className="text-[#10843E] font-bold">✓</span>}
               </div>
 
               {/* Stage 2 */}
               <div
                 className={`px-1 py-1 text-center flex items-center justify-center gap-1 shadow-sm ${
                   stages.step2
-                    ? 'bg-[#F1F5F9] border border-[#059669]/50'
-                    : 'bg-[#F1F5F9] border border-[#CBD5E1]'
+                    ? 'bg-[#F5F2EB] border border-[#10843E]/50'
+                    : 'bg-[#F5F2EB] border border-[#D8D2C5]'
                 }`}
                 id="step2"
               >
-                <span className={stages.step2 ? 'text-[#047857] font-bold' : 'text-[#64748B] font-bold'}>02:NEURAL</span>
-                {stages.step2 && <span className="text-[#059669] font-bold">✓</span>}
+                <span className={stages.step2 ? 'text-[#10843E] font-bold' : 'text-[#6B6F78] font-bold'}>02:NEURAL</span>
+                {stages.step2 && <span className="text-[#10843E] font-bold">✓</span>}
               </div>
 
               {/* Stage 3 (Active or Verified) */}
               <div
                 className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
                   stages.step4
-                    ? 'bg-[#F1F5F9] border border-[#059669]/50 shadow-sm'
+                    ? 'bg-[#F5F2EB] border border-[#10843E]/50 shadow-sm'
                     : stages.step3
-                    ? 'bg-[#FEF2F2] border-2 border-[#DC2626] shadow-[0_0_10px_rgba(220,38,38,0.2)]'
-                    : 'bg-[#F1F5F9] border border-[#CBD5E1]'
+                    ? 'bg-[#FDF2F0] border-2 border-[#E63926] shadow-[0_0_10px_rgba(230,57,38,0.2)]'
+                    : 'bg-[#F5F2EB] border border-[#D8D2C5]'
                 }`}
                 id="step3"
               >
-                <span className={stages.step4 ? 'text-[#047857] font-bold' : stages.step3 ? 'text-[#DC2626] font-bold' : 'text-[#64748B] font-bold'}>
+                <span className={stages.step4 ? 'text-[#10843E] font-bold' : stages.step3 ? 'text-[#E63926] font-bold' : 'text-[#6B6F78] font-bold'}>
                   03:BIOMETRIC
                 </span>
                 {stages.step4 ? (
-                  <span className="text-[#059669] font-bold">✓</span>
+                  <span className="text-[#10843E] font-bold">✓</span>
                 ) : stages.step3 ? (
-                  <span className="text-[#DC2626] font-bold animate-pulse">●</span>
+                  <span className="text-[#E63926] font-bold animate-pulse">●</span>
                 ) : null}
               </div>
 
@@ -871,12 +871,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               <div
                 className={`px-1 py-1 text-center flex items-center justify-center gap-1 ${
                   stages.step4
-                    ? 'bg-[#ECFDF5] border-2 border-[#059669] shadow-[0_0_12px_rgba(5,150,105,0.25)]'
-                    : 'bg-[#F1F5F9] border border-[#CBD5E1] shadow-sm'
+                    ? 'bg-[#EBF5EE] border-2 border-[#10843E] shadow-[0_0_12px_rgba(16,132,62,0.25)]'
+                    : 'bg-[#F5F2EB] border border-[#D8D2C5] shadow-sm'
                 }`}
                 id="step4"
               >
-                <span className={stages.step4 ? 'text-[#047857] font-bold' : 'text-[#64748B] font-bold'}>
+                <span className={stages.step4 ? 'text-[#10843E] font-bold' : 'text-[#6B6F78] font-bold'}>
                   04:COCKPIT {stages.step4 && '✓'}
                 </span>
               </div>
@@ -884,18 +884,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
             {/* Progress track & Micro diagnostic readouts */}
             <div className="w-full flex flex-col gap-0.5">
-              <div className="w-full h-1.5 bg-[#E2E8F0] border border-[#CBD5E1] relative overflow-hidden flex">
+              <div className="w-full h-1.5 bg-[#ECE8DF] border border-[#D8D2C5] relative overflow-hidden flex">
                 <div
-                  className={`h-full ${stages.step4 ? 'bg-[#059669]' : 'bg-[#059669]'} transition-all duration-300`}
+                  className={`h-full ${stages.step4 ? 'bg-[#10843E]' : 'bg-[#10843E]'} transition-all duration-300`}
                   id="bootProgressBar"
                   style={{ width: `${bootProgress}%` }}
                 ></div>
               </div>
-              <div className="flex items-center justify-between text-[8px] tracking-wider w-full text-[#475569]">
-                <span className="text-[#334155] font-mono font-medium truncate max-w-[280px]" id="bootDiagLabel">
+              <div className="flex items-center justify-between text-[8px] tracking-wider w-full text-[#484B53]">
+                <span className="text-[#24272E] font-mono font-medium truncate max-w-[280px]" id="bootDiagLabel">
                   {bootDiagLabel}
                 </span>
-                <span className="text-[#DC2626] font-bold font-mono">
+                <span className="text-[#E63926] font-bold font-mono">
                   {bootProgress.toFixed(1)}% CAPTURE
                 </span>
               </div>
@@ -905,24 +905,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           {/* Right Section (3 cols): Exploits, Live Distance, Re-Calibrate Trigger */}
           <div className="lg:col-span-3 flex flex-col items-end gap-1 text-[10px]">
             <div className="flex items-center gap-2">
-              <span className="text-[8.5px] px-1.5 py-0.5 bg-[#059669]/10 text-[#047857] border border-[#059669]/40 font-bold">
+              <span className="text-[8.5px] px-1.5 py-0.5 bg-[#10843E]/10 text-[#10843E] border border-[#10843E]/40 font-bold">
                 PAYLOADS: 0
               </span>
-              <span className="text-[#475569]">
-                DIST: <span className="text-[#0F172A] font-bold font-mono" id="subjectDistance">{depth}</span>
+              <span className="text-[#484B53]">
+                DIST: <span className="text-[#111216] font-bold font-mono" id="subjectDistance">{depth}</span>
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 bg-[#DC2626]/15 text-[#DC2626] border border-[#DC2626]/60 font-bold tracking-wider animate-pulse" id="lockStatusBadge">
+              <span className="text-[9px] px-1.5 py-0.5 bg-[#E63926]/15 text-[#E63926] border border-[#E63926]/60 font-bold tracking-wider animate-pulse" id="lockStatusBadge">
                 [TARGET_LOCKED]
               </span>
             </div>
             <div>
               <button
                 type="button"
-                className="flex items-center gap-1.5 text-[9px] text-[#334155] hover:text-[#DC2626] px-2 py-0.5 border border-[#CBD5E1] hover:border-[#DC2626] bg-white hover:bg-[#FEF2F2] transition-all cursor-pointer shadow-sm font-mono font-semibold"
+                className="flex items-center gap-1.5 text-[9px] text-[#24272E] hover:text-[#E63926] px-2 py-0.5 border border-[#D8D2C5] hover:border-[#E63926] bg-[#FAF8F3] hover:bg-[#FDF2F0] transition-all cursor-pointer shadow-sm font-mono font-semibold"
                 onClick={rebootSequence}
                 title="Re-run engine self-test and camera sweep"
               >
-                <span className="text-[#DC2626]">⚡</span>
+                <span className="text-[#E63926]">⚡</span>
                 <span>REBOOT_OPTO_MATRIX</span>
               </button>
             </div>
@@ -935,88 +935,88 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* ========================================== */}
       <main className="relative z-30 flex flex-col items-center justify-center flex-1 w-full my-auto overflow-hidden py-1">
         {/* Status Bar Pill above eye */}
-        <div className="flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#475569] pointer-events-none bg-white/95 px-4 py-1.5 border border-[#CBD5E1] mb-2 shadow-[0_2px_12px_rgba(15,23,42,0.06)] backdrop-blur-sm">
-          <span>SUBJECT: <span className="text-[#0284C7] font-bold" id="subjectStatusText">HUMAN_HOST_ACTIVE</span></span>
-          <span className="text-[#CBD5E1]">|</span>
-          <span>CONFIDENCE: <span className="text-[#0F172A] font-bold font-mono" id="confVal">99.14%</span></span>
-          <span className="text-[#CBD5E1]">|</span>
-          <span>FIREWALL: <span className="text-[#DC2626] font-bold">L5_OVERRIDE</span></span>
-          <span className="text-[#CBD5E1]">|</span>
-          <span>LIVENESS: <span className="text-[#059669] font-bold font-mono" id="livenessVal">0.998</span></span>
+        <div className="flex items-center gap-4 text-[9px] tracking-[0.14em] text-[#484B53] pointer-events-none bg-[#FAF8F3]/95 px-4 py-1.5 border border-[#D8D2C5] mb-2 shadow-[0_2px_12px_rgba(18,19,22,0.06)] backdrop-blur-sm">
+          <span>SUBJECT: <span className="text-[#111216] font-bold" id="subjectStatusText">HUMAN_HOST_ACTIVE</span></span>
+          <span className="text-[#D8D2C5]">|</span>
+          <span>CONFIDENCE: <span className="text-[#111216] font-bold font-mono" id="confVal">99.14%</span></span>
+          <span className="text-[#D8D2C5]">|</span>
+          <span>FIREWALL: <span className="text-[#E63926] font-bold">L5_OVERRIDE</span></span>
+          <span className="text-[#D8D2C5]">|</span>
+          <span>LIVENESS: <span className="text-[#10843E] font-bold font-mono" id="livenessVal">0.998</span></span>
         </div>
 
         {/* Main Biometric Stage with Lateral Data Streams */}
         <div className="relative w-full max-w-6xl flex items-center justify-center px-2" style={{ gap: 'clamp(1rem, 3.5vw, 3.5rem)' }}>
           {/* LEFT FLANK: Clinical Scrolling Memory Hex Dump */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#CBD5E1] bg-white/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(15,23,42,0.05)] text-[8px] font-mono leading-relaxed relative">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
+          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative">
+            <div className="flex items-center justify-between border-b border-[#D8D2C5] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] animate-ping"></span>
-                <span className="text-[#DC2626]">// MEM_DUMP_0x7FFF</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E63926] animate-ping"></span>
+                <span className="text-[#E63926]">// MEM_DUMP_0x7FFF</span>
               </div>
-              <span className="text-[7.5px] px-1 bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/30">L1_CACHE</span>
+              <span className="text-[7.5px] px-1 bg-[#E63926]/10 text-[#E63926] border border-[#E63926]/30">L1_CACHE</span>
             </div>
             <div className="relative flex-1 overflow-hidden">
-              <div className="stream-scroll space-y-1 text-[#475569]">
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89A2:</span> <span className="text-[#0F172A] font-medium">48 89 E5 48</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89AA:</span> <span className="text-[#0F172A] font-medium">E8 24 FF FF</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626] font-semibold">OVERFLOW_GUARD:</span> <span className="text-[#059669] font-bold">ACTIVE</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89B2:</span> <span className="text-[#0F172A] font-medium">55 48 89 E5</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89BA:</span> <span className="text-[#0F172A] font-medium">41 56 41 55</span></div>
-                <div className="flex justify-between"><span className="text-[#0284C7] font-semibold">ROOT_INJECT:</span> <span className="text-[#DC2626] font-bold">BLOCKED</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89C2:</span> <span className="text-[#0F172A] font-medium">B8 01 00 00</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89CA:</span> <span className="text-[#0F172A] font-medium">05 48 3D 00</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89D2:</span> <span className="text-[#0F172A] font-medium">77 1B 48 89</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626]">INTERRUPT:</span> <span className="text-[#991B1B] font-bold">SIGSEGV</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89DA:</span> <span className="text-[#0F172A] font-medium">31 C0 C9 C3</span></div>
-                <div className="flex justify-between"><span className="text-[#059669]">CRYPTO_NONCE:</span> <span className="text-[#059669] font-bold">0xFA49E2D</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89EA:</span> <span className="text-[#0F172A] font-medium">48 83 EC 08</span></div>
+              <div className="stream-scroll space-y-1 text-[#484B53]">
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89A2:</span> <span className="text-[#111216] font-medium">48 89 E5 48</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89AA:</span> <span className="text-[#111216] font-medium">E8 24 FF FF</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926] font-semibold">OVERFLOW_GUARD:</span> <span className="text-[#10843E] font-bold">ACTIVE</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89B2:</span> <span className="text-[#111216] font-medium">55 48 89 E5</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89BA:</span> <span className="text-[#111216] font-medium">41 56 41 55</span></div>
+                <div className="flex justify-between"><span className="text-[#111216] font-semibold">ROOT_INJECT:</span> <span className="text-[#E63926] font-bold">BLOCKED</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89C2:</span> <span className="text-[#111216] font-medium">B8 01 00 00</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89CA:</span> <span className="text-[#111216] font-medium">05 48 3D 00</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89D2:</span> <span className="text-[#111216] font-medium">77 1B 48 89</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926]">INTERRUPT:</span> <span className="text-[#BA2415] font-bold">SIGSEGV</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89DA:</span> <span className="text-[#111216] font-medium">31 C0 C9 C3</span></div>
+                <div className="flex justify-between"><span className="text-[#10843E]">CRYPTO_NONCE:</span> <span className="text-[#10843E] font-bold">0xFA49E2D</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89EA:</span> <span className="text-[#111216] font-medium">48 83 EC 08</span></div>
                 {/* Duplicated loop block */}
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89A2:</span> <span className="text-[#0F172A] font-medium">48 89 E5 48</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89AA:</span> <span className="text-[#0F172A] font-medium">E8 24 FF FF</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626] font-semibold">OVERFLOW_GUARD:</span> <span className="text-[#059669] font-bold">ACTIVE</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">0x7FFF89B2:</span> <span className="text-[#0F172A] font-medium">55 48 89 E5</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89A2:</span> <span className="text-[#111216] font-medium">48 89 E5 48</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89AA:</span> <span className="text-[#111216] font-medium">E8 24 FF FF</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926] font-semibold">OVERFLOW_GUARD:</span> <span className="text-[#10843E] font-bold">ACTIVE</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">0x7FFF89B2:</span> <span className="text-[#111216] font-medium">55 48 89 E5</span></div>
               </div>
             </div>
-            <div className="mt-1 pt-1 border-t border-[#E2E8F0] text-[7.5px] text-[#475569] flex justify-between items-center font-semibold">
-              <span>HEAP: <span className="text-[#0F172A]">42.1MB</span></span>
-              <span className="text-[#059669]">CANARY: SECURE</span>
+            <div className="mt-1 pt-1 border-t border-[#D8D2C5] text-[7.5px] text-[#484B53] flex justify-between items-center font-semibold">
+              <span>HEAP: <span className="text-[#111216]">42.1MB</span></span>
+              <span className="text-[#10843E]">CANARY: SECURE</span>
             </div>
           </aside>
 
           {/* CENTER: ULTRA-SHARP CLINICAL OCULAR ARENA (380px Canvas in 400px Bezel) */}
           <div className="relative w-[480px] max-w-full h-[460px] flex items-center justify-center mx-auto" id="scanArena" ref={arenaRef}>
             {/* Concentric HUD rings with technical markings */}
-            <div className="absolute -top-4 text-[8px] font-mono tracking-widest text-[#DC2626] font-bold pointer-events-none select-none">
+            <div className="absolute -top-4 text-[8px] font-mono tracking-widest text-[#E63926] font-bold pointer-events-none select-none">
               AZM 000° // APERTURE_NORTH [PREDATOR_ACQ]
             </div>
-            <div className="absolute -bottom-4 text-[8px] font-mono tracking-widest text-[#475569] font-medium pointer-events-none select-none">
+            <div className="absolute -bottom-4 text-[8px] font-mono tracking-widest text-[#484B53] font-medium pointer-events-none select-none">
               AZM 180° // APERTURE_SOUTH [LOCKED]
             </div>
 
             {/* Subtle Rotating Calibration Circles */}
-            <div className="absolute w-[470px] h-[470px] rounded-full border border-dashed border-[#0284C7]/30 pointer-events-none hud-dial-spin"></div>
-            <div className="absolute w-[446px] h-[446px] rounded-full border border-[#DC2626]/25 pointer-events-none hud-dial-counter"></div>
-            <div className="absolute w-[424px] h-[424px] rounded-full border border-[#CBD5E1] pointer-events-none"></div>
+            <div className="absolute w-[470px] h-[470px] rounded-full border border-dashed border-[#111216]/25 pointer-events-none hud-dial-spin"></div>
+            <div className="absolute w-[446px] h-[446px] rounded-full border border-[#E63926]/25 pointer-events-none hud-dial-counter"></div>
+            <div className="absolute w-[424px] h-[424px] rounded-full border border-[#D8D2C5] pointer-events-none"></div>
 
             {/* Outer Clinical Lens Bezel with Tick Marks */}
-            <div className="relative w-[400px] h-[400px] rounded-full p-2 bg-[#F1F5F9] border-2 border-[#CBD5E1] shadow-[0_12px_35px_rgba(15,23,42,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] flex items-center justify-center z-20">
+            <div className="relative w-[400px] h-[400px] rounded-full p-2 bg-[#ECE8DF] border-2 border-[#D8D2C5] shadow-[0_12px_35px_rgba(18,19,22,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] flex items-center justify-center z-20">
               {/* Precision Millimeter Reticle SVG Overlay */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 400 400">
                 {/* Circular Reticle */}
-                <circle cx="200" cy="200" fill="none" opacity="0.65" r="192" stroke="#DC2626" strokeDasharray="3 6" strokeWidth="1.5"></circle>
-                <circle cx="200" cy="200" fill="none" opacity="0.4" r="185" stroke="#0284C7" strokeWidth="0.8"></circle>
+                <circle cx="200" cy="200" fill="none" opacity="0.65" r="192" stroke="#E63926" strokeDasharray="3 6" strokeWidth="1.5"></circle>
+                <circle cx="200" cy="200" fill="none" opacity="0.4" r="185" stroke="#111216" strokeWidth="0.8"></circle>
                 {/* Crosshair ticks */}
-                <line stroke="#DC2626" strokeWidth="2" x1="200" x2="200" y1="4" y2="18"></line>
-                <line stroke="#DC2626" strokeWidth="2" x1="200" x2="200" y1="382" y2="396"></line>
-                <line stroke="#DC2626" strokeWidth="2" x1="4" x2="18" y1="200" y2="200"></line>
-                <line stroke="#DC2626" strokeWidth="2" x1="382" x2="396" y1="200" y2="200"></line>
+                <line stroke="#E63926" strokeWidth="2" x1="200" x2="200" y1="4" y2="18"></line>
+                <line stroke="#E63926" strokeWidth="2" x1="200" x2="200" y1="382" y2="396"></line>
+                <line stroke="#E63926" strokeWidth="2" x1="4" x2="18" y1="200" y2="200"></line>
+                <line stroke="#E63926" strokeWidth="2" x1="382" x2="396" y1="200" y2="200"></line>
                 {/* Minor degree ticks around circumference */}
-                <circle cx="200" cy="200" fill="none" opacity="0.5" r="189" stroke="#64748B" strokeDasharray="1 12.5" strokeWidth="2"></circle>
+                <circle cx="200" cy="200" fill="none" opacity="0.5" r="189" stroke="#6B6F78" strokeDasharray="1 12.5" strokeWidth="2"></circle>
               </svg>
 
               {/* The Eyeball Housing */}
-              <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8FF] border-2 border-[#DC2626] shadow-[0_0_35px_rgba(220,38,38,0.25),inset_0_0_40px_rgba(15,23,42,0.3)] flex items-center justify-center" id="eyeOrbit">
+              <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8F3] border-2 border-[#E63926] shadow-[0_0_35px_rgba(230,57,38,0.22),inset_0_0_40px_rgba(18,19,22,0.3)] flex items-center justify-center" id="eyeOrbit">
                 {/* Sharp Canvas Layer */}
                 <canvas
                   className="absolute inset-0 w-full h-full block z-20"
@@ -1036,56 +1036,56 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             </div>
 
             {/* Left & Right Telemetry Indicators */}
-            <div className="absolute -left-12 top-1/2 -translate-y-1/2 text-[9px] text-[#475569] font-mono leading-relaxed tracking-wider text-left pointer-events-none hidden md:block">
-              <div className="text-[#334155] font-semibold">FACIAL_DEPTH // <span className="text-[#0F172A] font-bold" id="depthVal">{depth}</span></div>
-              <div className="text-[#DC2626] font-bold">IRIS_SCAN: <span id="irisScanVal">{irisScan}</span> MATCH</div>
-              <div className="font-medium">PUPIL_DIL: <span className="text-[#0F172A] font-bold" id="pupilDilVal">{pupilDil}</span></div>
-              <div className="font-medium">IPD_METRIC: <span className="text-[#334155] font-semibold" id="ipdVal">63.8mm</span></div>
-              <div className="text-[#64748B]">VESSEL_HASH: <span className="text-[#DC2626] font-mono font-bold">0x9E4B..7A</span></div>
-              <div className="text-[#0284C7] font-semibold">SACCADE_FRQ: <span className="text-[#0F172A] font-bold">3.4Hz</span></div>
+            <div className="absolute -left-12 top-1/2 -translate-y-1/2 text-[9px] text-[#484B53] font-mono leading-relaxed tracking-wider text-left pointer-events-none hidden md:block">
+              <div className="text-[#22252B] font-semibold">FACIAL_DEPTH // <span className="text-[#111216] font-bold" id="depthVal">{depth}</span></div>
+              <div className="text-[#E63926] font-bold">IRIS_SCAN: <span id="irisScanVal">{irisScan}</span> MATCH</div>
+              <div className="font-medium">PUPIL_DIL: <span className="text-[#111216] font-bold" id="pupilDilVal">{pupilDil}</span></div>
+              <div className="font-medium">IPD_METRIC: <span className="text-[#22252B] font-semibold" id="ipdVal">63.8mm</span></div>
+              <div className="text-[#6B6F78]">VESSEL_HASH: <span className="text-[#E63926] font-mono font-bold">0x9E4B..7A</span></div>
+              <div className="text-[#111216] font-semibold">SACCADE_FRQ: <span className="text-[#111216] font-bold">3.4Hz</span></div>
             </div>
 
-            <div className="absolute -right-12 top-1/2 -translate-y-1/2 text-[9px] text-[#475569] font-mono leading-relaxed tracking-wider text-right pointer-events-none hidden md:block">
-              <div className="font-medium">CORNEA_REFRACT // <span className="text-[#059669] font-bold">OK</span></div>
-              <div className="text-[#DC2626] font-bold">BIOMETRIC_LOCK: <span id="biolockStatus">{biolockStatus}</span></div>
-              <div className="font-medium">GAZE_VECTOR: <span className="text-[#0F172A] font-mono font-bold" id="gazeVectorVal">{gazeVector}</span></div>
-              <div className="text-[#DC2626] font-bold">SPECTRAL_IR: COHERENT</div>
-              <div className="text-[#64748B]">TRIANGULATION: <span className="text-[#059669] font-bold">LOCKED</span></div>
-              <div className="text-[#0284C7] font-semibold">ENTROPY_POOL: <span className="text-[#0F172A] font-mono font-bold">0x88F1</span></div>
+            <div className="absolute -right-12 top-1/2 -translate-y-1/2 text-[9px] text-[#484B53] font-mono leading-relaxed tracking-wider text-right pointer-events-none hidden md:block">
+              <div className="font-medium">CORNEA_REFRACT // <span className="text-[#10843E] font-bold">OK</span></div>
+              <div className="text-[#E63926] font-bold">BIOMETRIC_LOCK: <span id="biolockStatus">{biolockStatus}</span></div>
+              <div className="font-medium">GAZE_VECTOR: <span className="text-[#111216] font-mono font-bold" id="gazeVectorVal">{gazeVector}</span></div>
+              <div className="text-[#E63926] font-bold">SPECTRAL_IR: COHERENT</div>
+              <div className="text-[#6B6F78]">TRIANGULATION: <span className="text-[#10843E] font-bold">LOCKED</span></div>
+              <div className="text-[#111216] font-semibold">ENTROPY_POOL: <span className="text-[#111216] font-mono font-bold">0x88F1</span></div>
             </div>
           </div>
 
           {/* RIGHT FLANK: Clinical Ethernet Packet Sniffer */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#CBD5E1] bg-white/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(15,23,42,0.05)] text-[8px] font-mono leading-relaxed relative">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
+          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative">
+            <div className="flex items-center justify-between border-b border-[#D8D2C5] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-ping"></span>
-                <span className="text-[#0284C7]">// PKT_SNIFFER_ETH0</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E63926] animate-ping"></span>
+                <span className="text-[#E63926]">// PKT_SNIFFER_ETH0</span>
               </div>
-              <span className="text-[7.5px] px-1 bg-[#0284C7]/10 text-[#0284C7] border border-[#0284C7]/30">PROMISC</span>
+              <span className="text-[7.5px] px-1 bg-[#E63926]/10 text-[#E63926] border border-[#E63926]/30">PROMISC</span>
             </div>
             <div className="relative flex-1 overflow-hidden">
-              <div className="stream-scroll-fast space-y-1 text-[#475569]">
-                <div className="flex justify-between"><span className="text-[#0284C7] font-medium">TCP/SYN</span> <span className="text-[#0F172A]">192.168.1.10:443</span></div>
-                <div className="flex justify-between"><span className="text-[#059669]">SHA256:</span> <span className="text-[#334155] font-mono">a94a8fe5..ba6</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626]">ECDSA:</span> <span className="text-[#059669] font-bold">SIGN_VERIFIED</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">AEAD_TAG:</span> <span className="text-[#0F172A] font-bold">c029f635</span></div>
-                <div className="flex justify-between"><span className="text-[#0284C7]">DNS_TUNNEL:</span> <span className="text-[#059669] font-bold">ZERO_LEAKS</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">PORT_80:</span> <span className="text-[#DC2626] font-bold">REJECT_ALL</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626]">MITM_CHECK:</span> <span className="text-[#059669] font-bold">PIN_VALID</span></div>
-                <div className="flex justify-between"><span className="text-[#059669]">DIFFIE_HELLMAN:</span> <span className="text-[#0F172A] font-bold">X25519</span></div>
-                <div className="flex justify-between"><span className="text-[#64748B]">PKT_DROP_RATE:</span> <span className="text-[#059669] font-bold">0.0000%</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626]">PAYLOAD_LEN:</span> <span className="text-[#0F172A]">512_BYTES</span></div>
-                <div className="flex justify-between"><span className="text-[#0284C7]">ENCLAVE_TOKEN:</span> <span className="text-[#0284C7] font-bold">0x89FC</span></div>
+              <div className="stream-scroll-fast space-y-1 text-[#484B53]">
+                <div className="flex justify-between"><span className="text-[#111216] font-medium">TCP/SYN</span> <span className="text-[#111216]">192.168.1.10:443</span></div>
+                <div className="flex justify-between"><span className="text-[#10843E]">SHA256:</span> <span className="text-[#22252B] font-mono">a94a8fe5..ba6</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926]">ECDSA:</span> <span className="text-[#10843E] font-bold">SIGN_VERIFIED</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">AEAD_TAG:</span> <span className="text-[#111216] font-bold">c029f635</span></div>
+                <div className="flex justify-between"><span className="text-[#111216]">DNS_TUNNEL:</span> <span className="text-[#10843E] font-bold">ZERO_LEAKS</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">PORT_80:</span> <span className="text-[#E63926] font-bold">REJECT_ALL</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926]">MITM_CHECK:</span> <span className="text-[#10843E] font-bold">PIN_VALID</span></div>
+                <div className="flex justify-between"><span className="text-[#10843E]">DIFFIE_HELLMAN:</span> <span className="text-[#111216] font-bold">X25519</span></div>
+                <div className="flex justify-between"><span className="text-[#6B6F78]">PKT_DROP_RATE:</span> <span className="text-[#10843E] font-bold">0.0000%</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926]">PAYLOAD_LEN:</span> <span className="text-[#111216]">512_BYTES</span></div>
+                <div className="flex justify-between"><span className="text-[#111216]">ENCLAVE_TOKEN:</span> <span className="text-[#111216] font-bold">0x89FC</span></div>
                 {/* Duplicated loop block */}
-                <div className="flex justify-between"><span className="text-[#0284C7] font-medium">TCP/SYN</span> <span className="text-[#0F172A]">192.168.1.10:443</span></div>
-                <div className="flex justify-between"><span className="text-[#059669]">SHA256:</span> <span className="text-[#334155] font-mono">a94a8fe5..ba6</span></div>
-                <div className="flex justify-between"><span className="text-[#DC2626]">ECDSA:</span> <span className="text-[#059669] font-bold">SIGN_VERIFIED</span></div>
+                <div className="flex justify-between"><span className="text-[#111216] font-medium">TCP/SYN</span> <span className="text-[#111216]">192.168.1.10:443</span></div>
+                <div className="flex justify-between"><span className="text-[#10843E]">SHA256:</span> <span className="text-[#22252B] font-mono">a94a8fe5..ba6</span></div>
+                <div className="flex justify-between"><span className="text-[#E63926]">ECDSA:</span> <span className="text-[#10843E] font-bold">SIGN_VERIFIED</span></div>
               </div>
             </div>
-            <div className="mt-1 pt-1 border-t border-[#E2E8F0] text-[7.5px] text-[#475569] flex justify-between items-center font-semibold">
-              <span>THROUGHPUT: <span className="text-[#0F172A]">2.8 MB/s</span></span>
-              <span className="text-[#0284C7]">MTU: 1500</span>
+            <div className="mt-1 pt-1 border-t border-[#D8D2C5] text-[7.5px] text-[#484B53] flex justify-between items-center font-semibold">
+              <span>THROUGHPUT: <span className="text-[#111216]">2.8 MB/s</span></span>
+              <span className="text-[#111216]">MTU: 1500</span>
             </div>
           </aside>
         </div>
@@ -1094,54 +1094,54 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         {/* 3. CLINICAL CLI AUTHENTICATION TERMINAL PROMPT */}
         {/* ========================================== */}
         <div className="relative z-30 w-[500px] max-w-full mt-3 flex flex-col gap-1.5">
-          <div className="flex items-center justify-between px-1 text-[9.5px] tracking-[0.08em] text-[#64748B] font-semibold">
+          <div className="flex items-center justify-between px-1 text-[9.5px] tracking-[0.08em] text-[#6B6F78] font-semibold">
             <button
               type="button"
               className={`flex items-center gap-1.5 cursor-pointer transition-colors ${
-                mode === 'passive' ? 'text-[#0F172A]' : 'text-[#64748B] hover:text-[#0284C7]'
+                mode === 'passive' ? 'text-[#111216]' : 'text-[#6B6F78] hover:text-[#111216]'
               }`}
               id="togglePassive"
               onClick={() => handleSetMode('passive')}
             >
-              <span className="text-[#0284C7] font-bold">[</span>
-              <span className={mode === 'passive' ? 'text-[#0284C7]' : 'text-[#94A3B8]'} id="dotPassive">
+              <span className="text-[#111216] font-bold">[</span>
+              <span className={mode === 'passive' ? 'text-[#E63926]' : 'text-[#A8A398]'} id="dotPassive">
                 {mode === 'passive' ? '●' : '○'}
               </span>
-              <span className="hover:text-[#0284C7]">FULL_PASSIVE_RECON</span>
-              <span className="text-[#0284C7] font-bold">]</span>
+              <span className="hover:text-[#111216]">FULL_PASSIVE_RECON</span>
+              <span className="text-[#111216] font-bold">]</span>
             </button>
             <button
               type="button"
               className={`flex items-center gap-1.5 cursor-pointer transition-colors ${
-                mode === 'active' ? 'text-[#0F172A]' : 'text-[#64748B] hover:text-[#DC2626]'
+                mode === 'active' ? 'text-[#111216]' : 'text-[#6B6F78] hover:text-[#E63926]'
               }`}
               id="toggleActive"
               onClick={() => handleSetMode('active')}
             >
-              <span className="text-[#94A3B8]">[</span>
-              <span className={mode === 'active' ? 'text-[#DC2626]' : 'text-[#94A3B8]'} id="dotActive">
+              <span className="text-[#A8A398]">[</span>
+              <span className={mode === 'active' ? 'text-[#E63926]' : 'text-[#A8A398]'} id="dotActive">
                 {mode === 'active' ? '●' : '○'}
               </span>
               <span>ACTIVE_INTRUSION_GUARD</span>
-              <span className="text-[#94A3B8]">]</span>
+              <span className="text-[#A8A398]">]</span>
             </button>
           </div>
 
-          <div className="relative w-full bg-[#0F172A] border-2 border-[#1E293B] shadow-[0_6px_25px_rgba(15,23,42,0.18)] p-2.5 flex flex-col gap-1.5 text-white">
-            <div className="flex items-center justify-between text-[9px] text-[#94A3B8] border-b border-[#334155] pb-1">
+          <div className="relative w-full bg-[#111216] border-2 border-[#1E2024] shadow-[0_6px_25px_rgba(18,19,22,0.25)] p-2.5 flex flex-col gap-1.5 text-white">
+            <div className="flex items-center justify-between text-[9px] text-[#A8A398] border-b border-[#2A2E35] pb-1">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+                <span className="w-2 h-2 rounded-full bg-[#E63926]"></span>
                 <span className="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
-                <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
-                <span className="text-white font-bold ml-1 font-mono">root@drishti-clinical-core:~#</span>
+                <span className="w-2 h-2 rounded-full bg-[#10843E]"></span>
+                <span className="text-[#FAF8F3] font-bold ml-1 font-mono">root@drishti-clinical-core:~#</span>
               </div>
               <div className="flex items-center gap-1 text-[8.5px]">
-                <span className="text-[#94A3B8]">STATUS:</span>
+                <span className="text-[#A8A398]">STATUS:</span>
                 <span
                   className={
                     scanMode === 'HIGH_FREQ_ACQUISITION'
-                      ? 'text-[#DC2626] font-extrabold tracking-tighter animate-pulse'
-                      : 'text-[#94A3B8] font-bold tracking-wider'
+                      ? 'text-[#E63926] font-extrabold tracking-tighter animate-pulse'
+                      : 'text-[#A8A398] font-bold tracking-wider'
                   }
                   id="scanModeIndicator"
                 >
@@ -1151,10 +1151,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             </div>
 
             <div className="flex items-center gap-2 text-[11px] font-mono pt-0.5">
-              <span className="text-[#34D399] font-bold whitespace-nowrap select-none">./auth_operator --token</span>
+              <span className="text-[#E63926] font-bold whitespace-nowrap select-none">./auth_operator --token</span>
               <input
                 autoComplete="off"
-                className="cli-terminal-input w-full bg-transparent text-[#F8FAFC] font-mono font-medium tracking-wider outline-none border-none p-0 text-[11px] placeholder-[#64748B] focus:ring-0"
+                className="cli-terminal-input w-full bg-transparent text-[#FAF8F3] font-mono font-medium tracking-wider outline-none border-none p-0 text-[11px] placeholder-[#6B6F78] focus:ring-0"
                 id="operatorInput"
                 onBlur={() => handleInputFocus(false)}
                 onFocus={() => handleInputFocus(true)}
@@ -1164,35 +1164,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 type="text"
                 value={tokenInput}
               />
-              <span className="text-[#DC2626] cli-cursor font-bold select-none text-[13px]">█</span>
+              <span className="text-[#E63926] cli-cursor font-bold select-none text-[13px]">█</span>
             </div>
 
-            <div className="flex items-center justify-between pt-1 text-[8px] text-[#94A3B8] border-t border-[#1E293B]">
+            <div className="flex items-center justify-between pt-1 text-[8px] text-[#A8A398] border-t border-[#1E2024]">
               <div className="flex items-center gap-1.5 overflow-x-auto">
-                <span className="text-[#64748B] select-none font-bold">FLAGS:</span>
+                <span className="text-[#6B6F78] select-none font-bold">FLAGS:</span>
                 <button
                   type="button"
-                  className="px-1.5 py-0.5 bg-[#1E293B] border border-[#334155] hover:border-[#DC2626] hover:text-white transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 bg-[#1E2024] border border-[#2A2E35] hover:border-[#E63926] hover:text-[#FAF8F3] transition-colors cursor-pointer"
                   onClick={() => appendFlag('--bypass-sandbox')}
                 >
                   [--bypass-sandbox]
                 </button>
                 <button
                   type="button"
-                  className="px-1.5 py-0.5 bg-[#1E293B] border border-[#334155] hover:border-[#DC2626] hover:text-white transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 bg-[#1E2024] border border-[#2A2E35] hover:border-[#E63926] hover:text-[#FAF8F3] transition-colors cursor-pointer"
                   onClick={() => appendFlag('--force-recon')}
                 >
                   [--force-recon]
                 </button>
                 <button
                   type="button"
-                  className="px-1.5 py-0.5 bg-[#1E293B] border border-[#334155] hover:border-[#DC2626] hover:text-white transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 bg-[#1E2024] border border-[#2A2E35] hover:border-[#E63926] hover:text-[#FAF8F3] transition-colors cursor-pointer"
                   onClick={() => appendFlag('--debug-dump')}
                 >
                   [--debug-dump]
                 </button>
               </div>
-              <span className="text-[#64748B] font-mono text-[7.5px] select-none">AUTH_CHALLENGE // 981-FC7</span>
+              <span className="text-[#6B6F78] font-mono text-[7.5px] select-none">AUTH_CHALLENGE // 981-FC7</span>
             </div>
           </div>
 
@@ -1200,8 +1200,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             type="button"
             className={`w-full h-[38px] font-mono text-[11px] font-bold tracking-[0.16em] flex items-center justify-center gap-2 rounded-none transition-all cursor-pointer ${
               isSuccess
-                ? 'bg-[#059669] hover:bg-[#047857] border-2 border-[#047857] text-white shadow-[0_4px_14px_rgba(5,150,105,0.35)]'
-                : 'bg-[#DC2626] hover:bg-[#991B1B] border-2 border-[#991B1B] text-white shadow-[0_4px_14px_rgba(220,38,38,0.35)]'
+                ? 'bg-[#10843E] hover:bg-[#0D6D33] border-2 border-[#0D6D33] text-[#FAF8F3] shadow-[0_4px_14px_rgba(16,132,62,0.35)]'
+                : 'bg-[#E63926] hover:bg-[#BA2415] border-2 border-[#BA2415] text-[#FAF8F3] shadow-[0_4px_14px_rgba(230,57,38,0.35)]'
             }`}
             disabled={isAuthenticating}
             id="authBtn"
@@ -1217,9 +1217,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               {authStatus.text}
             </div>
           ) : (
-            <div className="flex items-center justify-between px-1 text-[8.5px] tracking-[0.12em] font-mono text-[#64748B] min-h-[16px]" id="authStatus">
-              <span className="text-[#059669] font-bold">BIOMETRIC_CORE // SECURE_ENCLAVE_READY</span>
-              <span className="text-[#475569]">PRESS ⌘+ENTER TO AUTHENTICATE</span>
+            <div className="flex items-center justify-between px-1 text-[8.5px] tracking-[0.12em] font-mono text-[#6B6F78] min-h-[16px]" id="authStatus">
+              <span className="text-[#10843E] font-bold">BIOMETRIC_CORE // SECURE_ENCLAVE_READY</span>
+              <span className="text-[#484B53]">PRESS ⌘+ENTER TO AUTHENTICATE</span>
             </div>
           )}
         </div>
@@ -1230,48 +1230,48 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* ========================================== */}
       <footer className="relative z-30 flex flex-col items-center justify-end w-full pb-1 pt-2">
         {/* Active Status LED Triad Bar */}
-        <div className="flex items-center gap-6 mb-1 text-[8.5px] font-mono tracking-widest text-[#475569]">
+        <div className="flex items-center gap-6 mb-1 text-[8.5px] font-mono tracking-widest text-[#484B53]">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#DC2626] animate-pulse"></span>
-            <span className="text-[#DC2626] font-bold">RED: RECON_ACTIVE</span>
+            <span className="w-2 h-2 rounded-full bg-[#E63926] animate-pulse"></span>
+            <span className="text-[#E63926] font-bold">RED: RECON_ACTIVE</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#D97706]"></span>
             <span className="text-[#B45309] font-bold">AMBER: BUFFER_LOCK</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#059669]"></span>
-            <span className="text-[#047857] font-bold">GREEN: CRYPTO_VALID</span>
+            <span className="w-2 h-2 rounded-full bg-[#10843E]"></span>
+            <span className="text-[#10843E] font-bold">GREEN: CRYPTO_VALID</span>
           </div>
         </div>
 
         {/* Brand Typography with Clinical Red Contrast */}
         <div className="mb-1 text-center">
-          <div className="glitch-chroma text-[15px] md:text-[17px] font-black text-[#0F172A] tracking-[0.35em]">
+          <div className="glitch-chroma text-[15px] md:text-[17px] font-black text-[#111216] tracking-[0.35em]">
             D R I S H T I &nbsp;&nbsp;//&nbsp;&nbsp; V I S I O N &nbsp;&nbsp; C 2
           </div>
-          <div className="text-[8.5px] tracking-[0.25em] text-[#64748B] font-semibold mt-0.5">
+          <div className="text-[8.5px] tracking-[0.25em] text-[#6B6F78] font-semibold mt-0.5">
             HIGH-CONTAINMENT ZERO TRUST CLINICAL OCULAR DEFENSE MATRIX // PROTOCOL 09
           </div>
         </div>
 
         {/* Technical Spec Barcode and Hardware Hashes */}
-        <div className="w-full max-w-5xl border-t-2 border-[#CBD5E1] pt-1.5 px-3 flex flex-wrap items-center justify-between text-[8px] tracking-[0.08em] font-mono text-[#475569] gap-2 bg-white/60">
+        <div className="w-full max-w-5xl border-t-2 border-[#D8D2C5] pt-1.5 px-3 flex flex-wrap items-center justify-between text-[8px] tracking-[0.08em] font-mono text-[#484B53] gap-2 bg-[#FAF8F3]/80">
           <div className="flex flex-col">
-            <span className="text-[#64748B] font-semibold">SHA-256 ENCLAVE FINGERPRINT</span>
-            <span className="text-[#0F172A] font-bold">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+            <span className="text-[#6B6F78] font-semibold">SHA-256 ENCLAVE FINGERPRINT</span>
+            <span className="text-[#111216] font-bold">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[#64748B] font-semibold">DNS CHALLENGE STATUS</span>
-            <span className="text-[#0284C7] font-bold" id="dnsChallengeStatus">ACME_V02 [RESOLVED // SECURE]</span>
+            <span className="text-[#6B6F78] font-semibold">DNS CHALLENGE STATUS</span>
+            <span className="text-[#111216] font-bold" id="dnsChallengeStatus">ACME_V02 [RESOLVED // SECURE]</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[#64748B] font-semibold">HSM ENCLAVE ATTESTATION</span>
-            <span className="text-[#0F172A] font-bold" id="enclaveAttest">NITRO_ENCLAVE_V4 // VERIFIED</span>
+            <span className="text-[#6B6F78] font-semibold">HSM ENCLAVE ATTESTATION</span>
+            <span className="text-[#111216] font-bold" id="enclaveAttest">NITRO_ENCLAVE_V4 // VERIFIED</span>
           </div>
-          <div className="flex items-center gap-2 pl-3 border-l-2 border-[#CBD5E1]">
-            <div className="barcode-strip-login text-[#0F172A] font-bold">|||| || ||| | ||||</div>
-            <span className="text-[7.5px] text-[#DC2626] font-extrabold">SEC-09</span>
+          <div className="flex items-center gap-2 pl-3 border-l-2 border-[#D8D2C5]">
+            <div className="barcode-strip-login text-[#111216] font-bold">|||| || ||| | ||||</div>
+            <span className="text-[7.5px] text-[#E63926] font-extrabold">SEC-09</span>
           </div>
         </div>
       </footer>
