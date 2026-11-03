@@ -122,7 +122,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: probeUrl,
+          target_url: probeUrl,
           expected_status: 403,
         }),
       });

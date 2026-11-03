@@ -24,24 +24,27 @@ router = APIRouter(prefix="/api/defense", tags=["Autonomous Defense & Remediatio
 
 class GenerateDefenseRequest(BaseModel):
     cve_id: str = Field(..., description="CVE identifier, e.g. CVE-2024-4577")
-    target: str = Field(..., description="Target hostname or IP address, e.g. vvdx.in")
+    target: Optional[str] = Field(None, description="Target hostname or IP address, e.g. vvdx.in")
+    target_domain: Optional[str] = Field(None, description="Target domain alias")
     port: Optional[int] = Field(None, description="Target port number, e.g. 80, 443, 22")
     service_banner: Optional[str] = Field(None, description="Detected service banner")
     path_id: Optional[str] = Field(None, description="Optional attack path identifier")
 
 
 @router.post("/generate", response_model=DefenseRulesResponse)
+@router.post("/generate-rule", response_model=DefenseRulesResponse)
 async def generate_defense(req: GenerateDefenseRequest) -> DefenseRulesResponse:
     """
     Synthesizes multi-tier defense rules (Cloudflare WAF, ModSecurity Nginx,
     Linux iptables, and code-level patch diffs) for a given vulnerability and target.
     """
+    target_val = (req.target or req.target_domain or "").strip()
     if not req.cve_id.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="cve_id cannot be blank.",
         )
-    if not req.target.strip():
+    if not target_val:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="target cannot be blank.",
@@ -50,7 +53,7 @@ async def generate_defense(req: GenerateDefenseRequest) -> DefenseRulesResponse:
     try:
         return await generate_defense_rules(
             cve_id=req.cve_id,
-            target=req.target,
+            target=target_val,
             port=req.port,
             service_banner=req.service_banner,
             path_id=req.path_id,
@@ -62,20 +65,39 @@ async def generate_defense(req: GenerateDefenseRequest) -> DefenseRulesResponse:
         )
 
 
+class FlexibleVerifyRequest(BaseModel):
+    target_url: Optional[str] = Field(None, description="Target URL to probe")
+    url: Optional[str] = Field(None, description="URL alias")
+    method: str = "GET"
+    test_header_key: Optional[str] = "X-DRISHTI-VERIFY"
+    test_header_val: Optional[str] = "probe-diagnostic"
+    expected_status: int = 403
+    timeout_seconds: float = 3.0
+
+
 @router.post("/verify", response_model=VerifyRemediationResponse)
-async def verify_defense(req: VerifyRemediationRequest) -> VerifyRemediationResponse:
+async def verify_defense(req: FlexibleVerifyRequest) -> VerifyRemediationResponse:
     """
     Executes a non-intrusive verification probe to test whether a defensive
     firewall/WAF rule is actively blocking suspicious traffic to the target endpoint.
     """
-    if not req.target_url.strip():
+    actual_url = (req.target_url or req.url or "").strip()
+    if not actual_url:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="target_url cannot be blank.",
         )
 
     try:
-        return await execute_verification_probe(req)
+        strict_req = VerifyRemediationRequest(
+            target_url=actual_url,
+            method=req.method,
+            test_header_key=req.test_header_key,
+            test_header_val=req.test_header_val,
+            expected_status=req.expected_status,
+            timeout_seconds=req.timeout_seconds,
+        )
+        return await execute_verification_probe(strict_req)
     except Exception as ex:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

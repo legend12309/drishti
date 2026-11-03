@@ -59,7 +59,7 @@ def main():
     print("Reclaiming storage via VACUUM...")
     cur.execute("VACUUM;")
     conn.close()
-    print("✓ DRISHTI database reset to 100% pristine brand-new state.")
+    print("[OK] DRISHTI database reset to 100% pristine brand-new state.")
 
 if __name__ == "__main__":
     main()
