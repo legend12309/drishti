@@ -57,7 +57,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const rebootTimersRef = useRef<any[]>([]);
   const authTimersRef = useRef<any[]>([]);
 
-  // Eye Physics Parameters (Exact match to code.html)
+  // Eye Physics Parameters (Hyper-Realistic Biological Ocular Simulation)
   const SIZE = 380;
   const CENTER = SIZE / 2; // 190
   const IRIS_RADIUS = 76;
@@ -71,9 +71,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     targetY: 0,
     saccadeOffsetX: 0,
     saccadeOffsetY: 0,
-    pupilRadius: 24,
-    targetPupilRadius: 24,
+    pupilRadius: 22,
+    targetPupilRadius: 22,
     pupilTwitch: 0,
+    blinkProgress: 0, // 0 = open, 1 = closed
+    isBlinking: false,
+    blinkStartTime: 0,
+    blinkDuration: 170,
   });
 
   const primaryVesselsRef = useRef<Array<{
@@ -86,6 +90,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     width: number;
     color: string;
     alpha: number;
+    isDeep?: boolean;
   }>>([]);
 
   const irisFibersRef = useRef<Array<{
@@ -94,35 +99,37 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     outerRel: number;
     col: string;
     width: number;
+    wobbleAmp: number;
+    wobbleFreq: number;
   }>>([]);
 
-  // Generate authentic biological dendritic blood vessels (real anatomical branching trees)
-  const generateBloodVessels = useCallback(() => {
-    const segments: Array<{
-      x1: number;
-      y1: number;
-      cx: number;
-      cy: number;
-      x2: number;
-      y2: number;
-      width: number;
-      color: string;
-      alpha: number;
-    }> = [];
+  const fuchsCryptsRef = useRef<Array<{
+    angle: number;
+    relDist: number;
+    radiusX: number;
+    radiusY: number;
+    rotation: number;
+  }>>([]);
 
-    // Anatomical entry points: predominantly temporal & nasal canthi (lateral sides) + subtle arcade feeders
+  // Generate authentic biological dendritic vascular trees (deep episcleral + superficial conjunctival)
+  const generateBloodVessels = useCallback(() => {
+    const segments: typeof primaryVesselsRef.current = [];
+
+    // Realistic anatomical trunks entering from temporal & nasal canthi
     const trunkConfigs = [
-      // Left lateral / temporal dendritic trees
-      { baseAngle: Math.PI * 0.90, variance: 0.12, depth: 7, startWidth: 1.6, color: '#991B1B' },
-      { baseAngle: Math.PI * 1.02, variance: 0.10, depth: 8, startWidth: 1.8, color: '#BA2415' },
-      { baseAngle: Math.PI * 1.15, variance: 0.12, depth: 6, startWidth: 1.5, color: '#991B1B' },
+      // Left lateral / temporal dendritic trees (deeper + superficial)
+      { baseAngle: Math.PI * 0.88, variance: 0.10, depth: 7, startWidth: 1.8, color: '#7F1D1D', isDeep: true },
+      { baseAngle: Math.PI * 0.98, variance: 0.08, depth: 8, startWidth: 1.6, color: '#991B1B', isDeep: false },
+      { baseAngle: Math.PI * 1.08, variance: 0.10, depth: 8, startWidth: 1.7, color: '#B91C1C', isDeep: false },
+      { baseAngle: Math.PI * 1.18, variance: 0.12, depth: 6, startWidth: 1.4, color: '#7F1D1D', isDeep: true },
       // Right medial / nasal dendritic trees
-      { baseAngle: Math.PI * 0.05, variance: 0.10, depth: 8, startWidth: 1.8, color: '#BA2415' },
-      { baseAngle: Math.PI * 0.18, variance: 0.12, depth: 6, startWidth: 1.5, color: '#991B1B' },
-      { baseAngle: Math.PI * 1.90, variance: 0.12, depth: 7, startWidth: 1.6, color: '#991B1B' },
-      // Superior / Inferior subtle arcade feeders
-      { baseAngle: Math.PI * 0.48, variance: 0.15, depth: 5, startWidth: 1.3, color: '#B91C1C' },
-      { baseAngle: Math.PI * 1.52, variance: 0.15, depth: 5, startWidth: 1.3, color: '#B91C1C' },
+      { baseAngle: Math.PI * 0.02, variance: 0.08, depth: 8, startWidth: 1.7, color: '#991B1B', isDeep: false },
+      { baseAngle: Math.PI * 0.12, variance: 0.10, depth: 8, startWidth: 1.6, color: '#B91C1C', isDeep: false },
+      { baseAngle: Math.PI * 0.22, variance: 0.12, depth: 6, startWidth: 1.4, color: '#7F1D1D', isDeep: true },
+      { baseAngle: Math.PI * 1.88, variance: 0.10, depth: 7, startWidth: 1.5, color: '#991B1B', isDeep: false },
+      // Superior & inferior minor arcade feeders
+      { baseAngle: Math.PI * 0.46, variance: 0.14, depth: 5, startWidth: 1.2, color: '#B91C1C', isDeep: false },
+      { baseAngle: Math.PI * 1.54, variance: 0.14, depth: 5, startWidth: 1.2, color: '#B91C1C', isDeep: false },
     ];
 
     const growBranch = (
@@ -134,6 +141,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       initWidth: number,
       baseColor: string,
       baseAlpha: number,
+      isDeep: boolean,
       canBifurcate: boolean
     ) => {
       let curX = startX;
@@ -143,23 +151,23 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       let curW = initWidth;
 
       for (let s = 0; s < steps; s++) {
-        if (curR <= IRIS_RADIUS * 1.08) break;
+        if (curR <= IRIS_RADIUS * 1.06) break;
 
-        const stepLen = 9 + Math.random() * 5;
+        const stepLen = 8 + Math.random() * 5;
         const nextR = curR - stepLen;
-        const angleWiggle = (Math.random() - 0.5) * 0.18;
+        const angleWiggle = (Math.random() - 0.5) * 0.16;
         curAngle += angleWiggle;
 
         const nextX = CENTER + Math.cos(curAngle) * nextR;
         const nextY = CENTER + Math.sin(curAngle) * nextR;
 
-        // Midpoint control point with organic curvilinear meandering
+        // Curvilinear organic tortuosity control point
         const midX = (curX + nextX) / 2;
         const midY = (curY + nextY) / 2;
         const perpX = -(nextY - curY);
         const perpY = nextX - curX;
         const perpNorm = Math.sqrt(perpX * perpX + perpY * perpY) || 1;
-        const curvatureAmp = (Math.random() - 0.5) * 4.5;
+        const curvatureAmp = (Math.random() - 0.5) * 3.8;
         const cx = midX + (perpX / perpNorm) * curvatureAmp;
         const cy = midY + (perpY / perpNorm) * curvatureAmp;
 
@@ -170,32 +178,34 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           cy,
           x2: nextX,
           y2: nextY,
-          width: Math.max(0.35, curW),
+          width: Math.max(0.3, curW),
           color: baseColor,
           alpha: baseAlpha,
+          isDeep,
         });
 
-        // Bifurcation: Branch daughter vessel naturally
-        if (canBifurcate && s === Math.floor(steps * 0.4)) {
+        // Daughter vessel bifurcation at physiological acute angle
+        if (canBifurcate && s === Math.floor(steps * 0.38)) {
           const side = Math.random() > 0.5 ? 1 : -1;
-          const branchAngle = curAngle + side * (0.35 + Math.random() * 0.22);
+          const branchAngle = curAngle + side * (0.32 + Math.random() * 0.20);
           growBranch(
             nextX,
             nextY,
             branchAngle,
             nextR,
             Math.floor(steps * 0.65),
-            curW * 0.65,
-            Math.random() > 0.4 ? '#DC2626' : '#E63926',
+            curW * 0.68,
+            isDeep ? '#881337' : '#DC2626',
             Math.max(0.35, baseAlpha * 0.85),
+            isDeep,
             false
           );
         }
 
-        // Second fine terminal capillary twig
-        if (canBifurcate && s === Math.floor(steps * 0.75)) {
+        // Terminal capillary twig
+        if (canBifurcate && s === Math.floor(steps * 0.72)) {
           const side = Math.random() > 0.5 ? 1 : -1;
-          const twigAngle = curAngle + side * (0.40 + Math.random() * 0.25);
+          const twigAngle = curAngle + side * (0.38 + Math.random() * 0.22);
           growBranch(
             nextX,
             nextY,
@@ -203,8 +213,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             nextR,
             3,
             curW * 0.45,
-            '#E63926',
+            '#DC2626',
             Math.max(0.3, baseAlpha * 0.75),
+            isDeep,
             false
           );
         }
@@ -212,7 +223,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         curX = nextX;
         curY = nextY;
         curR = nextR;
-        curW *= 0.88; // Smooth tapering as vessel advances toward the cornea
+        curW *= 0.87; // Natural caliber tapering toward the cornea
       }
     };
 
@@ -230,7 +241,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         cfg.depth,
         cfg.startWidth,
         cfg.color,
-        0.70 + Math.random() * 0.15,
+        cfg.isDeep ? 0.38 : 0.75,
+        cfg.isDeep,
         true
       );
     });
@@ -238,49 +250,67 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     primaryVesselsRef.current = segments;
   }, [CENTER, IRIS_RADIUS]);
 
-  // Pre-generate hyper-detailed iris fibers (520 radial fibers)
+  // Pre-generate hyper-realistic biological iris trabeculae & Fuchs' crypts
   const generateIrisFibers = useCallback(() => {
     const list: typeof irisFibersRef.current = [];
-    const FIBER_COUNT = 520;
+    const FIBER_COUNT = 740;
+
     for (let f = 0; f < FIBER_COUNT; f++) {
-      const angle = (f / FIBER_COUNT) * Math.PI * 2 + (Math.random() * 0.008);
-      const innerRel = 0.22 + Math.random() * 0.12;
+      const angle = (f / FIBER_COUNT) * Math.PI * 2 + (Math.random() * 0.006 - 0.003);
+      const innerRel = 0.16 + Math.random() * 0.14;
       const outerRel = 0.98 - Math.random() * 0.03;
       const roll = Math.random();
+
+      // Photorealistic Hazel-Amber / Slate-Olive Natural Melanin Distribution
       let col: string;
-      if (roll > 0.84) {
-        col = 'rgba(230, 57, 38, 0.88)'; // screenprint vermilion
-      } else if (roll > 0.52) {
-        col = 'rgba(2, 132, 199, 0.8)';  // piercing cobalt
-      } else if (roll > 0.25) {
-        col = 'rgba(245, 242, 235, 0.9)'; // warm eggshell
+      if (roll > 0.82) {
+        col = 'rgba(254, 240, 138, 0.75)'; // superficial golden cristae highlight
+      } else if (roll > 0.65) {
+        col = 'rgba(217, 119, 6, 0.82)';   // warm amber collarette fiber
+      } else if (roll > 0.48) {
+        col = 'rgba(180, 83, 9, 0.85)';    // rich hazel-honey stroma
+      } else if (roll > 0.32) {
+        col = 'rgba(63, 79, 56, 0.80)';    // subtle olive-slate hazel undertone
+      } else if (roll > 0.16) {
+        col = 'rgba(30, 41, 59, 0.88)';    // deep ciliary slate
       } else {
-        col = 'rgba(17, 18, 22, 0.88)';  // deep carbon ink
+        col = 'rgba(24, 18, 12, 0.92)';    // dark walnut-espresso deep stroma
       }
+
       list.push({
         angle,
         innerRel,
         outerRel,
         col,
-        width: 0.65 + Math.random() * 1.1,
+        width: 0.55 + Math.random() * 1.0,
+        wobbleAmp: 0.8 + Math.random() * 1.4,
+        wobbleFreq: 10 + Math.floor(Math.random() * 14),
       });
     }
     irisFibersRef.current = list;
+
+    // Generate natural Fuchs' crypts (irregular oval depressions in stroma)
+    const crypts: typeof fuchsCryptsRef.current = [];
+    const CRYPT_COUNT = 18;
+    for (let c = 0; c < CRYPT_COUNT; c++) {
+      const angle = (c / CRYPT_COUNT) * Math.PI * 2 + (Math.random() * 0.25 - 0.125);
+      const relDist = 0.44 + Math.random() * 0.32;
+      crypts.push({
+        angle,
+        relDist,
+        radiusX: 2.2 + Math.random() * 2.8,
+        radiusY: 1.4 + Math.random() * 1.8,
+        rotation: angle + Math.PI / 2 + (Math.random() - 0.5) * 0.4,
+      });
+    }
+    fuchsCryptsRef.current = crypts;
   }, []);
 
-  // Blinking reflex trigger
-  const triggerBlink = useCallback((duration = 90) => {
-    const upper = eyelidUpperRef.current;
-    const lower = eyelidLowerRef.current;
-    if (!upper || !lower) return;
-    upper.style.transform = 'translateY(0%)';
-    lower.style.transform = 'translateY(0%)';
-    setTimeout(() => {
-      if (upper && lower) {
-        upper.style.transform = 'translateY(-101%)';
-        lower.style.transform = 'translateY(101%)';
-      }
-    }, duration);
+  // Blinking reflex trigger (smooth biological sweep)
+  const triggerBlink = useCallback((duration = 170) => {
+    physicsRef.current.isBlinking = true;
+    physicsRef.current.blinkStartTime = performance.now();
+    physicsRef.current.blinkDuration = duration;
   }, []);
 
   // Main canvas animation and loop setup
@@ -294,36 +324,36 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Blinking schedule
+    // Blinking schedule (every 3.5 to 7.0 seconds, exactly like a real human)
     let blinkTimer: any;
     const scheduleNextBlink = () => {
-      const delay = 3500 + Math.random() * 5500;
+      const delay = 3200 + Math.random() * 4500;
       blinkTimer = setTimeout(() => {
-        triggerBlink(75 + Math.random() * 35);
+        triggerBlink(150 + Math.random() * 40);
         scheduleNextBlink();
       }, delay);
     };
     scheduleNextBlink();
 
-    // Saccades schedule
+    // Saccades schedule (natural micro-gaze adjustments)
     let saccadeTimer: any;
     let saccadeResetTimer: any;
     const scheduleNextSaccade = () => {
-      const delay = 500 + Math.random() * 1400;
+      const delay = 600 + Math.random() * 1500;
       saccadeTimer = setTimeout(() => {
         if (Math.random() > 0.65) {
-          physicsRef.current.saccadeOffsetX = (Math.random() - 0.5) * 8.0;
-          physicsRef.current.saccadeOffsetY = (Math.random() - 0.5) * 6.0;
-          physicsRef.current.pupilTwitch = (Math.random() - 0.5) * 6.0;
+          physicsRef.current.saccadeOffsetX = (Math.random() - 0.5) * 7.0;
+          physicsRef.current.saccadeOffsetY = (Math.random() - 0.5) * 5.0;
+          physicsRef.current.pupilTwitch = (Math.random() - 0.5) * 4.5;
         } else {
-          physicsRef.current.saccadeOffsetX = (Math.random() - 0.5) * 3.0;
-          physicsRef.current.saccadeOffsetY = (Math.random() - 0.5) * 2.5;
+          physicsRef.current.saccadeOffsetX = (Math.random() - 0.5) * 2.5;
+          physicsRef.current.saccadeOffsetY = (Math.random() - 0.5) * 2.0;
           physicsRef.current.pupilTwitch = 0;
         }
         saccadeResetTimer = setTimeout(() => {
           physicsRef.current.saccadeOffsetX = 0;
           physicsRef.current.saccadeOffsetY = 0;
-        }, 80);
+        }, 90);
         scheduleNextSaccade();
       }, delay);
     };
@@ -333,15 +363,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     const jitterInterval = setInterval(() => {
       const base = 54.0 + (Math.random() * 0.6 - 0.3);
       setDepth(`${base.toFixed(1)} cm`);
-      const mm = (3.5 + (physicsRef.current.pupilRadius / 24) * 1.5 + (Math.random() * 0.12)).toFixed(2);
+      const mm = (3.4 + (physicsRef.current.pupilRadius / 22) * 1.4 + (Math.random() * 0.08)).toFixed(2);
       setPupilDil(`${mm}mm`);
-      const scan = (99.3 + (Math.random() * 0.5)).toFixed(1);
+      const scan = (99.4 + (Math.random() * 0.4)).toFixed(1);
       setIrisScan(`${scan}%`);
-      setTelemetryCycle(`${(0.34 + (Math.random() * 0.16)).toFixed(2)}ms`);
-    }, 420);
+      setTelemetryCycle(`${(0.32 + (Math.random() * 0.14)).toFixed(2)}ms`);
+    }, 400);
 
     // High-Detail Render Loop
-    const drawEyeFrame = () => {
+    const drawEyeFrame = (timestamp: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -353,7 +383,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         const rect = arena.getBoundingClientRect();
         const ax = rect.left + rect.width / 2;
         const ay = rect.top + rect.height / 2;
-        const maxDisplacement = 34;
+        const maxDisplacement = 32;
 
         const normX = Math.max(-1, Math.min(1, (p.mouseX - ax) / (window.innerWidth / 2)));
         const normY = Math.max(-1, Math.min(1, (p.mouseY - ay) / (window.innerHeight / 2)));
@@ -366,11 +396,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           p.targetX = (p.targetX / dist) * maxDisplacement;
           p.targetY = (p.targetY / dist) * maxDisplacement;
         }
+
+        // Accommodation reflex: pupil subtly constricts when user looks directly into center
+        const centerDist = Math.sqrt(normX * normX + normY * normY);
+        p.targetPupilRadius = 18 + centerDist * 6.5;
       }
 
-      p.curX += (p.targetX + p.saccadeOffsetX - p.curX) * 0.16;
-      p.curY += (p.targetY + p.saccadeOffsetY - p.curY) * 0.16;
-      p.pupilRadius += (p.targetPupilRadius + p.pupilTwitch - p.pupilRadius) * 0.14;
+      // Physics interpolation
+      p.curX += (p.targetX + p.saccadeOffsetX - p.curX) * 0.15;
+      p.curY += (p.targetY + p.saccadeOffsetY - p.curY) * 0.15;
+
+      // Physiological Pupil Hippus (living, breathing pupil oscillation)
+      const hippus = Math.sin(timestamp * 0.0024) * 1.5 + Math.cos(timestamp * 0.0052) * 0.8;
+      p.pupilRadius += (p.targetPupilRadius + hippus + p.pupilTwitch - p.pupilRadius) * 0.11;
+
+      // Biological Eyelid Blinking Physics (asymmetrical: fast close ~38%, smooth open ~62%)
+      if (p.isBlinking) {
+        const elapsed = timestamp - p.blinkStartTime;
+        if (elapsed >= p.blinkDuration) {
+          p.isBlinking = false;
+          p.blinkProgress = 0;
+        } else {
+          const norm = elapsed / p.blinkDuration;
+          if (norm < 0.38) {
+            p.blinkProgress = Math.sin((norm / 0.38) * (Math.PI / 2));
+          } else {
+            p.blinkProgress = Math.cos(((norm - 0.38) / 0.62) * (Math.PI / 2));
+          }
+        }
+      }
 
       ctx.clearRect(0, 0, SIZE, SIZE);
 
@@ -379,34 +433,51 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       ctx.arc(CENTER, CENTER, CENTER - 2, 0, Math.PI * 2);
       ctx.clip();
 
-      // 1. Sclera with clean, elegant warm paper ivory tone
-      const scleraGrad = ctx.createRadialGradient(CENTER, CENTER, 20, CENTER, CENTER, CENTER);
-      scleraGrad.addColorStop(0, '#FFFFFC');
-      scleraGrad.addColorStop(0.55, '#FAF8F3');
-      scleraGrad.addColorStop(0.82, '#F2EDE4');
-      scleraGrad.addColorStop(0.95, '#E8E2D5');
-      scleraGrad.addColorStop(1.0, '#D8D1C3');
+      // ========================================================
+      // 1. SCLERA (3D SPHERICAL GLOBE SHADING)
+      // ========================================================
+      // Top-left illumination key with realistic orbital spherical shadow
+      const scleraGrad = ctx.createRadialGradient(CENTER - 45, CENTER - 45, 30, CENTER, CENTER, CENTER);
+      scleraGrad.addColorStop(0, '#FFFFFF');
+      scleraGrad.addColorStop(0.38, '#FAF8F3');
+      scleraGrad.addColorStop(0.72, '#F0EBE0');
+      scleraGrad.addColorStop(0.90, '#E4DCCE');
+      scleraGrad.addColorStop(1.0, '#C9BFA8');
       ctx.fillStyle = scleraGrad;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // Subtle lateral lighting tints (minimal, clean)
-      const flushLeft = ctx.createRadialGradient(16, CENTER, 2, 36, CENTER, 110);
-      flushLeft.addColorStop(0, 'rgba(230, 57, 38, 0.16)');
-      flushLeft.addColorStop(0.6, 'rgba(186, 36, 21, 0.05)');
+      // Medial Canthus / Lacrimal Caruncle (pinkish mucosal flush in the lateral corners)
+      const flushLeft = ctx.createRadialGradient(18, CENTER, 4, 38, CENTER, 115);
+      flushLeft.addColorStop(0, 'rgba(225, 45, 35, 0.18)');
+      flushLeft.addColorStop(0.5, 'rgba(185, 28, 28, 0.07)');
       flushLeft.addColorStop(1, 'transparent');
       ctx.fillStyle = flushLeft;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      const flushRight = ctx.createRadialGradient(SIZE - 16, CENTER, 2, SIZE - 36, CENTER, 110);
-      flushRight.addColorStop(0, 'rgba(230, 57, 38, 0.16)');
-      flushRight.addColorStop(0.6, 'rgba(186, 36, 21, 0.05)');
+      const flushRight = ctx.createRadialGradient(SIZE - 18, CENTER, 4, SIZE - 38, CENTER, 115);
+      flushRight.addColorStop(0, 'rgba(225, 45, 35, 0.18)');
+      flushRight.addColorStop(0.5, 'rgba(185, 28, 28, 0.07)');
       flushRight.addColorStop(1, 'transparent');
       ctx.fillStyle = flushRight;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // Draw authentic anatomical branching blood vessels on sclera
+      // Deep Episcleral Vascular Bed (Soft & slightly blurred)
       ctx.save();
-      primaryVesselsRef.current.forEach((seg) => {
+      primaryVesselsRef.current.filter((v) => v.isDeep).forEach((seg) => {
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, seg.y1);
+        ctx.quadraticCurveTo(seg.cx, seg.cy, seg.x2, seg.y2);
+        ctx.strokeStyle = seg.color;
+        ctx.lineWidth = seg.width * 1.25;
+        ctx.globalAlpha = seg.alpha * 0.55;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      });
+      ctx.restore();
+
+      // Superficial Conjunctival Capillaries (Crisp, branching, arterial vermilion)
+      ctx.save();
+      primaryVesselsRef.current.filter((v) => !v.isDeep).forEach((seg) => {
         ctx.beginPath();
         ctx.moveTo(seg.x1, seg.y1);
         ctx.quadraticCurveTo(seg.cx, seg.cy, seg.x2, seg.y2);
@@ -419,60 +490,93 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       });
       ctx.restore();
 
-      // 2. Iris & Cornea
+      // ========================================================
+      // 2. IRIS & CORNEA (HYPER-REALISTIC HAZEL-AMBER STROMA)
+      // ========================================================
       const irisX = CENTER + p.curX;
       const irisY = CENTER + p.curY;
 
-      // Glowing limbal ring shadow
-      const limbalGlow = ctx.createRadialGradient(irisX, irisY, IRIS_RADIUS - 4, irisX, irisY, IRIS_RADIUS + 7);
-      limbalGlow.addColorStop(0, 'transparent');
-      limbalGlow.addColorStop(0.6, 'rgba(220, 38, 38, 0.85)');
-      limbalGlow.addColorStop(1.0, 'transparent');
-      ctx.fillStyle = limbalGlow;
+      // Soft Limbal Ring Feathering (blends iris smoothly into the sclera)
+      const limbalShadow = ctx.createRadialGradient(irisX, irisY, IRIS_RADIUS - 6, irisX, irisY, IRIS_RADIUS + 4);
+      limbalShadow.addColorStop(0, 'transparent');
+      limbalShadow.addColorStop(0.65, 'rgba(11, 14, 20, 0.70)');
+      limbalShadow.addColorStop(0.92, 'rgba(11, 14, 20, 0.35)');
+      limbalShadow.addColorStop(1.0, 'transparent');
+      ctx.fillStyle = limbalShadow;
       ctx.beginPath();
-      ctx.arc(irisX, irisY, IRIS_RADIUS + 8, 0, Math.PI * 2);
+      ctx.arc(irisX, irisY, IRIS_RADIUS + 4, 0, Math.PI * 2);
       ctx.fill();
 
-      // Iris base radial gradient
+      // Multi-zone Biological Iris Base Gradient
       const irisGrad = ctx.createRadialGradient(irisX, irisY, p.pupilRadius * 0.7, irisX, irisY, IRIS_RADIUS);
-      irisGrad.addColorStop(0, '#111216');
-      irisGrad.addColorStop(0.2, '#0369A1');
-      irisGrad.addColorStop(0.55, '#0284C7');
-      irisGrad.addColorStop(0.78, '#38BDF8');
-      irisGrad.addColorStop(0.92, '#E63926');
-      irisGrad.addColorStop(1.0, '#090D16');
+      irisGrad.addColorStop(0, '#0A0806');    // inner pupillary boundary
+      irisGrad.addColorStop(0.18, '#3D2314'); // deep hazel-sepia zone
+      irisGrad.addColorStop(0.38, '#854D0E'); // golden amber central heterochromia
+      irisGrad.addColorStop(0.55, '#B45309'); // rich warm amber collarette
+      irisGrad.addColorStop(0.74, '#3F4F38'); // hazel olive stroma
+      irisGrad.addColorStop(0.88, '#1E293B'); // deep ciliary slate
+      irisGrad.addColorStop(0.96, '#0B0E14'); // limbal ring dark rim
+      irisGrad.addColorStop(1.0, '#070A0F');  // outer limbus
       ctx.fillStyle = irisGrad;
       ctx.beginPath();
       ctx.arc(irisX, irisY, IRIS_RADIUS, 0, Math.PI * 2);
       ctx.fill();
 
-      // Limbal ring stroke
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 4;
-      ctx.stroke();
-
-      // Radial muscle fibers
+      // 740 Multi-Depth Trabeculae Fibers (Organic Sinusoidal Collagen Threads)
       irisFibersRef.current.forEach((f) => {
         const inR = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * f.innerRel;
         const outR = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * f.outerRel;
+
         const x1 = irisX + Math.cos(f.angle) * inR;
         const y1 = irisY + Math.sin(f.angle) * inR;
         const x2 = irisX + Math.cos(f.angle) * outR;
         const y2 = irisY + Math.sin(f.angle) * outR;
 
+        // Subtle curvilinear weave
+        const midR = (inR + outR) / 2;
+        const midAngle = f.angle + Math.sin(midR * 0.15) * 0.02;
+        const cx = irisX + Math.cos(midAngle) * midR;
+        const cy = irisY + Math.sin(midAngle) * midR;
+
         ctx.beginPath();
         ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        ctx.quadraticCurveTo(cx, cy, x2, y2);
         ctx.strokeStyle = f.col;
         ctx.lineWidth = f.width;
         ctx.stroke();
       });
 
-      // Jagged Collarette Ring
+      // Fuchs' Crypts (Natural anatomical depressions in anterior stroma)
+      fuchsCryptsRef.current.forEach((crypt) => {
+        const dist = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * crypt.relDist;
+        const cx = irisX + Math.cos(crypt.angle) * dist;
+        const cy = irisY + Math.sin(crypt.angle) * dist;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(crypt.rotation);
+        ctx.fillStyle = 'rgba(24, 18, 12, 0.72)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, crypt.radiusX, crypt.radiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Contraction Furrows (Concentric circular arcs in the outer ciliary zone)
+      [0.72, 0.82, 0.90].forEach((relR) => {
+        ctx.beginPath();
+        const furrowR = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * relR;
+        ctx.arc(irisX, irisY, furrowR, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.35)';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      });
+
+      // Jagged Starburst Collarette Ring with Golden Highlights
       ctx.beginPath();
-      const collaretteR = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * 0.48;
-      for (let a = 0; a <= Math.PI * 2; a += 0.08) {
-        const wobble = Math.sin(a * 24) * 2.8 + Math.cos(a * 12) * 1.5;
+      const collaretteR = p.pupilRadius + (IRIS_RADIUS - p.pupilRadius) * 0.44;
+      for (let a = 0; a <= Math.PI * 2; a += 0.06) {
+        const wobble = Math.sin(a * 22) * 2.6 + Math.cos(a * 11) * 1.4;
         const cr = collaretteR + wobble;
         const cx = irisX + Math.cos(a) * cr;
         const cy = irisY + Math.sin(a) * cr;
@@ -480,56 +584,176 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         else ctx.lineTo(cx, cy);
       }
       ctx.closePath();
-      ctx.strokeStyle = 'rgba(239, 68, 68, 0.9)';
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = 'rgba(253, 230, 138, 0.75)';
+      ctx.lineWidth = 1.4;
       ctx.stroke();
 
-      // 3. Pupil
-      ctx.fillStyle = '#000000';
+      // ========================================================
+      // 3. PUPIL & PUPILLARY RUFF (OPTICAL BLACK APERTURE)
+      // ========================================================
+      // Textured Pupillary Ruff (dark scalloped margin around aperture)
       ctx.beginPath();
-      ctx.arc(irisX, irisY, Math.max(9, p.pupilRadius), 0, Math.PI * 2);
+      const ruffR = Math.max(9, p.pupilRadius) + 1.8;
+      for (let a = 0; a <= Math.PI * 2; a += 0.08) {
+        const microNotch = Math.sin(a * 36) * 0.6;
+        const rx = irisX + Math.cos(a) * (ruffR + microNotch);
+        const ry = irisY + Math.sin(a) * (ruffR + microNotch);
+        if (a === 0) ctx.moveTo(rx, ry);
+        else ctx.lineTo(rx, ry);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#090807';
       ctx.fill();
 
-      const sphincter = ctx.createRadialGradient(irisX, irisY, p.pupilRadius * 0.75, irisX, irisY, p.pupilRadius * 1.25);
-      sphincter.addColorStop(0, 'rgba(0,0,0,1)');
-      sphincter.addColorStop(0.65, 'rgba(185, 28, 28, 0.45)');
+      // Absolute Optical Black Pupil Aperture
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(irisX, irisY, Math.max(8.5, p.pupilRadius), 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sphincter Muscle Shadow Gradient
+      const sphincter = ctx.createRadialGradient(irisX, irisY, p.pupilRadius * 0.85, irisX, irisY, p.pupilRadius * 1.35);
+      sphincter.addColorStop(0, 'rgba(0,0,0,0.85)');
+      sphincter.addColorStop(0.55, 'rgba(69, 26, 3, 0.35)');
       sphincter.addColorStop(1, 'transparent');
       ctx.fillStyle = sphincter;
       ctx.beginPath();
-      ctx.arc(irisX, irisY, p.pupilRadius * 1.25, 0, Math.PI * 2);
+      ctx.arc(irisX, irisY, p.pupilRadius * 1.35, 0, Math.PI * 2);
       ctx.fill();
 
-      // 4. Specular Highlights
-      const glintX = irisX - IRIS_RADIUS * 0.28;
-      const glintY = irisY - IRIS_RADIUS * 0.32;
+      // ========================================================
+      // 4. CORNEAL WET SPECULAR HIGHLIGHTS (STUDIO CATCHLIGHTS)
+      // ========================================================
+      // Primary Window Softbox Reflection at 10:30 o'clock
+      const glintX = irisX - IRIS_RADIUS * 0.32;
+      const glintY = irisY - IRIS_RADIUS * 0.36;
+
       ctx.save();
       ctx.translate(glintX, glintY);
-      ctx.rotate(-0.35);
+      ctx.rotate(-0.32);
+
+      // Softbox outer glow
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(-8, -5, 16, 10, 3) : ctx.rect(-8, -5, 16, 10);
+      ctx.fill();
+
+      // Softbox bright core with window-pane divider
       ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 7.5, 3.8, 0, 0, Math.PI * 2);
+      ctx.roundRect ? ctx.roundRect(-6.5, -4, 13, 8, 2) : ctx.rect(-6.5, -4, 13, 8);
       ctx.fill();
+
+      // Subtle window cross mullion
+      ctx.strokeStyle = 'rgba(200, 220, 255, 0.28)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(0, 4);
+      ctx.moveTo(-6.5, 0);
+      ctx.lineTo(6.5, 0);
+      ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      // Soul Spark Catchlight (Brilliant pinpoint glint on pupil edge at 11 o'clock)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
       ctx.beginPath();
-      ctx.arc(irisX - IRIS_RADIUS * 0.14, irisY - IRIS_RADIUS * 0.12, 2.2, 0, Math.PI * 2);
+      ctx.arc(irisX - IRIS_RADIUS * 0.16, irisY - IRIS_RADIUS * 0.14, 2.4, 0, Math.PI * 2);
       ctx.fill();
 
+      // Opposite Fresnel Tear-Film Bounce Reflection at 4:30 o'clock
       ctx.save();
-      ctx.translate(irisX + IRIS_RADIUS * 0.32, irisY + IRIS_RADIUS * 0.35);
-      ctx.rotate(0.5);
-      ctx.fillStyle = 'rgba(220, 38, 38, 0.4)';
+      ctx.translate(irisX + IRIS_RADIUS * 0.36, irisY + IRIS_RADIUS * 0.38);
+      ctx.rotate(0.55);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.32)';
       ctx.beginPath();
-      ctx.ellipse(0, 0, 6, 2.8, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 7.5, 2.6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
+      // Corneal Upper Orbital Drop Shadow (provides authentic socket depth)
+      const socketShadow = ctx.createLinearGradient(CENTER, 0, CENTER, CENTER + 40);
+      socketShadow.addColorStop(0, 'rgba(15, 23, 42, 0.30)');
+      socketShadow.addColorStop(0.55, 'rgba(15, 23, 42, 0.08)');
+      socketShadow.addColorStop(1, 'transparent');
+      ctx.fillStyle = socketShadow;
+      ctx.fillRect(0, 0, SIZE, SIZE);
+
+      // ========================================================
+      // 5. ANATOMICAL EYELIDS & BLINK REFLEX (NATURAL HUMAN CURVATURE)
+      // ========================================================
+      const blink = p.blinkProgress; // 0 = open, 1 = closed
+
+      // Upper Eyelid Position: resting at y=26 (covers top 12% of eye naturally), closes to CENTER + 36
+      const upperLidY = 26 + (CENTER + 36 - 26) * blink;
+      const lowerLidY = (SIZE - 24) - ((SIZE - 24) - (CENTER + 36)) * (blink * 0.35);
+
+      // Upper Eyelid Skin Surface
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(SIZE, 0);
+      ctx.lineTo(SIZE, upperLidY - 14);
+      ctx.quadraticCurveTo(CENTER, upperLidY + 18, 0, upperLidY - 14);
+      ctx.closePath();
+      const upperSkinGrad = ctx.createLinearGradient(CENTER, 0, CENTER, upperLidY + 18);
+      upperSkinGrad.addColorStop(0, '#EFEAE0');
+      upperSkinGrad.addColorStop(0.75, '#E5DEC8');
+      upperSkinGrad.addColorStop(1, '#D8CFB5');
+      ctx.fillStyle = upperSkinGrad;
+      ctx.fill();
+
+      // Upper Eyelash Margin Line (fine, crisp carbon line)
+      ctx.beginPath();
+      ctx.moveTo(0, upperLidY - 14);
+      ctx.quadraticCurveTo(CENTER, upperLidY + 18, SIZE, upperLidY - 14);
+      ctx.strokeStyle = '#18120C';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // Wet Tear Meniscus Line on Upper Lid
+      ctx.beginPath();
+      ctx.moveTo(20, upperLidY - 12);
+      ctx.quadraticCurveTo(CENTER, upperLidY + 19, SIZE - 20, upperLidY - 12);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      // Lower Eyelid Skin Surface
+      ctx.beginPath();
+      ctx.moveTo(0, SIZE);
+      ctx.lineTo(SIZE, SIZE);
+      ctx.lineTo(SIZE, lowerLidY + 10);
+      ctx.quadraticCurveTo(CENTER, lowerLidY - 12, 0, lowerLidY + 10);
+      ctx.closePath();
+      const lowerSkinGrad = ctx.createLinearGradient(CENTER, lowerLidY - 12, CENTER, SIZE);
+      lowerSkinGrad.addColorStop(0, '#D8CFB5');
+      lowerSkinGrad.addColorStop(0.35, '#E5DEC8');
+      lowerSkinGrad.addColorStop(1, '#EFEAE0');
+      ctx.fillStyle = lowerSkinGrad;
+      ctx.fill();
+
+      // Lower Eyelash & Glistening Tear Meniscus Line
+      ctx.beginPath();
+      ctx.moveTo(0, lowerLidY + 10);
+      ctx.quadraticCurveTo(CENTER, lowerLidY - 12, SIZE, lowerLidY + 10);
+      ctx.strokeStyle = '#18120C';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(25, lowerLidY + 9);
+      ctx.quadraticCurveTo(CENTER, lowerLidY - 13, SIZE - 25, lowerLidY + 9);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
       ctx.restore();
+
+      ctx.restore(); // end clip
 
       // Update Gaze Vector readout
-      const vx = (p.curX / 34).toFixed(2);
-      const vy = (p.curY / 34).toFixed(2);
+      const vx = (p.curX / 32).toFixed(2);
+      const vy = (p.curY / 32).toFixed(2);
       const sx = Number(vx) >= 0 ? '+' : '';
       const sy = Number(vy) >= 0 ? '+' : '';
       setGazeVector(`[${sx}${vx}, ${sy}${vy}]`);
@@ -537,7 +761,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       animFrameRef.current = requestAnimationFrame(drawEyeFrame);
     };
 
-    drawEyeFrame();
+    animFrameRef.current = requestAnimationFrame(drawEyeFrame);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -1102,9 +1326,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                   <circle cx="195" cy="195" fill="none" opacity="0.45" r="183" stroke="#6B6F78" strokeDasharray="1 12.5" strokeWidth="2"></circle>
                 </svg>
 
-                {/* The Eyeball Housing */}
-                <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8F3] border-2 border-[#E63926] shadow-[0_0_35px_rgba(230,57,38,0.22),inset_0_0_40px_rgba(18,19,22,0.3)] flex items-center justify-center" id="eyeOrbit">
-                  {/* Sharp Canvas Layer */}
+                {/* The Eyeball Housing (Anatomical Globe & Clinical Bezel) */}
+                <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8F3] border-2 border-[#1E2024] shadow-[0_10px_35px_rgba(18,19,22,0.18),inset_0_0_35px_rgba(18,19,22,0.22)] flex items-center justify-center" id="eyeOrbit">
+                  {/* Sharp Canvas Layer (Hyper-Realistic Biological Eye) */}
                   <canvas
                     className="absolute inset-0 w-full h-full block z-20"
                     height={380}
@@ -1113,12 +1337,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                     width={380}
                   ></canvas>
 
-                  {/* Anatomical Eyelids (Blinking Reflex) */}
-                  <div className="eyelid-slice eyelid-upper" id="eyelidUpper" ref={eyelidUpperRef}></div>
-                  <div className="eyelid-slice eyelid-lower" id="eyelidLower" ref={eyelidLowerRef}></div>
+                  {/* Hidden fallback refs for eyelid interfaces */}
+                  <div ref={eyelidUpperRef} className="hidden" aria-hidden="true"></div>
+                  <div ref={eyelidLowerRef} className="hidden" aria-hidden="true"></div>
 
                   {/* Corneal Glass Gloss Vignette Overlay */}
-                  <div className="absolute inset-0 rounded-full shadow-[inset_0_0_30px_rgba(0,0,0,0.45),inset_0_20px_25px_rgba(255,255,255,0.4)] pointer-events-none z-26"></div>
+                  <div className="absolute inset-0 rounded-full shadow-[inset_0_0_25px_rgba(0,0,0,0.35),inset_0_15px_20px_rgba(255,255,255,0.35)] pointer-events-none z-26"></div>
                 </div>
               </div>
             </div>
