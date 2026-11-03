@@ -166,6 +166,12 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         } catch (err) {}
       }
       await loadFindingsForScan(workflowId, targetDomain || target);
+      // Auto-trigger graph synthesis for the newly completed scan
+      fetch('/api/graph/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scan_id: workflowId, target_domain: targetDomain || target }),
+      }).catch(() => {});
     };
 
     es.onmessage = async (event) => {
@@ -404,7 +410,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           target_domain: target.trim(),
-          permitted_scope: 'FULL_PASSIVE',
+          permitted_scope: reconMode === 'ACTIVE' ? 'FULL_ACTIVE' : 'FULL_PASSIVE',
         }),
       });
       if (!res.ok) {
@@ -448,7 +454,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         if (showToast) showToast('success', 'Domain Authorized', `${target} verified successfully.`);
         setShowVerifyModal(false);
         setChallengeData(null);
-        await checkAuthorization(target, 'FULL_PASSIVE');
+        await checkAuthorization(target, reconMode === 'ACTIVE' ? 'FULL_ACTIVE' : 'PASSIVE_OSINT');
       } else {
         const errMsg = data.detail || data.message || 'DNS TXT token not found. Please allow 1-2 minutes for DNS propagation.';
         setVerificationError(errMsg);
@@ -515,6 +521,11 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 setScanning(false);
                 setProgress(100);
                 await loadFindingsForScan(scanId, target.trim());
+                fetch('/api/graph/build', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ scan_id: scanId, target_domain: target.trim() }),
+                }).catch(() => {});
                 if (showToast) showToast('success', 'Passive OSINT Complete', `Discovered assets for ${target.trim()}`);
               }
             }
@@ -530,7 +541,17 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       return;
     }
 
-    const requestedScope = authStatus?.permitted_scope || 'FULL_ACTIVE';
+    // Enforce RFC 8655 Active Scope Authorization Check: Prompt for DNS TXT if unverified
+    if (!authStatus?.authorized) {
+      setScanning(false);
+      if (showToast) {
+        showToast('warning', 'DNS Ownership Challenge Required', `Target '${target.trim()}' requires verified DNS TXT ownership before active port & intrusion probing.`);
+      }
+      initiateDNSChallenge();
+      return;
+    }
+
+    const requestedScope = 'FULL_ACTIVE';
     const requestedScanners = ['nmap', 'httpx', 'zap', 'trivy', 'nuclei'];
 
     try {
@@ -541,7 +562,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           target: target.trim(),
           scanners: requestedScanners,
           scope: requestedScope,
-          authorization_id: authStatus?.authorization_id || undefined,
+          authorization_id: authStatus?.permitted_scope === 'FULL_ACTIVE' ? authStatus?.authorization_id : undefined,
           allow_partial_completion: true,
         }),
       });

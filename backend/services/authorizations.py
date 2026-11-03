@@ -20,6 +20,7 @@ from backend.services.scope import (
     normalize_domain,
     is_public_suffix,
     is_in_scope,
+    is_scope_authorized,
     PERMITTED_SCOPES,
     is_sandbox_target,
 )
@@ -404,9 +405,10 @@ async def get_valid_authorization_for_target(target: str, scope: Optional[str] =
                 except Exception:
                     pass
 
-                # Check if target is in authorized scope
+                # Check if target is in authorized scope and granted scope satisfies requested scope
                 if is_in_scope(clean_target, auth["target_domain"]):
-                    return auth
+                    if is_scope_authorized(auth.get("permitted_scope"), scope):
+                        return auth
 
             return None
 

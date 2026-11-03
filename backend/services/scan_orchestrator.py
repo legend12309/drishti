@@ -23,7 +23,7 @@ from backend.services.authorizations import (
     get_valid_authorization_for_target,
     log_audit_event,
 )
-from backend.services.scope import normalize_domain, is_in_scope, is_sandbox_target
+from backend.services.scope import normalize_domain, is_in_scope, is_sandbox_target, is_scope_authorized
 from backend.services.scanner_foundation import (
     ScanProfile,
     ScannerExecutionState,
@@ -131,15 +131,15 @@ class UnifiedScanOrchestrator:
         auth = None
         if plan.authorization_id:
             auth = await get_authorization(plan.authorization_id)
-            if not auth or auth["status"] != "verified" or not is_in_scope(clean_target, auth["target_domain"]):
+            if not auth or auth["status"] != "verified" or not is_in_scope(clean_target, auth["target_domain"]) or not is_scope_authorized(auth.get("permitted_scope"), plan.scope):
                 raise ValueError(
-                    f"Supplied authorization '{plan.authorization_id}' is invalid or does not cover '{clean_target}'."
+                    f"Supplied authorization '{plan.authorization_id}' (scope: {auth.get('permitted_scope') if auth else 'none'}) does not permit requested scope '{plan.scope}' for '{clean_target}'."
                 )
         else:
             auth = await get_valid_authorization_for_target(clean_target, scope=plan.scope)
             if not auth:
                 raise ValueError(
-                    f"Target '{clean_target}' is not authorized. Please complete DNS TXT verification challenge first."
+                    f"Target '{clean_target}' is not authorized for '{plan.scope}'. Please complete DNS TXT verification challenge first."
                 )
 
         # Validate Plan against Authorization

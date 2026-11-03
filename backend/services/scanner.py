@@ -23,7 +23,7 @@ from backend.services.authorizations import (
 )
 from backend.services.passive import execute_passive_reconnaissance
 from backend.services.detective import detective_engine
-from backend.services.scope import normalize_domain, is_in_scope
+from backend.services.scope import normalize_domain, is_in_scope, is_scope_authorized
 from backend.services.vulnerability_service import (
     normalize_and_persist_fingerprints,
     evaluate_scan_vulnerabilities,
@@ -708,14 +708,14 @@ async def create_scan(
     auth = None
     if authorization_id:
         auth = await get_authorization(authorization_id)
-        if not auth or auth["status"] != "verified" or not is_in_scope(clean_target, auth["target_domain"]):
+        if not auth or auth["status"] != "verified" or not is_in_scope(clean_target, auth["target_domain"]) or not is_scope_authorized(auth.get("permitted_scope"), scope):
             await log_audit_event(
                 event_type="scan_rejected",
                 target=clean_target,
-                detail=f"Explicit authorization '{authorization_id}' invalid or does not cover target '{clean_target}'."
+                detail=f"Explicit authorization '{authorization_id}' invalid, does not cover '{clean_target}', or scope mismatch."
             )
             raise ValueError(
-                f"Supplied authorization '{authorization_id}' is invalid, unverified, or does not cover '{clean_target}'."
+                f"Supplied authorization '{authorization_id}' does not permit requested scope '{scope}' for '{clean_target}'."
             )
     else:
         auth = await get_valid_authorization_for_target(clean_target, scope)

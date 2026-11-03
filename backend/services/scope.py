@@ -27,6 +27,39 @@ PERMITTED_SCOPES = {
     "PASSIVE_METADATA": "Public registration and RDAP metadata inspection only",
 }
 
+
+def is_scope_authorized(granted_scope: Optional[str], requested_scope: Optional[str]) -> bool:
+    """
+    Determines whether a granted authorization scope satisfies the requested scanning scope.
+    - PASSIVE_OSINT or FULL_PASSIVE CANNOT authorize ACTIVE or FULL_ACTIVE scanning.
+    - FULL_ACTIVE satisfies both active and passive scanning scopes.
+    """
+    if not requested_scope:
+        return True
+    granted = (granted_scope or "").strip().upper()
+    requested = requested_scope.strip().upper()
+
+    if granted == requested:
+        return True
+
+    # FULL_ACTIVE grants full authority across active and passive pipelines
+    if granted == "FULL_ACTIVE":
+        return True
+
+    # Active scanning strictly requires FULL_ACTIVE
+    if requested in ("FULL_ACTIVE", "ACTIVE", "ACTIVE_DAG"):
+        return False
+
+    # PASSIVE_OSINT only satisfies PASSIVE_OSINT
+    if requested == "PASSIVE_OSINT":
+        return True
+
+    # FULL_PASSIVE satisfies all passive sub-scopes
+    if granted == "FULL_PASSIVE" and requested in ("PASSIVE_OSINT", "PASSIVE_DNS", "PASSIVE_METADATA"):
+        return True
+
+    return False
+
 # Tier 1 Pre-Authorized Sandbox Targets (Can run active scans without DNS TXT verification)
 DEFAULT_SANDBOX_TARGETS = {
     "scanme.nmap.org",
