@@ -39,7 +39,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const displayTarget = target && target.trim() !== '' && target !== 'vvdx.in' ? target.trim() : '';
+  const displayTarget = target && target.trim() !== '' ? target.trim() : '';
 
   return (
     <header
