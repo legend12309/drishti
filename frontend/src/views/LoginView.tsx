@@ -91,14 +91,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     width: number;
   }>>([]);
 
-  // Generate vascular network (42 primary + 32 secondary fine capillaries)
+  // Generate refined, minimal vascular network (delicate clinical eye capillaries)
   const generateBloodVessels = useCallback(() => {
     const list: typeof primaryVesselsRef.current = [];
-    const vesselCount = 42;
+    const vesselCount = 10;
     for (let i = 0; i < vesselCount; i++) {
       const angle = (i / vesselCount) * Math.PI * 2 + (Math.random() * 0.15 - 0.075);
       const outerR = CENTER * 0.98;
-      const innerR = IRIS_RADIUS * 1.05 + Math.random() * 22;
+      const innerR = IRIS_RADIUS * 1.15 + Math.random() * 20;
       const points = [];
       let r = outerR;
       let a = angle;
@@ -107,22 +107,22 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           x: CENTER + Math.cos(a) * r,
           y: CENTER + Math.sin(a) * r,
         });
-        r -= 4 + Math.random() * 4;
-        a += (Math.random() - 0.5) * 0.28;
+        r -= 6 + Math.random() * 4;
+        a += (Math.random() - 0.5) * 0.22;
       }
       list.push({
         points,
-        width: 0.7 + Math.random() * 1.5,
-        color: Math.random() > 0.35 ? '#BA2415' : '#8F1B0F',
-        alpha: 0.65 + Math.random() * 0.35,
+        width: 0.5 + Math.random() * 0.4,
+        color: Math.random() > 0.4 ? '#BA2415' : '#E63926',
+        alpha: 0.35 + Math.random() * 0.20,
       });
     }
 
-    // Secondary fine capillary network
-    for (let j = 0; j < 32; j++) {
+    // Secondary fine capillary accents (very few, subtle)
+    for (let j = 0; j < 5; j++) {
       const angle = Math.random() * Math.PI * 2;
-      const outerR = CENTER * 0.96;
-      const innerR = IRIS_RADIUS * 1.25;
+      const outerR = CENTER * 0.95;
+      const innerR = IRIS_RADIUS * 1.30;
       const points = [];
       let r = outerR;
       let a = angle;
@@ -131,14 +131,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           x: CENTER + Math.cos(a) * r,
           y: CENTER + Math.sin(a) * r,
         });
-        r -= 3;
-        a += (Math.random() - 0.5) * 0.35;
+        r -= 5;
+        a += (Math.random() - 0.5) * 0.25;
       }
       list.push({
         points,
-        width: 0.4 + Math.random() * 0.4,
+        width: 0.35 + Math.random() * 0.25,
         color: '#E63926',
-        alpha: 0.45 + Math.random() * 0.35,
+        alpha: 0.25 + Math.random() * 0.15,
       });
     }
     primaryVesselsRef.current = list;
@@ -285,27 +285,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       ctx.arc(CENTER, CENTER, CENTER - 2, 0, Math.PI * 2);
       ctx.clip();
 
-      // 1. Sclera with warm tactile paper tone & realistic bloodshot gradients
+      // 1. Sclera with clean, elegant warm paper ivory tone
       const scleraGrad = ctx.createRadialGradient(CENTER, CENTER, 20, CENTER, CENTER, CENTER);
       scleraGrad.addColorStop(0, '#FFFFFC');
-      scleraGrad.addColorStop(0.5, '#F7F4EB');
-      scleraGrad.addColorStop(0.75, '#FDE8E4');
-      scleraGrad.addColorStop(0.92, '#E4DFD4');
-      scleraGrad.addColorStop(1.0, '#CFC8BA');
+      scleraGrad.addColorStop(0.55, '#FAF8F3');
+      scleraGrad.addColorStop(0.82, '#F2EDE4');
+      scleraGrad.addColorStop(0.95, '#E8E2D5');
+      scleraGrad.addColorStop(1.0, '#D8D1C3');
       ctx.fillStyle = scleraGrad;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
-      // Hemorrhagic corner suffusion flushes
+      // Subtle lateral lighting tints (minimal, clean)
       const flushLeft = ctx.createRadialGradient(16, CENTER, 2, 36, CENTER, 110);
-      flushLeft.addColorStop(0, 'rgba(230, 57, 38, 0.65)');
-      flushLeft.addColorStop(0.6, 'rgba(186, 36, 21, 0.25)');
+      flushLeft.addColorStop(0, 'rgba(230, 57, 38, 0.16)');
+      flushLeft.addColorStop(0.6, 'rgba(186, 36, 21, 0.05)');
       flushLeft.addColorStop(1, 'transparent');
       ctx.fillStyle = flushLeft;
       ctx.fillRect(0, 0, SIZE, SIZE);
 
       const flushRight = ctx.createRadialGradient(SIZE - 16, CENTER, 2, SIZE - 36, CENTER, 110);
-      flushRight.addColorStop(0, 'rgba(230, 57, 38, 0.65)');
-      flushRight.addColorStop(0.6, 'rgba(186, 36, 21, 0.25)');
+      flushRight.addColorStop(0, 'rgba(230, 57, 38, 0.16)');
+      flushRight.addColorStop(0.6, 'rgba(186, 36, 21, 0.05)');
       flushRight.addColorStop(1, 'transparent');
       ctx.fillStyle = flushRight;
       ctx.fillRect(0, 0, SIZE, SIZE);
@@ -658,28 +658,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   }, [simulateAuth]);
 
   return (
-    <div className="relative flex flex-col justify-between w-full min-h-screen bg-[#F5F2EB] lab-grid-bg text-[#111216] select-none p-2 md:p-3 font-mono overflow-x-hidden">
+    <div className="relative flex flex-col justify-between w-full min-h-screen bg-[#F5F2EB] text-[#111216] select-none p-2 md:p-3 font-mono overflow-x-hidden">
       {/* Local Scoped Keyframe & Technical Styles */}
       <style>{`
-        /* Tactile Poster Paper & Millimeter Grid Background */
-        .lab-grid-bg {
-          background-image: 
-            linear-gradient(to right, rgba(18, 19, 22, 0.055) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(18, 19, 22, 0.055) 1px, transparent 1px),
-            linear-gradient(to right, rgba(230, 57, 38, 0.04) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(230, 57, 38, 0.04) 1px, transparent 1px);
-          background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
-        }
-
-        /* Subtle Archival Print Reticle Vignette */
+        /* Smooth Archival Print Vignette (No Grid) */
         .clinical-overlay {
           position: fixed;
           inset: 0;
           pointer-events: none;
           z-index: 45;
-          background: radial-gradient(circle at center, transparent 60%, rgba(216, 210, 197, 0.25) 90%, rgba(180, 172, 158, 0.35) 100%),
-                      linear-gradient(rgba(18, 19, 22, 0.015) 50%, rgba(255, 255, 255, 0.015) 50%);
-          background-size: 100% 100%, 100% 4px;
+          background: radial-gradient(circle at center, transparent 65%, rgba(216, 210, 197, 0.18) 90%, rgba(180, 172, 158, 0.28) 100%);
         }
 
         /* High-contrast Chromatic Jitter */
@@ -946,9 +934,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         </div>
 
         {/* Main Biometric Stage with Lateral Data Streams */}
-        <div className="relative w-full max-w-6xl flex items-center justify-center px-2" style={{ gap: 'clamp(1rem, 3.5vw, 3.5rem)' }}>
+        <div className="relative w-full max-w-6xl flex items-center justify-center px-2 gap-3 lg:gap-6">
           {/* LEFT FLANK: Clinical Scrolling Memory Hex Dump */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative">
+          <aside className="hidden xl:flex flex-col w-[210px] h-[330px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative shrink-0">
             <div className="flex items-center justify-between border-b border-[#D8D2C5] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E63926] animate-ping"></span>
@@ -984,79 +972,81 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             </div>
           </aside>
 
-          {/* CENTER: ULTRA-SHARP CLINICAL OCULAR ARENA (380px Canvas in 400px Bezel) */}
-          <div className="relative w-[480px] max-w-full h-[460px] flex items-center justify-center mx-auto" id="scanArena" ref={arenaRef}>
-            {/* Concentric HUD rings with technical markings */}
-            <div className="absolute -top-4 text-[8px] font-mono tracking-widest text-[#E63926] font-bold pointer-events-none select-none">
-              AZM 000° // APERTURE_NORTH [PREDATOR_ACQ]
+          {/* CENTER ARENA CLUSTER */}
+          <div className="flex items-center justify-center gap-2 md:gap-4 shrink-0">
+            {/* Left Telemetry Wing */}
+            <div className="hidden md:flex flex-col items-end gap-1.5 text-[9px] text-[#484B53] font-mono leading-tight tracking-wider text-right w-[125px] shrink-0 border-r border-[#D8D2C5] pr-3 select-none">
+              <span className="text-[7.5px] text-[#E63926] font-extrabold uppercase tracking-widest">// OPTO_METRICS</span>
+              <div className="text-[#22252B] font-semibold">DEPTH // <span className="text-[#111216] font-bold font-mono" id="depthVal">{depth}</span></div>
+              <div className="text-[#E63926] font-bold">IRIS: <span id="irisScanVal">{irisScan}</span></div>
+              <div>PUPIL: <span className="text-[#111216] font-bold font-mono" id="pupilDilVal">{pupilDil}</span></div>
+              <div>IPD: <span className="text-[#22252B] font-semibold font-mono" id="ipdVal">63.8mm</span></div>
+              <div className="text-[#6B6F78]">HASH: <span className="text-[#E63926] font-mono font-bold">0x9E4B..7A</span></div>
+              <div>SACCADE: <span className="text-[#111216] font-bold font-mono">3.4Hz</span></div>
             </div>
-            <div className="absolute -bottom-4 text-[8px] font-mono tracking-widest text-[#484B53] font-medium pointer-events-none select-none">
-              AZM 180° // APERTURE_SOUTH [LOCKED]
-            </div>
 
-            {/* Subtle Rotating Calibration Circles */}
-            <div className="absolute w-[470px] h-[470px] rounded-full border border-dashed border-[#111216]/25 pointer-events-none hud-dial-spin"></div>
-            <div className="absolute w-[446px] h-[446px] rounded-full border border-[#E63926]/25 pointer-events-none hud-dial-counter"></div>
-            <div className="absolute w-[424px] h-[424px] rounded-full border border-[#D8D2C5] pointer-events-none"></div>
+            {/* Ocular Arena Canvas & Bezel */}
+            <div className="relative w-[400px] h-[400px] flex items-center justify-center shrink-0" id="scanArena" ref={arenaRef}>
+              {/* Concentric HUD rings with technical markings */}
+              <div className="absolute -top-3.5 text-[8px] font-mono tracking-widest text-[#E63926] font-bold pointer-events-none select-none">
+                AZM 000° // APERTURE_NORTH [PREDATOR_ACQ]
+              </div>
+              <div className="absolute -bottom-3.5 text-[8px] font-mono tracking-widest text-[#484B53] font-medium pointer-events-none select-none">
+                AZM 180° // APERTURE_SOUTH [LOCKED]
+              </div>
 
-            {/* Outer Clinical Lens Bezel with Tick Marks */}
-            <div className="relative w-[400px] h-[400px] rounded-full p-2 bg-[#ECE8DF] border-2 border-[#D8D2C5] shadow-[0_12px_35px_rgba(18,19,22,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] flex items-center justify-center z-20">
-              {/* Precision Millimeter Reticle SVG Overlay */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 400 400">
-                {/* Circular Reticle */}
-                <circle cx="200" cy="200" fill="none" opacity="0.65" r="192" stroke="#E63926" strokeDasharray="3 6" strokeWidth="1.5"></circle>
-                <circle cx="200" cy="200" fill="none" opacity="0.4" r="185" stroke="#111216" strokeWidth="0.8"></circle>
-                {/* Crosshair ticks */}
-                <line stroke="#E63926" strokeWidth="2" x1="200" x2="200" y1="4" y2="18"></line>
-                <line stroke="#E63926" strokeWidth="2" x1="200" x2="200" y1="382" y2="396"></line>
-                <line stroke="#E63926" strokeWidth="2" x1="4" x2="18" y1="200" y2="200"></line>
-                <line stroke="#E63926" strokeWidth="2" x1="382" x2="396" y1="200" y2="200"></line>
-                {/* Minor degree ticks around circumference */}
-                <circle cx="200" cy="200" fill="none" opacity="0.5" r="189" stroke="#6B6F78" strokeDasharray="1 12.5" strokeWidth="2"></circle>
-              </svg>
+              {/* Rotating Calibration Circles */}
+              <div className="absolute w-[416px] h-[416px] rounded-full border border-dashed border-[#111216]/20 pointer-events-none hud-dial-spin"></div>
+              <div className="absolute w-[404px] h-[404px] rounded-full border border-[#E63926]/20 pointer-events-none hud-dial-counter"></div>
 
-              {/* The Eyeball Housing */}
-              <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8F3] border-2 border-[#E63926] shadow-[0_0_35px_rgba(230,57,38,0.22),inset_0_0_40px_rgba(18,19,22,0.3)] flex items-center justify-center" id="eyeOrbit">
-                {/* Sharp Canvas Layer */}
-                <canvas
-                  className="absolute inset-0 w-full h-full block z-20"
-                  height={380}
-                  id="eyeCanvas"
-                  ref={canvasRef}
-                  width={380}
-                ></canvas>
+              {/* Outer Clinical Lens Bezel */}
+              <div className="relative w-[390px] h-[390px] rounded-full p-1.5 bg-[#ECE8DF] border-2 border-[#D8D2C5] shadow-[0_10px_30px_rgba(18,19,22,0.10),0_0_0_1px_rgba(255,255,255,0.8)_inset] flex items-center justify-center z-20">
+                {/* Precision Reticle SVG Overlay */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-30" viewBox="0 0 390 390">
+                  <circle cx="195" cy="195" fill="none" opacity="0.65" r="186" stroke="#E63926" strokeDasharray="3 6" strokeWidth="1.5"></circle>
+                  <circle cx="195" cy="195" fill="none" opacity="0.35" r="180" stroke="#111216" strokeWidth="0.8"></circle>
+                  <line stroke="#E63926" strokeWidth="2" x1="195" x2="195" y1="4" y2="18"></line>
+                  <line stroke="#E63926" strokeWidth="2" x1="195" x2="195" y1="372" y2="386"></line>
+                  <line stroke="#E63926" strokeWidth="2" x1="4" x2="18" y1="195" y2="195"></line>
+                  <line stroke="#E63926" strokeWidth="2" x1="372" x2="386" y1="195" y2="195"></line>
+                  <circle cx="195" cy="195" fill="none" opacity="0.45" r="183" stroke="#6B6F78" strokeDasharray="1 12.5" strokeWidth="2"></circle>
+                </svg>
 
-                {/* Anatomical Eyelids (Blinking Reflex) */}
-                <div className="eyelid-slice eyelid-upper" id="eyelidUpper" ref={eyelidUpperRef}></div>
-                <div className="eyelid-slice eyelid-lower" id="eyelidLower" ref={eyelidLowerRef}></div>
+                {/* The Eyeball Housing */}
+                <div className="relative w-[380px] h-[380px] rounded-full overflow-hidden bg-[#FAF8F3] border-2 border-[#E63926] shadow-[0_0_35px_rgba(230,57,38,0.22),inset_0_0_40px_rgba(18,19,22,0.3)] flex items-center justify-center" id="eyeOrbit">
+                  {/* Sharp Canvas Layer */}
+                  <canvas
+                    className="absolute inset-0 w-full h-full block z-20"
+                    height={380}
+                    id="eyeCanvas"
+                    ref={canvasRef}
+                    width={380}
+                  ></canvas>
 
-                {/* Corneal Glass Gloss Vignette Overlay */}
-                <div className="absolute inset-0 rounded-full shadow-[inset_0_0_30px_rgba(0,0,0,0.45),inset_0_20px_25px_rgba(255,255,255,0.4)] pointer-events-none z-26"></div>
+                  {/* Anatomical Eyelids (Blinking Reflex) */}
+                  <div className="eyelid-slice eyelid-upper" id="eyelidUpper" ref={eyelidUpperRef}></div>
+                  <div className="eyelid-slice eyelid-lower" id="eyelidLower" ref={eyelidLowerRef}></div>
+
+                  {/* Corneal Glass Gloss Vignette Overlay */}
+                  <div className="absolute inset-0 rounded-full shadow-[inset_0_0_30px_rgba(0,0,0,0.45),inset_0_20px_25px_rgba(255,255,255,0.4)] pointer-events-none z-26"></div>
+                </div>
               </div>
             </div>
 
-            {/* Left & Right Telemetry Indicators */}
-            <div className="absolute -left-12 top-1/2 -translate-y-1/2 text-[9px] text-[#484B53] font-mono leading-relaxed tracking-wider text-left pointer-events-none hidden md:block">
-              <div className="text-[#22252B] font-semibold">FACIAL_DEPTH // <span className="text-[#111216] font-bold" id="depthVal">{depth}</span></div>
-              <div className="text-[#E63926] font-bold">IRIS_SCAN: <span id="irisScanVal">{irisScan}</span> MATCH</div>
-              <div className="font-medium">PUPIL_DIL: <span className="text-[#111216] font-bold" id="pupilDilVal">{pupilDil}</span></div>
-              <div className="font-medium">IPD_METRIC: <span className="text-[#22252B] font-semibold" id="ipdVal">63.8mm</span></div>
-              <div className="text-[#6B6F78]">VESSEL_HASH: <span className="text-[#E63926] font-mono font-bold">0x9E4B..7A</span></div>
-              <div className="text-[#111216] font-semibold">SACCADE_FRQ: <span className="text-[#111216] font-bold">3.4Hz</span></div>
-            </div>
-
-            <div className="absolute -right-12 top-1/2 -translate-y-1/2 text-[9px] text-[#484B53] font-mono leading-relaxed tracking-wider text-right pointer-events-none hidden md:block">
-              <div className="font-medium">CORNEA_REFRACT // <span className="text-[#10843E] font-bold">OK</span></div>
-              <div className="text-[#E63926] font-bold">BIOMETRIC_LOCK: <span id="biolockStatus">{biolockStatus}</span></div>
-              <div className="font-medium">GAZE_VECTOR: <span className="text-[#111216] font-mono font-bold" id="gazeVectorVal">{gazeVector}</span></div>
-              <div className="text-[#E63926] font-bold">SPECTRAL_IR: COHERENT</div>
-              <div className="text-[#6B6F78]">TRIANGULATION: <span className="text-[#10843E] font-bold">LOCKED</span></div>
-              <div className="text-[#111216] font-semibold">ENTROPY_POOL: <span className="text-[#111216] font-mono font-bold">0x88F1</span></div>
+            {/* Right Telemetry Wing */}
+            <div className="hidden md:flex flex-col items-start gap-1.5 text-[9px] text-[#484B53] font-mono leading-tight tracking-wider text-left w-[125px] shrink-0 border-l border-[#D8D2C5] pl-3 select-none">
+              <span className="text-[7.5px] text-[#10843E] font-extrabold uppercase tracking-widest">// ENCLAVE_LOCK</span>
+              <div>CORNEA // <span className="text-[#10843E] font-bold font-mono">OK [1.37]</span></div>
+              <div className="text-[#E63926] font-bold">LOCK: <span id="biolockStatus">{biolockStatus}</span></div>
+              <div>GAZE: <span className="text-[#111216] font-mono font-bold" id="gazeVectorVal">{gazeVector}</span></div>
+              <div className="text-[#E63926] font-bold">IR: COHERENT</div>
+              <div className="text-[#6B6F78]">TRIANG: <span className="text-[#10843E] font-bold font-mono">LOCKED</span></div>
+              <div>POOL: <span className="text-[#111216] font-mono font-bold">0x88F1</span></div>
             </div>
           </div>
 
           {/* RIGHT FLANK: Clinical Ethernet Packet Sniffer */}
-          <aside className="hidden xl:flex flex-col w-[210px] h-[320px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative">
+          <aside className="hidden xl:flex flex-col w-[210px] h-[330px] border-2 border-[#D8D2C5] bg-[#FAF8F3]/95 p-2 overflow-hidden shadow-[0_4px_16px_rgba(18,19,22,0.05)] text-[8px] font-mono leading-relaxed relative shrink-0">
             <div className="flex items-center justify-between border-b border-[#D8D2C5] pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E63926] animate-ping"></span>
@@ -1093,7 +1083,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         {/* ========================================== */}
         {/* 3. CLINICAL CLI AUTHENTICATION TERMINAL PROMPT */}
         {/* ========================================== */}
-        <div className="relative z-30 w-[500px] max-w-full mt-3 flex flex-col gap-1.5">
+        <div className="relative z-30 w-[520px] max-w-full mt-3 flex flex-col gap-1.5 mx-auto">
           <div className="flex items-center justify-between px-1 text-[9.5px] tracking-[0.08em] text-[#6B6F78] font-semibold">
             <button
               type="button"
