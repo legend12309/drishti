@@ -132,16 +132,13 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <>
-        <LoginView
-          onLoginSuccess={(op) => {
-            setOperator(op);
-            setIsAuthenticated(true);
-          }}
-          showToast={showToast}
-        />
-        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      </>
+      <LoginView
+        onLoginSuccess={(op) => {
+          setOperator(op);
+          setIsAuthenticated(true);
+        }}
+        showToast={showToast}
+      />
     );
   }
 
