@@ -43,7 +43,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
   return (
     <header
-      className="h-13 w-full border-b border-hairline bg-pureWhite px-4 sm:px-6 flex items-center justify-between text-xs shrink-0 z-30 select-none font-mono tracking-tight shadow-xs"
+      className="module-cascade-0 h-13 w-full border-b border-hairline bg-pureWhite px-4 sm:px-6 flex items-center justify-between text-xs shrink-0 z-30 select-none font-mono tracking-tight shadow-xs"
       data-purpose="top-command-bar"
     >
       {/* 1. Left: Brand & Enclave Security State */}

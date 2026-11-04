@@ -63,7 +63,7 @@ export default function App() {
     if (entranceFlash) {
       const timer = setTimeout(() => {
         setEntranceFlash(false);
-      }, 850);
+      }, 480);
       return () => clearTimeout(timer);
     }
   }, [entranceFlash]);
@@ -164,20 +164,20 @@ export default function App() {
 
   return (
     <div className="w-full h-screen flex flex-col bg-bone border border-hairline select-none overflow-hidden text-ink font-mono relative">
-      {/* Seamless Entrance Flash Dissipation from Biometric Ocular Login */}
+      {/* Seamless Entrance Flash Dissipation from Biometric Ocular Login into Cyber Lab */}
       {entranceFlash && (
         <div
-          className="pointer-events-none fixed inset-0 z-[9999] bg-white"
+          className="pointer-events-none fixed inset-0 z-[9999] bg-[#F8FAFC]"
           style={{
-            animation: 'flashExit 850ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            animation: 'flashExit 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
           }}
         >
           <style>{`
             @keyframes flashExit {
               0% { opacity: 1; filter: blur(0px); }
-              30% { opacity: 0.9; filter: blur(4px); }
-              70% { opacity: 0.35; filter: blur(10px); }
-              100% { opacity: 0; filter: blur(18px); visibility: hidden; }
+              40% { opacity: 0.85; filter: blur(2px); }
+              75% { opacity: 0.35; filter: blur(6px); }
+              100% { opacity: 0; filter: blur(12px); visibility: hidden; }
             }
           `}</style>
         </div>

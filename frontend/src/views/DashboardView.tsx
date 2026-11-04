@@ -253,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         {/* ========================================================================= */}
         {/* 1. TARGET COMMAND HERO BAR                                                */}
         {/* ========================================================================= */}
-        <section className="bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <section className="module-cascade-1 bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
@@ -262,6 +262,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               </span>
             </div>
             <div className="flex items-center space-x-3">
+              <span className="text-pencil font-bold text-sm font-mono">00 //</span>
               <h1 className="text-xl font-grotesk font-extrabold uppercase tracking-wide text-ink">
                 PERIMETER TARGET:
               </h1>
@@ -311,7 +312,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         {/* ========================================================================= */}
         {/* 2. DIJKSTRA ATTACK GRAPH // LEAST RESISTANCE PATH                         */}
         {/* ========================================================================= */}
-        <section className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-5">
+        <section className="module-cascade-2 bg-pureWhite border border-hairline p-6 shadow-xs space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-hairline">
             <div>
               <div className="flex items-center space-x-2">
@@ -338,42 +339,98 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             </div>
           </div>
 
-          {/* Real Attack Path Nodes OR Standby Zero-Threat Banner */}
+          {/* Sequential Dijkstra Attack Path Nodes with Animated Connecting Arrows */}
           {attackPaths.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-2">
               {attackPaths[0].path_nodes?.slice(0, 4).map((node: string, idx: number) => (
-                <div key={idx} className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-colors">
-                  <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                    <span>{idx === 0 ? '01_ INGRESS' : idx === 3 ? '04_ CROWN JEWEL' : `0${idx + 1}_ TRAVERSAL`}</span>
-                    <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                <React.Fragment key={idx}>
+                  <div
+                    className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
+                    style={{
+                      animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
+                      <span>{idx === 0 ? '01_ INGRESS' : idx === 3 ? '04_ CROWN JEWEL' : `0${idx + 1}_ TRAVERSAL`}</span>
+                      <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                    </div>
+                    <div className="text-sm font-bold text-ink truncate">{node}</div>
+                    <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain || 'UNASSIGNED'}</div>
                   </div>
-                  <div className="text-sm font-bold text-ink truncate">{node}</div>
-                  <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain || 'UNASSIGNED'}</div>
-                </div>
+                  {idx < Math.min(attackPaths[0].path_nodes.length, 4) - 1 && (
+                    <div
+                      className="flex items-center justify-center text-signalGreen font-bold px-1 select-none"
+                      style={{
+                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
+                      }}
+                    >
+                      <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
+                      <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center bg-[#FAF8F5] border border-dashed border-hairline font-mono space-y-3">
-              <div className="text-signalGreen font-bold text-xs flex items-center justify-center gap-2">
-                <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
-                <span>[ STATUS: ZERO HOSTILE ATTACK VECTORS TRAVERSED // PRISTINE ENCLAVE ]</span>
+            <div className="space-y-4">
+              <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-1">
+                {[
+                  { tag: '01_ INGRESS', label: 'EXT_RECON_80/443', desc: 'Perimeter Surface' },
+                  { tag: '02_ TRAVERSAL', label: 'REVERSE_PROXY_NGINX', desc: 'Ingress Gateway' },
+                  { tag: '03_ TRAVERSAL', label: 'AUTH_ENCLAVE_NODE', desc: 'Session Verification' },
+                  { tag: '04_ CROWN JEWEL', label: 'INTEL_DATABASE_CORE', desc: 'Protected Assets' },
+                ].map((item, idx) => (
+                  <React.Fragment key={idx}>
+                    <div
+                      className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
+                      style={{
+                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
+                        <span>{item.tag}</span>
+                        <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                      </div>
+                      <div className="text-xs font-bold text-ink truncate">{item.label}</div>
+                      <div className="text-[10px] text-charcoal font-mono">{item.desc}</div>
+                    </div>
+                    {idx < 3 && (
+                      <div
+                        className="flex items-center justify-center text-signalGreen font-bold px-1 select-none"
+                        style={{
+                          animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
+                        }}
+                      >
+                        <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
+                        <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
-              <p className="text-charcoal text-[11px] max-w-lg mx-auto">
-                No active breach vectors discovered for <strong className="text-ink">{targetDomain || 'current perimeter'}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
-              </p>
-              <div className="pt-2 flex items-center justify-center gap-3">
-                <button
-                  onClick={() => onNavigate('recon')}
-                  className="px-4 py-2 bg-signalGreen hover:bg-forestGreen text-white text-xs font-bold border border-hairline shadow-xs cursor-pointer"
-                >
-                  [ 🌐 START PASSIVE OSINT RECON ➔ ]
-                </button>
-                <button
-                  onClick={loadDashboardData}
-                  className="px-3 py-2 bg-pureWhite hover:bg-boneDark border border-hairline text-ink text-xs font-bold cursor-pointer"
-                >
-                  [ REFRESH DATA ]
-                </button>
+
+              <div className="p-4 text-center bg-[#FAF8F5] border border-dashed border-hairline font-mono space-y-2">
+                <div className="text-signalGreen font-bold text-xs flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
+                  <span>[ STATUS: ZERO HOSTILE ATTACK VECTORS TRAVERSED // PRISTINE ENCLAVE ]</span>
+                </div>
+                <p className="text-charcoal text-[11px] max-w-lg mx-auto">
+                  No active breach vectors discovered for <strong className="text-ink">{targetDomain || 'current perimeter'}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
+                </p>
+                <div className="pt-1 flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => onNavigate('recon')}
+                    className="px-4 py-1.5 bg-signalGreen hover:bg-forestGreen text-white text-xs font-bold border border-hairline shadow-xs cursor-pointer"
+                  >
+                    [ 🌐 START PASSIVE OSINT RECON ➔ ]
+                  </button>
+                  <button
+                    onClick={loadDashboardData}
+                    className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark border border-hairline text-ink text-xs font-bold cursor-pointer"
+                  >
+                    [ REFRESH DATA ]
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -398,7 +455,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         {/* ========================================================================= */}
         {/* 3. AUTONOMOUS DEFENSE DIRECTIVE & MICRO-PROBE VERIFIER                     */}
         {/* ========================================================================= */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section className="module-cascade-3 grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left 8 Cols: Defense Directive */}
           <div className="lg:col-span-8 bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
@@ -628,6 +685,65 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         </section>
 
       </div>
+
+      {/* 55ms Staggered Brutalist Cascade Reveal & Connecting Arrow Pulse Keyframes */}
+      <style>{`
+        @keyframes brutalistCascadeSlide {
+          0% {
+            opacity: 0;
+            transform: translateY(12px);
+            filter: blur(2px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+          }
+        }
+
+        .module-cascade-0 {
+          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 0ms both;
+        }
+        .module-cascade-1 {
+          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 55ms both;
+        }
+        .module-cascade-2 {
+          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 110ms both;
+        }
+        .module-cascade-3 {
+          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 165ms both;
+        }
+        .module-cascade-4 {
+          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 220ms both;
+        }
+
+        @keyframes nodeSequentialDraw {
+          0% {
+            opacity: 0;
+            transform: scale(0.94) translateX(-8px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+          }
+        }
+
+        @keyframes arrowPulseAnim {
+          0%, 100% {
+            opacity: 0.45;
+            transform: translateX(0);
+          }
+          50% {
+            opacity: 1;
+            transform: translateX(4px);
+            filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+          }
+        }
+        .arrow-connecting-pulse {
+          display: inline-block;
+          animation: arrowPulseAnim 1.2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };
