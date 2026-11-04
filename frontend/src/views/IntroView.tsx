@@ -23,7 +23,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     return () => clearTimeout(t);
   }, []);
 
-  // Trigger cinematic fade-out at the last 8 seconds and simultaneous fade-in of login page
+  // Trigger cinematic fade-out strictly before the copyright frame, revealing the login page with slow eye opening
   const handleTransitionToLogin = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
@@ -54,12 +54,13 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     }, 1800);
   }, [isExiting, onBeginExit, onComplete]);
 
-  // Video time tracker: detect when the video enters its final 8 seconds
+  // Video time tracker: detect when video reaches right before the copyright line appears
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (v && !isNaN(v.duration) && v.duration > 0) {
-      // Trigger cinematic fade-out when reaching the last 8 seconds of the video
-      const fadeTriggerTime = Math.max(1.0, v.duration - 8.0);
+      // The copyright notice '© 2025 RYLES COPYRIGHT RESERVED.' appears at ~15.15s (total duration 18.37s).
+      // Trigger cinematic fade-out at 14.85s, right as the glitch peaks and strictly before the copyright text appears.
+      const fadeTriggerTime = v.duration > 16.0 ? 14.85 : Math.max(1.0, v.duration - 2.8);
       if (v.currentTime >= fadeTriggerTime) {
         handleTransitionToLogin();
       }
@@ -165,11 +166,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[1800ms] ease-out ${
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[1800ms] ease-out ${
         isExiting
-          ? 'opacity-0 pointer-events-none'
+          ? 'opacity-0 pointer-events-none filter brightness-50 contrast-125'
           : isReady
-          ? 'opacity-100 pointer-events-auto'
+          ? 'opacity-100 pointer-events-auto filter brightness-100'
           : 'opacity-0 pointer-events-none'
       }`}
       style={{

@@ -30,7 +30,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const [telemetryCycle, setTelemetryCycle] = useState('0.47ms');
   const [gazeVector, setGazeVector] = useState('[-0.38, -0.24]');
   const [scanMode, setScanMode] = useState<'IDLE_SCAN' | 'HIGH_FREQ_ACQUISITION'>('IDLE_SCAN');
-  const [biolockStatus, setBiolockStatus] = useState('ENGAGED');
+  const [biolockStatus, setBiolockStatus] = useState('INITIALIZING...');
+  const [corneaRefract, setCorneaRefract] = useState('ACQUIRING_OPTICS...');
+  const [eyeAwakened, setEyeAwakened] = useState(false);
+  const hasTriggeredAwakenRef = useRef(false);
 
   // Stages & Diagnostic Progress Bar States
   const [stages, setStages] = useState({
@@ -91,12 +94,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
     isSaccading: false,
     gazeMode: 'CURSOR' as 'CURSOR' | 'LOOK_AWAY',
     tremorSeed: Math.random() * 100,
-    currentPupilR: 21,
-    targetPupilR: 21,
+    currentPupilR: 12,
+    targetPupilR: 12,
     colorMorph: 0, // 0 = Crimson Red, 1 = Electric Cobalt #00E5FF
     scanBeamProgress: -1, // -1 = inactive, 0.0 -> 1.0 active vertical laser scan sweep
     scanBeamActive: false,
-    lockGazeToCenter: false,
+    lockGazeToCenter: true,
   });
 
   // Vascular Seeds for Sclera
@@ -206,14 +209,94 @@ export const LoginView: React.FC<LoginViewProps> = ({
     const bottom = eyelidBottomRef.current;
     if (!top || !bottom) return;
 
+    top.style.transition = 'transform 0.08s ease-out';
+    bottom.style.transition = 'transform 0.08s ease-out';
     top.style.transform = 'translateY(0%)';
     bottom.style.transform = 'translateY(0%)';
 
     setTimeout(() => {
+      top.style.transition = 'transform 0.12s ease-out';
+      bottom.style.transition = 'transform 0.12s ease-out';
       top.style.transform = 'translateY(-100%)';
       bottom.style.transform = 'translateY(100%)';
     }, duration);
   }, []);
+
+  // Handle cinematic fade-in and slow physiological eye opening
+  useEffect(() => {
+    if (!startFadeIn) {
+      hasTriggeredAwakenRef.current = false;
+      setEyeAwakened(false);
+      const top = eyelidTopRef.current;
+      const bottom = eyelidBottomRef.current;
+      if (top && bottom) {
+        top.style.transition = 'transform 0.3s ease-out';
+        bottom.style.transition = 'transform 0.3s ease-out';
+        top.style.transform = 'translateY(0%)';
+        bottom.style.transform = 'translateY(0%)';
+      }
+      physicsRef.current.lockGazeToCenter = true;
+      physicsRef.current.currentPupilR = 12;
+      physicsRef.current.targetPupilR = 12;
+      return;
+    }
+
+    if (hasTriggeredAwakenRef.current) return;
+    hasTriggeredAwakenRef.current = true;
+
+    // Start with gaze locked centered and pupil constricted (resting dormancy)
+    physicsRef.current.lockGazeToCenter = true;
+    physicsRef.current.currentPupilR = 12;
+    physicsRef.current.targetPupilR = 12;
+    setCorneaRefract('ACQUIRING_OPTICS...');
+    setBiolockStatus('INITIALIZING...');
+
+    // Wait 700ms into the login page fade-in (as the UI emerges), then slowly open eyelids over 2100ms
+    const openDelay = 700;
+    const openDuration = 2100;
+
+    const tOpen = setTimeout(() => {
+      const top = eyelidTopRef.current;
+      const bottom = eyelidBottomRef.current;
+      if (top && bottom) {
+        top.style.transition = `transform ${openDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+        bottom.style.transition = `transform ${openDuration}ms cubic-bezier(0.16, 1, 0.3, 1)`;
+        top.style.transform = 'translateY(-100%)';
+        bottom.style.transform = 'translateY(100%)';
+      }
+      setEyeAwakened(true);
+
+      // Smoothly dilate pupil from 12px to 21px as eye adapts to light
+      const pupilStartTime = performance.now();
+      const dilateStep = (now: number) => {
+        const elapsed = now - pupilStartTime;
+        const p = Math.min(1, elapsed / openDuration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        physicsRef.current.targetPupilR = 12 + eased * 9;
+        physicsRef.current.currentPupilR = 12 + eased * 9;
+        setPupilDil(`${(3.2 + eased * 1.6).toFixed(2)}mm`);
+
+        if (p < 0.4) {
+          setCorneaRefract('CORNEA_REFRACT_ACQUIRING...');
+          setBiolockStatus('SYNCHRONIZING...');
+        } else if (p < 0.9) {
+          setCorneaRefract('OCULAR_ALIGNMENT_NOMINAL');
+          setBiolockStatus('LOCK_CONFIRMED');
+        }
+
+        if (p < 1) {
+          requestAnimationFrame(dilateStep);
+        } else {
+          setCorneaRefract('OK [NOMINAL]');
+          setBiolockStatus('ENGAGED');
+          physicsRef.current.lockGazeToCenter = false;
+        }
+      };
+      requestAnimationFrame(dilateStep);
+    }, openDelay);
+
+    return () => clearTimeout(tOpen);
+  }, [startFadeIn]);
 
   // Cinematic biometric laser scan & smooth color morph animation from Red to Blue (or vice-versa)
   const animateEyeColor = useCallback((from: number, to: number, duration = 1800) => {
@@ -409,16 +492,18 @@ export const LoginView: React.FC<LoginViewProps> = ({
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Blinking schedule: 2.8s to 7.0s
+    // Blinking schedule: starts 4.8s after mount to let the slow awakening sequence complete undisturbed
     let blinkTimer: any;
-    const scheduleNextBlink = () => {
-      const nextBlink = 2800 + Math.random() * 4200;
+    const scheduleNextBlink = (initialDelay = 4800) => {
+      const nextBlink = initialDelay + Math.random() * 3200;
       blinkTimer = setTimeout(() => {
-        triggerBlink(130 + Math.random() * 30);
-        scheduleNextBlink();
+        if (!physicsRef.current.lockGazeToCenter) {
+          triggerBlink(130 + Math.random() * 30);
+        }
+        scheduleNextBlink(3000);
       }, nextBlink);
     };
-    scheduleNextBlink();
+    scheduleNextBlink(4800);
 
     // Live Jitter Metrics Interval (440ms)
     const jitterInterval = setInterval(() => {
@@ -1067,7 +1152,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
   return (
     <div
       className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-all duration-[1800ms] ease-out ${
-        startFadeIn ? 'opacity-100 filter brightness-100' : 'opacity-0 filter brightness-75 pointer-events-none'
+        startFadeIn
+          ? 'opacity-100 filter brightness-100 scale-100 pointer-events-auto'
+          : 'opacity-0 filter brightness-50 scale-[0.99] pointer-events-none'
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
@@ -1555,14 +1642,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
               {/* Optical Glass Antireflective Depth Layer */}
               <div className="absolute inset-0 rounded-full shadow-[inset_0_0_50px_rgba(0,0,0,0.9),inset_0_15px_30px_rgba(0,0,0,0.7),inset_0_-15px_30px_rgba(0,0,0,0.7)] pointer-events-none z-25"></div>
 
-              {/* Organic Circular Eyelids for natural physiological blinking */}
+              {/* Organic Circular Eyelids for natural physiological blinking & slow cinematic reveal */}
               <div
                 className="eyelid eyelid-top"
                 id="eyelidTop"
                 ref={eyelidTopRef}
                 style={{
-                  transform: 'translateY(-100%)',
-                  borderBottomColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
+                  transform: eyeAwakened ? 'translateY(-100%)' : 'translateY(0%)',
+                  borderBottomColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.5)',
                 }}
               ></div>
               <div
@@ -1570,8 +1657,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="eyelidBottom"
                 ref={eyelidBottomRef}
                 style={{
-                  transform: 'translateY(100%)',
-                  borderTopColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
+                  transform: eyeAwakened ? 'translateY(100%)' : 'translateY(0%)',
+                  borderTopColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.5)',
                 }}
               ></div>
             </div>
@@ -1586,7 +1673,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
             <div className="border-b border-[#1E293B]/60 pb-0.5 text-[7.5px] font-bold text-[#38BDF8] tracking-widest">// ENCLAVE_LOCK</div>
             <div>
               <span className="text-[#64748B] block text-[7.5px]">CORNEA_REFRACT</span>
-              <span className="text-[#10B981] font-bold">OK [NOMINAL]</span>
+              <span className={`font-bold transition-colors duration-300 ${corneaRefract === 'OK [NOMINAL]' ? 'text-[#10B981]' : 'text-[#38BDF8] animate-pulse'}`}>
+                {corneaRefract}
+              </span>
             </div>
             <div>
               <span className="text-[#64748B] block text-[7.5px]">BIOMETRIC_LOCK</span>
