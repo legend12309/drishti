@@ -105,6 +105,24 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     }
   };
 
+  // Click on video: unmutes on first interaction if muted, otherwise toggles play/pause
+  const handleVideoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.muted && !hasInteracted) {
+      v.muted = false;
+      setIsMuted(false);
+      setHasInteracted(true);
+      if (v.paused) {
+        v.play().catch(() => {});
+        setIsPlaying(true);
+      }
+      return;
+    }
+    togglePlay(e);
+  };
+
   // Toggle mute / unmute
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -201,7 +219,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
         muted={isMuted}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleVideoEnded}
-        onClick={togglePlay}
+        onClick={handleVideoClick}
         onDoubleClick={toggleFullscreen}
       />
 
@@ -217,49 +235,40 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* Subtle CRT Scanline Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-20"></div>
 
-      {/* Tactical Edge Viewport Corner Brackets with Ambient Crimson Glow */}
+      {/* Ultra-subtle Viewfinder Frame Margins — strictly outside content safe area */}
       <div
-        className={`absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
-          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
+        className={`pointer-events-none absolute inset-3 z-25 transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0' : 'opacity-40'
         }`}
-      ></div>
-      <div
-        className={`absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
-          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
-        }`}
-      ></div>
-      <div
-        className={`absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
-          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
-        }`}
-      ></div>
-      <div
-        className={`absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
-          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
-        }`}
-      ></div>
+      >
+        <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-white/50"></div>
+        <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-white/50"></div>
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-white/50"></div>
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/50"></div>
+      </div>
 
       {/* Center Pause Indicator Overlay */}
       {!isPlaying && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-35 cursor-pointer animate-fade-in"
-          onClick={togglePlay}
+          onClick={handleVideoClick}
         >
-          <div className="px-6 py-3 bg-[#0B101D]/95 border border-[#EF4444] text-[#EF4444] text-xs font-bold tracking-[0.2em] flex items-center gap-3 shadow-[0_0_35px_rgba(239,68,68,0.5)] active:scale-95 transition-transform">
+          <div className="px-5 py-2.5 bg-[#0B101D]/95 border border-[#EF4444] text-[#EF4444] text-xs font-mono font-bold tracking-[0.2em] flex items-center gap-3 shadow-[0_0_25px_rgba(239,68,68,0.4)] active:scale-95 transition-transform">
             <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-ping"></span>
             <span>❚❚ PAUSED // CLICK TO RESUME</span>
           </div>
         </div>
       )}
 
-      {/* Unmute Prompt Pill if video started muted */}
+      {/* Minimal Unmute Prompt Pill — Sleek, quiet, non-bouncing */}
       {isMuted && !hasInteracted && isPlaying && !isVideoFadingOut && (
         <div
-          className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
+          className="absolute top-[56px] right-6 md:right-8 z-35 px-2.5 py-1 bg-black/85 border border-white/15 text-white/80 text-[9px] font-mono tracking-wider backdrop-blur-md cursor-pointer hover:border-white/40 hover:text-white transition-all flex items-center gap-2 shadow-sm animate-fade-in"
           onClick={toggleMute}
+          title="Click to unmute audio"
         >
-          <DoodleIcon name="audio" className="w-3.5 h-3.5 text-[#38BDF8]" />
-          <span>CLICK TO UNMUTE AUDIO [M]</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+          <span>CLICK ANYWHERE OR PRESS [M] TO UNMUTE</span>
         </div>
       )}
 
@@ -267,37 +276,41 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* 2. MINIMAL FLOATING TOP CONTROLS                         */}
       {/* ======================================================== */}
       <header
-        className={`absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-4 flex items-center justify-between text-[10px] pointer-events-auto transition-opacity duration-700 ${
+        className={`absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-5 flex items-center justify-between text-[10px] pointer-events-auto transition-opacity duration-700 ${
           isVideoFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 font-mono">
           <span className="font-bold text-white tracking-[0.22em] text-[11px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             DRISHTI <span className="text-[#EF4444]">//</span> BOOT_INTRO
           </span>
-          <span className="hidden sm:inline-block text-[8.5px] px-1.5 py-0.5 bg-[#EF4444]/25 border border-[#EF4444] text-[#EF4444] font-bold rounded-sm shadow-[0_0_8px_rgba(239,68,68,0.3)] animate-pulse">
+          <span className="text-[8.5px] px-1.5 py-0.5 bg-[#EF4444]/20 border border-[#EF4444]/60 text-[#EF4444] font-bold tracking-wider">
             LIVE
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-mono">
           <button
             type="button"
             onClick={toggleMute}
-            className={`px-2.5 py-1 border text-[9px] font-bold tracking-wider rounded-sm cursor-pointer backdrop-blur-sm flex items-center gap-1.5 active:scale-95 transition-all duration-150 ${
+            className={`px-3 py-1.5 border text-[9px] font-bold tracking-wider cursor-pointer backdrop-blur-md flex items-center gap-2 active:scale-95 transition-all duration-150 ${
               isMuted
-                ? 'bg-black/60 border-[#475569] text-[#94A3B8] hover:border-[#38BDF8] hover:text-white'
-                : 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.4)]'
+                ? 'bg-black/80 border-[#F59E0B] text-[#F59E0B] hover:border-white hover:text-white shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                : 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.3)]'
             }`}
+            title={isMuted ? 'Click to Unmute (M)' : 'Mute Audio (M)'}
           >
             <DoodleIcon name={isMuted ? 'muted' : 'audio'} className="w-3.5 h-3.5" />
-            <span>{isMuted ? 'AUDIO: MUTED' : 'AUDIO: LIVE'}</span>
+            <span>{isMuted ? 'UNMUTE [M]' : 'AUDIO: LIVE'}</span>
+            {isMuted && !hasInteracted && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-ping"></span>
+            )}
           </button>
 
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="px-2.5 py-1 border border-[#475569] bg-black/60 hover:border-white hover:text-white text-[#94A3B8] text-[9px] font-bold tracking-wider rounded-sm cursor-pointer backdrop-blur-sm flex items-center gap-1.5 active:scale-95 transition-all duration-150"
+            className="px-3 py-1.5 border border-white/20 bg-black/60 hover:border-white hover:text-white text-white/80 text-[9px] font-bold tracking-wider cursor-pointer backdrop-blur-md flex items-center gap-1.5 active:scale-95 transition-all duration-150"
             title="Toggle Fullscreen (F)"
           >
             <DoodleIcon name={isFullscreen ? 'window' : 'fullscreen'} className="w-3.5 h-3.5" />
@@ -307,20 +320,27 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       </header>
 
       {/* ======================================================== */}
-      {/* 3. MINIMAL BOTTOM SKIP ACTION                            */}
+      {/* 3. MINIMAL BOTTOM CONTROLS & BALANCED TELEMETRY          */}
       {/* ======================================================== */}
       <footer
-        className={`absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto transition-opacity duration-700 ${
+        className={`absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-between pointer-events-auto transition-opacity duration-700 ${
           isVideoFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
+        {/* Telemetry Indicator on bottom-left — cleanly anchors the frame */}
+        <div className="flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-white/50 backdrop-blur-sm bg-black/40 px-3 py-1.5 border border-white/10">
+          <span className="w-1.5 h-1.5 bg-signalGreen rounded-full inline-block animate-pulse"></span>
+          <span className="text-white/80 font-bold">SYSTEM // GATEWAY_BOOT</span>
+          <span className="hidden sm:inline text-white/40">// SEC_LEVEL_5</span>
+        </div>
+
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             startVideoFadeOut(true);
           }}
-          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white active:scale-[0.98] transition-all duration-150 cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
+          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-white shadow-[0_0_15px_rgba(239,68,68,0.35)] hover:bg-[#E62E25]/40 hover:border-white active:scale-[0.98] transition-all duration-150 cursor-pointer flex items-center gap-2 group backdrop-blur-sm"
           id="skipIntroBtn"
         >
           <span>[ SKIP INTRO // ENTER GATEWAY ⌘↵ ]</span>
@@ -331,10 +351,10 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* Scoped Scanline Filter */}
       <style>{`
         .crt-overlay {
-          background: radial-gradient(circle at center, transparent 70%, rgba(0, 0, 0, 0.6) 100%),
-                      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+          background: radial-gradient(circle at center, transparent 75%, rgba(0, 0, 0, 0.45) 100%),
+                      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
           background-size: 100% 100%, 100% 3px;
-          opacity: 0.55;
+          opacity: 0.35;
         }
       `}</style>
     </div>
