@@ -42,12 +42,24 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 };
 
 export default function App() {
-  // Play intro video sequence on initial startup
-  const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(false);
+  // Track and persist application lifecycle phase ('INTRO' -> 'GATEWAY' -> 'COCKPIT')
+  const [currentPhase, setCurrentPhase] = useState<string>(() => {
+    return localStorage.getItem('drishti_phase') || 'INTRO';
+  });
+
+  // Play intro video sequence on initial startup unless already progressed past INTRO phase
+  const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(() => {
+    const saved = localStorage.getItem('drishti_phase');
+    return saved === 'GATEWAY' || saved === 'COCKPIT';
+  });
   const [isIntroExiting, setIsIntroExiting] = useState<boolean>(false);
 
-  // Always show login page first on open
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // Always show login page first on open unless verified token in COCKPIT phase
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const token = localStorage.getItem('drishti_auth_token');
+    const saved = localStorage.getItem('drishti_phase');
+    return Boolean(token && saved === 'COCKPIT');
+  });
 
   const [operator, setOperator] = useState<OperatorProfile | null>(() => {
     const saved = localStorage.getItem('drishti_operator');
@@ -104,6 +116,10 @@ export default function App() {
   const handleLogout = useCallback(() => {
     localStorage.removeItem('drishti_auth_token');
     localStorage.removeItem('drishti_operator');
+    try {
+      localStorage.setItem('drishti_phase', 'GATEWAY');
+      setCurrentPhase('GATEWAY');
+    } catch {}
     setIsAuthenticated(false);
     showToast('info', 'Session Ended', 'Operator logged out.');
   }, [showToast]);
@@ -163,8 +179,17 @@ export default function App() {
             setOperator(op);
             setIsAuthenticated(true);
             setEntranceFlash(true);
+            try {
+              localStorage.setItem('drishti_phase', 'COCKPIT');
+              setCurrentPhase('COCKPIT');
+            } catch {}
           }}
           onReplayIntro={() => {
+            try {
+              localStorage.setItem('drishti_phase', 'INTRO');
+              localStorage.removeItem('drishti_has_seen_intro');
+              setCurrentPhase('INTRO');
+            } catch {}
             setIsIntroExiting(false);
             setHasSeenIntro(false);
           }}
@@ -175,10 +200,22 @@ export default function App() {
         {/* Cinematic Video Intro Overlay (Runs completely, then fades out from last black frame) */}
         {!hasSeenIntro && (
           <IntroView
-            onBeginExit={() => setIsIntroExiting(true)}
+            onBeginExit={() => {
+              setIsIntroExiting(true);
+              try {
+                localStorage.setItem('drishti_phase', 'GATEWAY');
+                localStorage.setItem('drishti_has_seen_intro', 'true');
+                setCurrentPhase('GATEWAY');
+              } catch {}
+            }}
             onComplete={() => {
               setHasSeenIntro(true);
               setIsIntroExiting(false);
+              try {
+                localStorage.setItem('drishti_phase', 'GATEWAY');
+                localStorage.setItem('drishti_has_seen_intro', 'true');
+                setCurrentPhase('GATEWAY');
+              } catch {}
             }}
           />
         )}

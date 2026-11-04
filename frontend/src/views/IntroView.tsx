@@ -294,7 +294,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
             DRISHTI <span className="text-[#EF4444]">//</span> BOOT_INTRO
           </span>
           <span className="text-[8.5px] px-1.5 py-0.5 bg-[#EF4444]/20 border border-[#EF4444]/60 text-[#EF4444] font-bold tracking-wider">
-            LIVE
+            PHASE 1
           </span>
         </div>
 
@@ -339,8 +339,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
         {/* Telemetry Indicator on bottom-left — cleanly anchors the frame */}
         <div className="flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-white/50 backdrop-blur-sm bg-black/40 px-3 py-1.5 border border-white/10">
           <span className="w-1.5 h-1.5 bg-signalGreen rounded-full inline-block animate-pulse"></span>
-          <span className="text-white/80 font-bold">SYSTEM // GATEWAY_BOOT</span>
-          <span className="hidden sm:inline text-white/40">// SEC_LEVEL_5</span>
+          <span className="text-white/80 font-bold">SYSTEM // PHASE_1: BOOT_INTRO</span>
+          <span className="hidden sm:inline text-white/40">// PERSISTED</span>
         </div>
 
         <button
