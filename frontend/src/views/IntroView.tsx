@@ -14,9 +14,10 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   const [hasInteracted, setHasInteracted] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // isExiting: triggers the fade-out from the last black frame
-  const [isExiting, setIsExiting] = useState<boolean>(false);
+  // isVideoFadingOut: triggers the cinematic fade-out of the video to pitch black in its final seconds
+  const [isVideoFadingOut, setIsVideoFadingOut] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
+  const transitionStartedRef = useRef<boolean>(false);
 
   // Smooth entrance fade-in on mount
   useEffect(() => {
@@ -24,60 +25,70 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     return () => clearTimeout(t);
   }, []);
 
-  // Trigger cinematic fade-out strictly before the copyright frame, revealing the login page with slow eye opening
-  const handleTransitionToLogin = useCallback(() => {
-    if (isExiting) return;
-    setIsExiting(true);
-
+  // Fade out audio smoothly over specified duration
+  const fadeOutAudio = useCallback((durationMs = 1200) => {
     const v = videoRef.current;
-    if (v) {
-      // Immediately freeze video playback so it NEVER renders into the white flash or copyright text
-      v.pause();
-    }
-
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    }
-
-    // Notify LoginView to begin its smooth cinematic fade-in simultaneously
-    onBeginExit?.();
-
-    // Smoothly fade out audio over the 1400ms transition to prevent popping
     if (v && !v.muted) {
+      const stepTime = 50;
+      const stepDecrease = 1 / (durationMs / stepTime);
       const fadeAudioInterval = setInterval(() => {
-        if (v.volume > 0.05) {
-          v.volume = Math.max(0, v.volume - 0.05);
+        if (v.volume > stepDecrease) {
+          v.volume = Math.max(0, v.volume - stepDecrease);
         } else {
           v.volume = 0;
           clearInterval(fadeAudioInterval);
         }
-      }, 50);
+      }, stepTime);
     }
+  }, []);
 
-    // Wait for the 1400ms cinematic fade-out to complete, then unmount IntroView
+  // Cinematic two-step transition:
+  // Step 1: Fade out the video completely into pure black (#030407)
+  // Step 2: Signal the login page to fade in from black, then unmount video
+  const startVideoFadeOut = useCallback((quick = false) => {
+    if (transitionStartedRef.current) return;
+    transitionStartedRef.current = true;
+    setIsVideoFadingOut(true);
+
+    const fadeDuration = quick ? 350 : 1200;
+    fadeOutAudio(fadeDuration);
+
     setTimeout(() => {
-      onComplete();
-    }, 1400);
-  }, [isExiting, onBeginExit, onComplete]);
+      const v = videoRef.current;
+      if (v) {
+        // Freeze video permanently in pure blackness so neither the flash (14.5s) nor the copyright (15.15s) ever appears
+        v.pause();
+      }
 
-  // Video time tracker: detect when video reaches right before the flash & copyright text appears
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+
+      // Step 2: Now that screen is 100% pitch black, trigger the login page fade-in
+      onBeginExit?.();
+
+      // Step 3: Complete handoff to LoginView after 400ms once login fade-in has engaged
+      setTimeout(() => {
+        onComplete();
+      }, 400);
+    }, fadeDuration);
+  }, [fadeOutAudio, onBeginExit, onComplete]);
+
+  // Video time tracker: detect when video reaches final action climax (12.60s) to begin fade-out to black
   const handleTimeUpdate = () => {
     const v = videoRef.current;
-    if (v && !isNaN(v.duration) && v.duration > 0) {
-      // Cut strictly at 13.90s (end of main sequence), before the white flash (14.50s) and copyright frame (15.15s)
-      const fadeTriggerTime = v.duration > 15.0 ? 13.90 : Math.max(1.0, v.duration - 2.8);
+    if (v && !isNaN(v.duration) && v.duration > 0 && !transitionStartedRef.current) {
+      // Start fade out at 12.60s (last ~1.2s before the flash at 14.50s)
+      const fadeTriggerTime = v.duration > 15.0 ? 12.60 : Math.max(1.0, v.duration - 2.8);
       if (v.currentTime >= fadeTriggerTime) {
-        if (videoRef.current) {
-          videoRef.current.pause();
-        }
-        handleTransitionToLogin();
+        startVideoFadeOut(false);
       }
     }
   };
 
   // Video ended fallback: runs completely to completion
   const handleVideoEnded = () => {
-    handleTransitionToLogin();
+    startVideoFadeOut(true);
   };
 
   // Toggle play/pause
@@ -128,7 +139,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter') {
-        handleTransitionToLogin();
+        startVideoFadeOut(true);
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
         const v = videoRef.current;
@@ -157,7 +168,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleTransitionToLogin]);
+  }, [startVideoFadeOut]);
 
   // Autoplay handler with graceful muted fallback
   useEffect(() => {
@@ -174,16 +185,9 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[1400ms] ease-out ${
-        isExiting
-          ? 'opacity-0 pointer-events-none filter brightness-50 contrast-125'
-          : isReady
-          ? 'opacity-100 pointer-events-auto filter brightness-100'
-          : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[400ms] ease-out ${
+        isReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
       }`}
-      style={{
-        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
     >
       {/* ======================================================== */}
       {/* 1. CINEMATIC FULLSCREEN VIDEO CANVAS                     */}
@@ -201,14 +205,39 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
         onDoubleClick={toggleFullscreen}
       />
 
+      {/* ======================================================== */}
+      {/* CINEMATIC BLACKOUT FADE-OUT CURTAIN IN LAST OF VIDEO     */}
+      {/* ======================================================== */}
+      <div
+        className={`absolute inset-0 bg-[#030407] pointer-events-none z-45 transition-opacity duration-[1200ms] ease-in-out ${
+          isVideoFadingOut ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+
       {/* Subtle CRT Scanline Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-20"></div>
 
       {/* Tactical Edge Viewport Corner Brackets with Ambient Crimson Glow */}
-      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
-      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
-      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
-      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
+      <div
+        className={`absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
+        }`}
+      ></div>
+      <div
+        className={`absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
+        }`}
+      ></div>
+      <div
+        className={`absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
+        }`}
+      ></div>
+      <div
+        className={`absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0' : 'opacity-85'
+        }`}
+      ></div>
 
       {/* Center Pause Indicator Overlay */}
       {!isPlaying && (
@@ -224,7 +253,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       )}
 
       {/* Unmute Prompt Pill if video started muted */}
-      {isMuted && !hasInteracted && isPlaying && !isExiting && (
+      {isMuted && !hasInteracted && isPlaying && !isVideoFadingOut && (
         <div
           className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
           onClick={toggleMute}
@@ -237,7 +266,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* ======================================================== */}
       {/* 2. MINIMAL FLOATING TOP CONTROLS                         */}
       {/* ======================================================== */}
-      <header className="absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-4 flex items-center justify-between text-[10px] pointer-events-auto">
+      <header
+        className={`absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-4 flex items-center justify-between text-[10px] pointer-events-auto transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
         <div className="flex items-center gap-2">
           <span className="font-bold text-white tracking-[0.22em] text-[11px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             DRISHTI <span className="text-[#EF4444]">//</span> BOOT_INTRO
@@ -276,12 +309,16 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* ======================================================== */}
       {/* 3. MINIMAL BOTTOM SKIP ACTION                            */}
       {/* ======================================================== */}
-      <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto">
+      <footer
+        className={`absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto transition-opacity duration-700 ${
+          isVideoFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            handleTransitionToLogin();
+            startVideoFadeOut(true);
           }}
           className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white active:scale-[0.98] transition-all duration-150 cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
           id="skipIntroBtn"
