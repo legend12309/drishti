@@ -1134,15 +1134,18 @@ export const LoginView: React.FC<LoginViewProps> = ({
           animation: streamUp 12s linear infinite;
         }
 
-        /* Brutalist Buttons */
+        /* Brutalist Tactile Buttons */
         .btn-brutal {
-          transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
         }
         .btn-brutal:hover {
           background-color: #E62E25 !important;
           color: #030407 !important;
           border-color: #ff4d4d !important;
           box-shadow: 0 0 24px rgba(230, 46, 37, 0.6);
+        }
+        .btn-brutal:active {
+          transform: scale(0.97);
         }
 
         /* Blinking Block Cursor */
@@ -1381,7 +1384,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               {onReplayIntro && (
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 text-[9px] text-[#38BDF8] hover:text-white px-2 py-0.5 border border-[#2563EB]/40 hover:border-[#38BDF8] bg-[#0A0E18] hover:bg-[#2563EB]/20 transition-all cursor-pointer shadow-sm font-mono rounded-sm"
+                  className="flex items-center gap-1.5 text-[9px] text-[#38BDF8] hover:text-white px-2 py-0.5 border border-[#2563EB]/40 hover:border-[#38BDF8] bg-[#0A0E18] hover:bg-[#2563EB]/20 active:scale-95 transition-all duration-150 cursor-pointer shadow-sm font-mono rounded-sm"
                   onClick={onReplayIntro}
                   title="Watch boot video intro again"
                 >
@@ -1391,7 +1394,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               )}
               <button
                 type="button"
-                className="flex items-center gap-1.5 text-[9px] text-[#94A3B8] hover:text-white px-2 py-0.5 border border-[#334155]/80 hover:border-[#EF4444] bg-[#0A0E18] hover:bg-[#E62E25]/20 transition-all cursor-pointer shadow-sm font-mono rounded-sm"
+                className="flex items-center gap-1.5 text-[9px] text-[#94A3B8] hover:text-white px-2 py-0.5 border border-[#334155]/80 hover:border-[#EF4444] bg-[#0A0E18] hover:bg-[#E62E25]/20 active:scale-95 transition-all duration-150 cursor-pointer shadow-sm font-mono rounded-sm"
                 onClick={rebootSequence}
                 title="Re-run engine self-test and camera sweep"
               >
@@ -1738,21 +1741,21 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <span className="text-[#475569] select-none font-bold">FLAGS:</span>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white active:scale-95 transition-all duration-150 cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--bypass-sandbox')}
               >
                 [--bypass-sandbox]
               </button>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white active:scale-95 transition-all duration-150 cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--force-recon')}
               >
                 [--force-recon]
               </button>
               <button
                 type="button"
-                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white transition-colors cursor-pointer rounded-sm"
+                className="px-1.5 py-0.5 bg-[#0B101D] border border-[#1E293B] hover:border-[#EF4444] hover:text-white active:scale-95 transition-all duration-150 cursor-pointer rounded-sm"
                 onClick={() => appendFlag('--debug-dump')}
               >
                 [--debug-dump]
@@ -1763,7 +1766,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
           {/* Primary Tactical Authorization Trigger */}
           <button
             type="button"
-            className={`w-full h-[38px] font-mono text-[11px] font-bold tracking-[0.16em] flex items-center justify-center gap-2 rounded-sm transition-all cursor-pointer ${
+            className={`w-full h-[38px] font-mono text-[11px] font-bold tracking-[0.16em] flex items-center justify-center gap-2 rounded-sm transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-85 disabled:cursor-wait ${
               isSuccess
                 ? 'bg-[#10B981]/20 border border-[#10B981] text-[#10B981] shadow-[0_0_24px_rgba(16,185,129,0.5)] hover:bg-[#10B981]/30'
                 : 'bg-[#E62E25]/15 border border-[#E62E25] text-[#EF4444] shadow-[0_0_20px_rgba(230,46,37,0.35)] hover:bg-[#E62E25]/25 hover:text-white'

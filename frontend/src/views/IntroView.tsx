@@ -15,6 +15,13 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
 
   // isExiting: triggers the fade-out from the last black frame
   const [isExiting, setIsExiting] = useState<boolean>(false);
+  const [isReady, setIsReady] = useState<boolean>(false);
+
+  // Smooth entrance fade-in on mount
+  useEffect(() => {
+    const t = setTimeout(() => setIsReady(true), 40);
+    return () => clearTimeout(t);
+  }, []);
 
   // Trigger smooth fade-out from the last black frame and fade-in of the login screen
   const handleTransitionToLogin = useCallback(() => {
@@ -28,12 +35,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     // Notify LoginView to begin its smooth fade-in simultaneously
     onBeginExit?.();
 
-    // Smoothly fade out audio if still playing
+    // Smoothly fade out audio if still playing to prevent popping
     const v = videoRef.current;
     if (v && !v.muted) {
       const fadeAudioInterval = setInterval(() => {
-        if (v.volume > 0.1) {
-          v.volume = Math.max(0, v.volume - 0.2);
+        if (v.volume > 0.08) {
+          v.volume = Math.max(0, v.volume - 0.15);
         } else {
           v.volume = 0;
           clearInterval(fadeAudioInterval);
@@ -158,7 +165,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     <div
       ref={containerRef}
       className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[850ms] ease-out ${
-        isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
+        isExiting
+          ? 'opacity-0 pointer-events-none'
+          : isReady
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
@@ -183,19 +194,19 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* Subtle CRT Scanline Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-20"></div>
 
-      {/* Tactical Edge Viewport Corner Brackets */}
-      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
-      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
-      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
-      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
+      {/* Tactical Edge Viewport Corner Brackets with Ambient Crimson Glow */}
+      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
+      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
+      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
+      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-85 shadow-[0_0_12px_rgba(239,68,68,0.4)]"></div>
 
       {/* Center Pause Indicator Overlay */}
       {!isPlaying && (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-35 cursor-pointer"
+          className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-35 cursor-pointer animate-fade-in"
           onClick={togglePlay}
         >
-          <div className="px-6 py-3 bg-[#0B101D]/90 border border-[#EF4444] text-[#EF4444] text-xs font-bold tracking-[0.2em] flex items-center gap-3 shadow-[0_0_35px_rgba(239,68,68,0.5)]">
+          <div className="px-6 py-3 bg-[#0B101D]/95 border border-[#EF4444] text-[#EF4444] text-xs font-bold tracking-[0.2em] flex items-center gap-3 shadow-[0_0_35px_rgba(239,68,68,0.5)] active:scale-95 transition-transform">
             <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-ping"></span>
             <span>❚❚ PAUSED // CLICK TO RESUME</span>
           </div>
@@ -205,7 +216,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       {/* Unmute Prompt Pill if video started muted */}
       {isMuted && !hasInteracted && isPlaying && !isExiting && (
         <div
-          className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 transition-all flex items-center gap-2 backdrop-blur-sm"
+          className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
           onClick={toggleMute}
         >
           <span>🔊</span>
@@ -230,7 +241,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
           <button
             type="button"
             onClick={toggleMute}
-            className={`px-2 py-1 border text-[9px] font-bold tracking-wider rounded-sm transition-all cursor-pointer backdrop-blur-sm flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 border text-[9px] font-bold tracking-wider rounded-sm cursor-pointer backdrop-blur-sm flex items-center gap-1.5 active:scale-95 transition-all duration-150 ${
               isMuted
                 ? 'bg-black/60 border-[#475569] text-[#94A3B8] hover:border-[#38BDF8] hover:text-white'
                 : 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.4)]'
@@ -242,7 +253,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="px-2 py-1 border border-[#475569] bg-black/60 hover:border-white hover:text-white text-[#94A3B8] text-[9px] font-bold tracking-wider rounded-sm transition-all cursor-pointer backdrop-blur-sm flex items-center gap-1.5"
+            className="px-2.5 py-1 border border-[#475569] bg-black/60 hover:border-white hover:text-white text-[#94A3B8] text-[9px] font-bold tracking-wider rounded-sm cursor-pointer backdrop-blur-sm flex items-center gap-1.5 active:scale-95 transition-all duration-150"
             title="Toggle Fullscreen (F)"
           >
             <span>{isFullscreen ? '⤦ WINDOW' : '⛶ FULL'}</span>
@@ -251,7 +262,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       </header>
 
       {/* ======================================================== */}
-      {/* 3. MINIMAL BOTTOM SKIP / REVEAL ACTION                   */}
+      {/* 3. MINIMAL BOTTOM SKIP ACTION                            */}
       {/* ======================================================== */}
       <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto">
         <button
@@ -260,11 +271,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
             e.stopPropagation();
             handleTransitionToLogin();
           }}
-          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white transition-all cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
+          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white active:scale-[0.98] transition-all duration-150 cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
           id="skipIntroBtn"
         >
           <span>[ SKIP INTRO // ENTER GATEWAY ⌘↵ ]</span>
-          <span className="group-hover:translate-x-1 transition-transform">→</span>
+          <span className="group-hover:translate-x-1 transition-transform duration-150">→</span>
         </button>
       </footer>
 

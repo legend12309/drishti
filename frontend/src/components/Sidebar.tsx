@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectTab(item.id as TabId);
                 }
               }}
-              className={`w-full py-2 px-1 flex flex-col items-center justify-center transition-all duration-75 text-center cursor-pointer ${
+              className={`w-full py-2 px-1 flex flex-col items-center justify-center active:scale-95 transition-all duration-150 text-center cursor-pointer ${
                 isActive
                   ? 'text-signalGreen bg-pureWhite border-l-[3px] border-signalGreen shadow-xs'
                   : 'text-charcoal hover:text-ink hover:bg-boneDark border-l-2 border-transparent'

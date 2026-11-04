@@ -96,7 +96,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
         <button
           onClick={onCreateScan}
-          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider transition-colors duration-75 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider active:scale-95 transition-all duration-150 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
           title="Launch Autonomous Recon Pipeline"
         >
           <span>⚡</span>
@@ -108,7 +108,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       <div className="flex items-center space-x-2.5 shrink-0 text-xs">
         <button
           onClick={onOpenCommandPalette}
-          className="border border-hairline bg-boneLight hover:bg-boneDark px-2.5 py-1 text-charcoal hover:text-ink font-semibold cursor-pointer text-[11px] transition-colors flex items-center space-x-1"
+          className="border border-hairline bg-boneLight hover:bg-boneDark px-2.5 py-1 text-charcoal hover:text-ink font-semibold cursor-pointer text-[11px] active:scale-95 transition-all duration-150 flex items-center space-x-1"
           title="Press ⌘K or Ctrl+K"
         >
           <span className="text-pencil font-bold text-[10px]">⌘K</span>
@@ -121,7 +121,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
         <div
           onClick={onOpenProfile}
-          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2.5 py-1 font-bold text-[10px] cursor-pointer hover:bg-signalGreen hover:text-white transition-colors flex items-center space-x-1"
+          className="border border-signalGreen text-signalGreen bg-signalGreenBg px-2.5 py-1 font-bold text-[10px] cursor-pointer hover:bg-signalGreen hover:text-white active:scale-95 transition-all duration-150 flex items-center space-x-1"
           title={`Operator: ${operator?.name || 'Security Operator'} (${operator?.clearance || 'LEVEL 5'})`}
         >
           <span>OP:</span>
