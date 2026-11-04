@@ -23,7 +23,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     return () => clearTimeout(t);
   }, []);
 
-  // Trigger smooth fade-out from the last black frame and fade-in of the login screen
+  // Trigger cinematic fade-out at the last 8 seconds and simultaneous fade-in of login page
   const handleTransitionToLogin = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
@@ -32,15 +32,15 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       document.exitFullscreen().catch(() => {});
     }
 
-    // Notify LoginView to begin its smooth fade-in simultaneously
+    // Notify LoginView to begin its smooth cinematic fade-in simultaneously
     onBeginExit?.();
 
-    // Smoothly fade out audio if still playing to prevent popping
+    // Smoothly fade out audio over the 1800ms transition to prevent popping
     const v = videoRef.current;
     if (v && !v.muted) {
       const fadeAudioInterval = setInterval(() => {
-        if (v.volume > 0.08) {
-          v.volume = Math.max(0, v.volume - 0.15);
+        if (v.volume > 0.05) {
+          v.volume = Math.max(0, v.volume - 0.05);
         } else {
           v.volume = 0;
           clearInterval(fadeAudioInterval);
@@ -48,18 +48,19 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       }, 50);
     }
 
-    // Wait for the 850ms fade-out of the last black frame to complete, then unmount IntroView
+    // Wait for the 1800ms cinematic fade-out to complete, then unmount IntroView
     setTimeout(() => {
       onComplete();
-    }, 850);
+    }, 1800);
   }, [isExiting, onBeginExit, onComplete]);
 
-  // Video time tracker: detect the very last frame (black screen)
+  // Video time tracker: detect when the video enters its final 8 seconds
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (v && !isNaN(v.duration) && v.duration > 0) {
-      // Trigger when reaching the final frame of the video
-      if (v.currentTime >= v.duration - 0.15) {
+      // Trigger cinematic fade-out when reaching the last 8 seconds of the video
+      const fadeTriggerTime = Math.max(1.0, v.duration - 8.0);
+      if (v.currentTime >= fadeTriggerTime) {
         handleTransitionToLogin();
       }
     }
@@ -164,7 +165,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[850ms] ease-out ${
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[1800ms] ease-out ${
         isExiting
           ? 'opacity-0 pointer-events-none'
           : isReady
