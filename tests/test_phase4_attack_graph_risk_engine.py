@@ -275,3 +275,35 @@ async def test_supabase_graph_snapshot_and_risk_persistence(mock_evidence):
         fetched_paths = await get_attack_paths(scan_id)
         assert len(fetched_paths) >= 1
         assert fetched_paths[0]["target_node"] == "CoreDB"
+
+
+def test_no_self_loop_for_apex_domain():
+    """Verifies that an apex host finding does not create a self-loop edge company.com -> company.com."""
+    findings = [{"host": "company.com", "ip": "1.2.3.4", "ports": [80, 443], "risk": "MEDIUM", "score": 4.0}]
+    builder = AttackGraphBuilder(scan_id="test-no-loop")
+    g = builder.build_from_evidence("company.com", findings, [])
+    assert not g.has_edge("company.com", "company.com")
+
+
+def test_lateral_movement_from_risky_ports():
+    """Verifies that high-risk exposed ports (SSH 22, Redis 6379) infer lateral transitions without CVEs."""
+    findings = [
+        {"host": "cache.company.com", "ip": "10.0.0.5", "ports": [6379], "risk": "HIGH", "score": 8.0},
+        {"host": "bastion.company.com", "ip": "10.0.0.6", "ports": [22], "risk": "HIGH", "score": 7.5},
+    ]
+    builder = AttackGraphBuilder(scan_id="test-risky-ports")
+    g = builder.build_from_evidence("company.com", findings, [])
+
+    assert g.has_edge("cache.company.com:6379", "InternalAuth")
+    assert g.has_edge("bastion.company.com:22", "InternalAuth")
+
+    paths = find_candidate_attack_paths(
+        g=g,
+        source_node="company.com",
+        target_node="CoreDB",
+        scan_id="test-risky-ports",
+        snapshot_id=builder.snapshot_id,
+        k=2,
+    )
+    assert len(paths) >= 1
+    assert "CoreDB" in paths[0].path_nodes

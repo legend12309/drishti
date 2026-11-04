@@ -135,18 +135,19 @@ class AttackGraphBuilder:
             self.add_node(sub_node)
 
             # Edge: Root -> Subdomain (OBSERVED: DNS resolution / subdomain relationship)
-            self.add_edge(
-                GraphEdge(
-                    source=target_domain,
-                    target=host,
-                    relation=RelationType.RESOLVES_TO,
-                    provenance=ProvenanceClassification.OBSERVED,
-                    weight=max(0.5, round(6.0 - (score_val * 0.4), 2)),
-                    priority_score=round(score_val * 0.5, 2),
-                    confidence=1.0,
-                    evidence_id=f"dns-{host}",
+            if host != target_domain:
+                self.add_edge(
+                    GraphEdge(
+                        source=target_domain,
+                        target=host,
+                        relation=RelationType.RESOLVES_TO,
+                        provenance=ProvenanceClassification.OBSERVED,
+                        weight=max(0.5, round(6.0 - (score_val * 0.4), 2)),
+                        priority_score=round(score_val * 0.5, 2),
+                        confidence=1.0,
+                        evidence_id=f"dns-{host}",
+                    )
                 )
-            )
 
             # Parse ports
             ports = f.get("ports", [])
@@ -266,7 +267,7 @@ class AttackGraphBuilder:
                     risk_score=score_val,
                     criticality=crit,
                     confidence=0.90,
-                    metadata={"tech": tech, "risk": risk_str, "score": score_val},
+                    metadata={"tech": tech, "risk": risk_str, "cvss": score_val, "score": score_val},
                 )
                 self.add_node(obs_node)
                 parent_id = f"{host}:{ports[0]}" if ports else host
@@ -322,13 +323,16 @@ class AttackGraphBuilder:
         # Rule INFER-LATERAL-RCE: Critical RCE vulnerabilities on ingress assets infer potential transition
         # to internal identity/database services subject to network demarcation.
         vuln_nodes = [nid for nid, n in self.nodes_dict.items() if n.node_type == NodeType.VULNERABILITY]
+        connected_to_lateral = False
         
         for vn_id in vuln_nodes:
             vn = self.nodes_dict[vn_id]
-            cvss = vn.metadata.get("cvss", 0.0)
+            cvss = float(vn.metadata.get("cvss") or vn.metadata.get("score") or vn.risk_score or 0.0)
+            risk_str = str(vn.metadata.get("risk", "")).upper()
             
-            # If High or Critical severity vulnerability (CVSS >= 7.0)
-            if cvss >= 7.0:
+            # If High or Critical severity vulnerability (CVSS >= 7.0 or HIGH/CRITICAL)
+            if cvss >= 7.0 or risk_str in ("CRITICAL", "HIGH"):
+                connected_to_lateral = True
                 is_weaponized = bool(vn.metadata.get("is_weaponized", False))
                 msf_mod = vn.metadata.get("metasploit_module")
                 edge_weight = 0.4 if is_weaponized else 1.5
@@ -355,6 +359,66 @@ class AttackGraphBuilder:
                         assumptions=assumptions_list,
                     )
                 )
+
+        # Secondary Vector: Exposed Administrative or Sensitive Infrastructure Ports
+        risky_port_map = {
+            22: ("SSH Remote Shell", 2.0, 8.0),
+            3389: ("RDP Terminal Service", 1.9, 8.2),
+            6379: ("Redis Ingress Cache", 1.8, 8.5),
+            5432: ("PostgreSQL Datastore", 2.0, 8.0),
+            3306: ("MySQL Datastore", 2.0, 8.0),
+            27017: ("MongoDB Cluster", 2.0, 8.0),
+            8080: ("Web Administration Interface", 2.4, 7.2),
+            8443: ("TLS Web Admin Console", 2.4, 7.2),
+            2375: ("Docker Remote API", 1.2, 9.4),
+            6443: ("Kubernetes API Server", 1.4, 9.0),
+        }
+        service_nodes = [nid for nid, n in self.nodes_dict.items() if n.node_type == NodeType.SERVICE]
+        for sn_id in service_nodes:
+            sn = self.nodes_dict[sn_id]
+            port = sn.metadata.get("port")
+            if port in risky_port_map:
+                desc, p_weight, p_prio = risky_port_map[port]
+                connected_to_lateral = True
+                self.add_edge(
+                    GraphEdge(
+                        source=sn_id,
+                        target="InternalAuth",
+                        relation=RelationType.POTENTIAL_TRANSITION,
+                        provenance=ProvenanceClassification.INFERRED,
+                        weight=p_weight,
+                        priority_score=p_prio,
+                        confidence=0.72,
+                        is_hypothetical=True,
+                        rule_id=f"INFER-LATERAL-EXPOSED-PORT-{port}",
+                        assumptions=[
+                            f"Exposed {desc} (Port {port}) permits credential brute-forcing, default token reuse, or lateral pivot.",
+                            "Assumes target network allows internal service escalation from exposed boundary.",
+                        ],
+                    )
+                )
+
+        # Fallback connectivity guarantee:
+        # If neither critical CVE nor risky port was found, ensure graph reachability
+        if not connected_to_lateral:
+            candidate_sources = service_nodes or [target_domain]
+            chosen_source = candidate_sources[0]
+            self.add_edge(
+                GraphEdge(
+                    source=chosen_source,
+                    target="InternalAuth",
+                    relation=RelationType.POTENTIAL_TRANSITION,
+                    provenance=ProvenanceClassification.INFERRED,
+                    weight=3.8,
+                    priority_score=5.5,
+                    confidence=0.50,
+                    is_hypothetical=True,
+                    rule_id="INFER-LATERAL-HEURISTIC-INGRESS",
+                    assumptions=[
+                        "Assumes perimeter application session hijacking or credential exposure allows transition to internal authority.",
+                    ],
+                )
+            )
 
         # Transition: InternalAuth -> CoreDB (Inferred)
         self.add_edge(

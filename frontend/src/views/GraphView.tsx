@@ -155,16 +155,99 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       ];
       const osint = osintSources[index % osintSources.length];
 
-      // Identify service, cve, pivot, crown
-      const serviceNode = pNodes.find((n) => n.includes(':')) || `${domain}:443`;
-      const cveNode = pNodes.find((n) => n.toUpperCase().includes('CVE-') || n.toUpperCase().includes('CWE-')) || 'CVE-2024-4577';
-      const pivotNode = pNodes.find((n) => n.toLowerCase().includes('auth') || n.toLowerCase().includes('proxy') || n.toLowerCase().includes('ssh')) || 'InternalAuth';
-      const crownNode = pNodes[pNodes.length - 1] || 'CoreDB';
+      // Prepend OSINT source if not present, and preserve all actual traversal nodes
+      const fullPathNodes = pNodes.length > 0 && pNodes[0].includes('(') && (pNodes[0].includes('crt.sh') || pNodes[0].includes('DoH') || pNodes[0].includes('RDAP'))
+        ? [...pNodes]
+        : [osint.label, ...pNodes];
 
-      const pathNodesComplete = [osint.label, domain, serviceNode, cveNode, pivotNode, crownNode];
+      // Identify key markers for summary & metadata
+      const cveNode = fullPathNodes.find((n) => n.toUpperCase().includes('CVE-') || n.toUpperCase().includes('CWE-') || n.toUpperCase().includes('ALERT')) || 'CVE-2024-4577';
+      const serviceNode = fullPathNodes.find((n) => n.includes(':')) || `${domain}:443`;
+      const pivotNode = fullPathNodes.find((n) => n.toLowerCase().includes('auth') || n.toLowerCase().includes('proxy') || n.toLowerCase().includes('ssh')) || 'InternalAuth';
+      const crownNode = fullPathNodes[fullPathNodes.length - 1] || 'CoreDB';
 
-      const badge = index === 0 ? 'CRITICAL' : index === 1 ? 'HIGH' : 'ELEVATED';
-      const timeEst = index === 0 ? '0.40 MIN' : index === 1 ? '1.25 MIN' : '2.30 MIN';
+      const costVal = Number((rawPath.total_cost ?? rawPath.cumulative_cost ?? (index === 0 ? 0.40 : index === 1 ? 1.15 : 2.45)).toFixed(2));
+      const badge: 'CRITICAL' | 'HIGH' | 'ELEVATED' = costVal <= 3.0 ? 'CRITICAL' : costVal <= 7.0 ? 'HIGH' : 'ELEVATED';
+      const timeEst = `${Math.max(0.20, Number((costVal * 0.25).toFixed(2)))} MIN`;
+
+      const steps: AttackRouteStep[] = fullPathNodes.map((nid, k) => {
+        if (nid === osint.label || k === 0) {
+          return {
+            stage: '1. Passive OSINT',
+            stageIndex: 0,
+            stageName: 'PASSIVE RECON',
+            label: osint.label,
+            desc: osint.desc,
+            nodeId: nid,
+            mitreTechnique: osint.mitre,
+            badgeColor: '#8B5CF6',
+            icon: '🔍',
+          };
+        }
+        if (nid === crownNode || k === fullPathNodes.length - 1) {
+          return {
+            stage: '6. Crown Jewel',
+            stageIndex: 5,
+            stageName: 'CROWN JEWEL',
+            label: nid,
+            desc: 'Core datastore / asset breach',
+            nodeId: nid,
+            mitreTechnique: 'T1530',
+            badgeColor: '#0D7B38',
+            icon: '💎',
+          };
+        }
+        if (nid.toUpperCase().includes('CVE-') || nid.toUpperCase().includes('CWE-') || nid.toUpperCase().includes('ALERT')) {
+          return {
+            stage: '4. Exploit',
+            stageIndex: 3,
+            stageName: 'VULNERABILITY',
+            label: nid.split(' ')[0],
+            desc: 'Weaponized exploit payload',
+            nodeId: nid,
+            mitreTechnique: 'T1203',
+            badgeColor: '#E63926',
+            icon: '⚡',
+          };
+        }
+        if (nid.includes(':')) {
+          return {
+            stage: '3. Service',
+            stageIndex: 2,
+            stageName: 'EXPOSED PORT',
+            label: nid,
+            desc: 'Listening daemon interface',
+            nodeId: nid,
+            mitreTechnique: 'T1046',
+            badgeColor: '#0284C7',
+            icon: '🔌',
+          };
+        }
+        if (nid.toLowerCase().includes('auth') || nid.toLowerCase().includes('proxy') || nid.toLowerCase().includes('ssh')) {
+          return {
+            stage: '5. Pivot',
+            stageIndex: 4,
+            stageName: 'LATERAL MOVEMENT',
+            label: nid,
+            desc: 'Internal privilege & credential pivot',
+            nodeId: nid,
+            mitreTechnique: 'T1078',
+            badgeColor: '#4F46E5',
+            icon: '🔑',
+          };
+        }
+        return {
+          stage: '2. Ingress',
+          stageIndex: 1,
+          stageName: nid === domain ? 'INGRESS APEX' : 'SUBDOMAIN INGRESS',
+          label: nid,
+          desc: nid === domain ? 'Perimeter apex target entry' : 'Discovered host endpoint',
+          nodeId: nid,
+          mitreTechnique: 'T1190',
+          badgeColor: '#0D0E11',
+          icon: '🌐',
+        };
+      });
 
       return {
         id: `route-${index + 1}`,
@@ -175,21 +258,14 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           : `ROUTE 3 // LATERAL PIVOT (${cveNode.split(' ')[0]})`,
         badge,
         timeEstimate: timeEst,
-        resistanceCost: Number((rawPath.total_cost || (index === 0 ? 0.40 : index === 1 ? 1.15 : 2.45)).toFixed(2)),
+        resistanceCost: costVal,
         source_node: osint.label,
         target_node: crownNode,
-        path_nodes: pathNodesComplete,
+        path_nodes: fullPathNodes,
         exploitName: cveNode,
         exploitCve: cveNode.split(' ')[0],
         summary: `Adversary gathers intelligence on ${domain} via ${osint.label}, discovers listener ${serviceNode}, weaponizes ${cveNode} for remote initial access, pivots through ${pivotNode}, and executes full compromise of ${crownNode}.`,
-        steps: [
-          { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: osint.label, desc: osint.desc, nodeId: osint.label, mitreTechnique: osint.mitre, badgeColor: '#8B5CF6', icon: '🔍' },
-          { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Perimeter apex target entry', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', icon: '🌐' },
-          { stage: '3. Service', stageIndex: 2, stageName: 'EXPOSED PORT', label: serviceNode, desc: 'Listening daemon interface', nodeId: serviceNode, mitreTechnique: 'T1046', badgeColor: '#0284C7', icon: '🔌' },
-          { stage: '4. Exploit', stageIndex: 3, stageName: 'VULNERABILITY', label: cveNode, desc: 'Weaponized exploit payload', nodeId: cveNode, mitreTechnique: 'T1203', badgeColor: '#E63926', icon: '⚡' },
-          { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL MOVEMENT', label: pivotNode, desc: 'Internal privilege & credential pivot', nodeId: pivotNode, mitreTechnique: 'T1078', badgeColor: '#4F46E5', icon: '🔑' },
-          { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: crownNode, desc: 'Core datastore / asset breach', nodeId: crownNode, mitreTechnique: 'T1530', badgeColor: '#0D7B38', icon: '💎' },
-        ],
+        steps,
         preconditions: rawPath.preconditions || [
           'Target service lacks rate limiting or WAF input sanitization.',
           'Compromised process holds administrative token to internal network.',
@@ -203,12 +279,8 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       };
     };
 
-    if (rawPaths && rawPaths.length > 0) {
-      return rawPaths.slice(0, 3).map((rp, i) => buildFromRawPath(rp, i));
-    }
-
-    // Default canonical vectors if no scan has been run yet
-    const r1: AttackRoute = {
+    // Canonical Fallback Routes
+    const r1Fallback: AttackRoute = {
       id: 'route-1',
       title: 'ROUTE 1 // PRIMARY CRITICAL PATH (LOWEST RESISTANCE)',
       badge: 'CRITICAL',
@@ -238,7 +310,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       ],
     };
 
-    const r2: AttackRoute = {
+    const r2Fallback: AttackRoute = {
       id: 'route-2',
       title: 'ROUTE 2 // SECONDARY WEB EXPLOITATION VECTOR',
       badge: 'HIGH',
@@ -268,7 +340,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       ],
     };
 
-    const r3: AttackRoute = {
+    const r3Fallback: AttackRoute = {
       id: 'route-3',
       title: 'ROUTE 3 // LATERAL AUTHENTICATION PIVOT',
       badge: 'ELEVATED',
@@ -298,7 +370,17 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       ],
     };
 
-    return [r1, r2, r3];
+    if (rawPaths && rawPaths.length >= 3) {
+      return rawPaths.slice(0, 3).map((rp, i) => buildFromRawPath(rp, i));
+    }
+    if (rawPaths && rawPaths.length === 2) {
+      return [buildFromRawPath(rawPaths[0], 0), buildFromRawPath(rawPaths[1], 1), r3Fallback];
+    }
+    if (rawPaths && rawPaths.length === 1) {
+      return [buildFromRawPath(rawPaths[0], 0), r2Fallback, r3Fallback];
+    }
+
+    return [r1Fallback, r2Fallback, r3Fallback];
   }, [rawPaths, currentTargetDomain]);
 
   // Active selected route
@@ -365,7 +447,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
         col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#0D7B38', icon: '💎' });
       } else if (idLower === 'internalauth' || idLower === 'nginxreverseproxy' || idLower === 'devopsbastionssh' || typeLower === 'pivot' || idLower.includes('auth') || idLower.includes('proxy') || idLower.includes('ssh')) {
         col4.push({ ...node, stageIndex: 4, stageLabel: 'LATERAL PIVOT', badgeColor: '#4F46E5', icon: '🔑' });
-      } else if (typeLower === 'vulnerability' || idLower.includes('cve') || idLower.includes('cwe') || idLower.includes('vuln') || idLower.includes('exploit')) {
+      } else if (typeLower === 'vulnerability' || idLower.includes('cve') || idLower.includes('cwe') || idLower.includes('vuln') || idLower.includes('exploit') || idLower.includes('alert')) {
         col3.push({ ...node, stageIndex: 3, stageLabel: 'EXPLOIT', badgeColor: '#E63926', icon: '⚡' });
       } else if (typeLower === 'service' || node.id.includes(':') || typeLower.includes('port')) {
         col2.push({ ...node, stageIndex: 2, stageLabel: 'SERVICE PORT', badgeColor: '#0284C7', icon: '🔌' });
@@ -376,8 +458,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       }
     });
 
+    // Ingress column sorting: apex domain at the very top, subdomains below
+    col1.sort((a, b) => {
+      if (a.id === currentTargetDomain) return -1;
+      if (b.id === currentTargetDomain) return 1;
+      return a.id.localeCompare(b.id);
+    });
+    // Service column sorting: by host and port
+    col2.sort((a, b) => a.id.localeCompare(b.id));
+    // Vulnerability column sorting: by CVSS / risk score descending
+    col3.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0));
+
     return [col0, col1, col2, col3, col4, col5];
-  }, [allRenderNodes]);
+  }, [allRenderNodes, currentTargetDomain]);
 
   // Canvas Layout with Integrated Stage Swimlanes
   const layout = useMemo(() => {
@@ -433,6 +526,49 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     }
     return false;
   }, [activeRoute]);
+
+  // Compute clean SVG path curves for forward, intra-column, and lateral/backward edges
+  const computeEdgePath = useCallback((sourcePos: any, targetPos: any): string => {
+    const dxCol = targetPos.x - sourcePos.x;
+
+    // 1. Forward inter-column edge (dxCol > 50)
+    if (dxCol > 50) {
+      const x1 = sourcePos.x + sourcePos.w / 2;
+      const y1 = sourcePos.y;
+      const x2 = targetPos.x - targetPos.w / 2;
+      const y2 = targetPos.y;
+      const dx = (x2 - x1) * 0.45;
+      return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+    }
+
+    // 2. Intra-column edge (|dxCol| <= 50, e.g. root domain -> subdomain in Col 1)
+    if (Math.abs(dxCol) <= 50) {
+      if (targetPos.y > sourcePos.y) {
+        // Vertical downward flow
+        const x1 = sourcePos.x;
+        const y1 = sourcePos.y + sourcePos.h / 2;
+        const x2 = targetPos.x;
+        const y2 = targetPos.y - targetPos.h / 2;
+        const dy = y2 - y1;
+        return `M ${x1} ${y1} C ${x1} ${y1 + dy * 0.45}, ${x2} ${y2 - dy * 0.45}, ${x2} ${y2}`;
+      } else {
+        // Vertical upward flow
+        const x1 = sourcePos.x;
+        const y1 = sourcePos.y - sourcePos.h / 2;
+        const x2 = targetPos.x;
+        const y2 = targetPos.y + targetPos.h / 2;
+        const dy = sourcePos.y - targetPos.y;
+        return `M ${x1} ${y1} C ${x1} ${y1 - dy * 0.45}, ${x2} ${y2 + dy * 0.45}, ${x2} ${y2}`;
+      }
+    }
+
+    // 3. Backward or lateral jump edge (dxCol < -50)
+    const x1 = sourcePos.x - sourcePos.w / 2;
+    const y1 = sourcePos.y;
+    const x2 = targetPos.x + targetPos.w / 2;
+    const y2 = targetPos.y;
+    return `M ${x1} ${y1} C ${x1 - 45} ${y1 - 30}, ${x2 + 45} ${y2 - 30}, ${x2} ${y2}`;
+  }, []);
 
   // Mouse Controls (Pan & Zoom)
   const handleWheel = (e: React.WheelEvent) => {
@@ -682,15 +818,15 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             </div>
           </div>
 
-          {/* 6-Step Traversal Flow Stepper */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-1">
+          {/* Traversal Flow Stepper */}
+          <div className="flex flex-wrap gap-2 pt-1">
             {activeRoute.steps.map((step, idx) => {
               const isInspected = selectedNode?.id === step.nodeId;
               return (
                 <div
                   key={idx}
                   onClick={() => focusOnNode(step.nodeId)}
-                  className={`p-2.5 border transition-all cursor-pointer space-y-1 relative group ${
+                  className={`flex-1 min-w-[155px] p-2.5 border transition-all cursor-pointer space-y-1 relative group ${
                     isInspected
                       ? 'bg-pureWhite border-vermilion ring-2 ring-vermilion/30 shadow-sm'
                       : 'bg-[#F8FAFC] border-hairline hover:border-ink hover:bg-pureWhite'
@@ -699,7 +835,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                 >
                   <div className="flex items-center justify-between text-[9.5px] text-charcoal font-bold">
                     <span>{step.stage}</span>
-                    {idx < 5 && <span className="hidden lg:inline text-pencil font-black">➔</span>}
+                    {idx < activeRoute.steps.length - 1 && <span className="hidden lg:inline text-pencil font-black">➔</span>}
                   </div>
                   <div className="text-[11px] font-bold text-ink truncate" title={step.label}>
                     {step.label}
@@ -927,13 +1063,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                     if (onActive) return null;
 
                     const isHovered = hoveredNodeId === edge.source || hoveredNodeId === edge.target;
-
-                    const x1 = sourcePos.x + sourcePos.w / 2;
-                    const y1 = sourcePos.y;
-                    const x2 = targetPos.x - targetPos.w / 2;
-                    const y2 = targetPos.y;
-                    const dx = Math.abs(x2 - x1) * 0.45;
-                    const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+                    const d = computeEdgePath(sourcePos, targetPos);
 
                     return (
                       <path
@@ -958,12 +1088,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                     const onActive = isEdgeOnActiveRoute(edge.source, edge.target);
                     if (!onActive) return null;
 
-                    const x1 = sourcePos.x + sourcePos.w / 2;
-                    const y1 = sourcePos.y;
-                    const x2 = targetPos.x - targetPos.w / 2;
-                    const y2 = targetPos.y;
-                    const dx = Math.abs(x2 - x1) * 0.45;
-                    const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+                    const d = computeEdgePath(sourcePos, targetPos);
 
                     return (
                       <g key={`active-edge-${idx}`}>

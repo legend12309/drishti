@@ -294,7 +294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               <div>
                 <span className="text-[9px] text-charcoal block uppercase">LEAST FRICTION</span>
                 <span className="text-sm font-bold text-signalGreen">
-                  {attackPaths.length > 0 ? `${attackPaths[0].cumulative_cost?.toFixed(2)} COST` : '1.00 MAX'}
+                  {attackPaths.length > 0 ? `${(attackPaths[0].total_cost ?? attackPaths[0].cumulative_cost ?? 1.0).toFixed(2)} COST` : '1.00 MAX'}
                 </span>
               </div>
             </div>
@@ -328,7 +328,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
 
             <div className="flex items-center space-x-2 font-mono text-[10px]">
               <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold">
-                {attackPaths.length > 0 ? `CUMULATIVE COST: ${attackPaths[0].cumulative_cost?.toFixed(2)}` : 'PERIMETER PRISTINE'}
+                {attackPaths.length > 0 ? `CUMULATIVE COST: ${(attackPaths[0].total_cost ?? attackPaths[0].cumulative_cost ?? 1.0).toFixed(2)}` : 'PERIMETER PRISTINE'}
               </span>
               <button
                 onClick={() => onNavigate('graph')}
@@ -340,36 +340,83 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
           </div>
 
           {/* Sequential Dijkstra Attack Path Nodes with Animated Connecting Arrows */}
-          {attackPaths.length > 0 ? (
-            <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-2">
-              {attackPaths[0].path_nodes?.slice(0, 4).map((node: string, idx: number) => (
-                <React.Fragment key={idx}>
-                  <div
-                    className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
-                    style={{
-                      animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
-                    }}
-                  >
-                    <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                      <span>{idx === 0 ? '01_ INGRESS' : idx === 3 ? '04_ CROWN JEWEL' : `0${idx + 1}_ TRAVERSAL`}</span>
-                      <span className="w-2 h-2 bg-signalGreen inline-block"></span>
-                    </div>
-                    <div className="text-sm font-bold text-ink truncate">{node}</div>
-                    <div className="text-[10px] text-charcoal font-mono">Target: {targetDomain || 'UNASSIGNED'}</div>
-                  </div>
-                  {idx < Math.min(attackPaths[0].path_nodes.length, 4) - 1 && (
+          {attackPaths.length > 0 && Array.isArray(attackPaths[0].path_nodes) && attackPaths[0].path_nodes.length > 0 ? (
+            <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-2 scrollbar-tactical">
+              {attackPaths[0].path_nodes.map((node: string, idx: number) => {
+                const totalNodes = attackPaths[0].path_nodes.length;
+                const isFirst = idx === 0;
+                const isLast = idx === totalNodes - 1;
+                const isService = node.includes(':');
+                const isVuln = node.toUpperCase().includes('CVE-') || node.toUpperCase().includes('CWE-') || node.toUpperCase().includes('ALERT');
+                const isPivot = node.toLowerCase().includes('auth') || node.toLowerCase().includes('proxy') || node.toLowerCase().includes('ssh');
+
+                const stageTag = isFirst
+                  ? '01_ INGRESS APEX'
+                  : isLast
+                  ? '06_ CROWN JEWEL'
+                  : isVuln
+                  ? '⚡ EXPLOIT'
+                  : isService
+                  ? '🔌 SERVICE PORT'
+                  : isPivot
+                  ? '🔑 LATERAL PIVOT'
+                  : `0${Math.min(idx + 1, 5)}_ TRAVERSAL`;
+
+                const tagColor = isFirst
+                  ? 'text-ink'
+                  : isLast
+                  ? 'text-signalGreen'
+                  : isVuln
+                  ? 'text-vermilion'
+                  : isService
+                  ? 'text-sky-600'
+                  : isPivot
+                  ? 'text-indigo-600'
+                  : 'text-charcoal';
+
+                const dotColor = isFirst
+                  ? 'bg-ink'
+                  : isLast
+                  ? 'bg-signalGreen'
+                  : isVuln
+                  ? 'bg-vermilion'
+                  : isService
+                  ? 'bg-sky-500'
+                  : isPivot
+                  ? 'bg-indigo-500'
+                  : 'bg-signalGreen';
+
+                return (
+                  <React.Fragment key={idx}>
                     <div
-                      className="flex items-center justify-center text-signalGreen font-bold px-1 select-none"
+                      className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
                       style={{
-                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
+                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
                       }}
                     >
-                      <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
-                      <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
+                      <div className="flex items-center justify-between text-[9px] font-bold pb-1.5 border-b border-hairlineLight">
+                        <span className={tagColor}>{stageTag}</span>
+                        <span className={`w-2 h-2 ${dotColor} inline-block`}></span>
+                      </div>
+                      <div className="text-sm font-bold text-ink truncate" title={node}>{node}</div>
+                      <div className="text-[10px] text-charcoal font-mono truncate">
+                        {isLast ? 'Objective: Mission Critical Datastore' : `Target: ${targetDomain || 'UNASSIGNED'}`}
+                      </div>
                     </div>
-                  )}
-                </React.Fragment>
-              ))}
+                    {idx < totalNodes - 1 && (
+                      <div
+                        className="flex items-center justify-center text-signalGreen font-bold px-1 select-none shrink-0"
+                        style={{
+                          animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
+                        }}
+                      >
+                        <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
+                        <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           ) : (
             <div className="space-y-4">
