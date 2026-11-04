@@ -6,6 +6,7 @@ import { ToastContainer, ToastMessage } from './components/Toast';
 import { CommandPalette } from './components/CommandPalette';
 import { ProfileModal } from './components/ProfileModal';
 import { LoginView } from './views/LoginView';
+import { IntroView } from './views/IntroView';
 import { DashboardView } from './views/DashboardView';
 import { ReconView } from './views/ReconView';
 import { IntelView } from './views/IntelView';
@@ -41,6 +42,9 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 };
 
 export default function App() {
+  // Play intro video sequence on initial startup
+  const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(false);
+
   // Always show login page first on open
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
@@ -149,6 +153,10 @@ export default function App() {
     }
   };
 
+  if (!hasSeenIntro) {
+    return <IntroView onComplete={() => setHasSeenIntro(true)} />;
+  }
+
   if (!isAuthenticated) {
     return (
       <LoginView
@@ -157,6 +165,7 @@ export default function App() {
           setIsAuthenticated(true);
           setEntranceFlash(true);
         }}
+        onReplayIntro={() => setHasSeenIntro(false)}
         showToast={showToast}
       />
     );

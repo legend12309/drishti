@@ -4,9 +4,10 @@ import { OperatorProfile } from '../types';
 interface LoginViewProps {
   onLoginSuccess: (operator: OperatorProfile, token: string) => void;
   showToast?: (type: 'success' | 'warning' | 'error' | 'info', title: string, detail?: string) => void;
+  onReplayIntro?: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast, onReplayIntro }) => {
   // Input & Mode States
   const [tokenInput, setTokenInput] = useState('ED25519-948A-AUTH-BIO-09');
   const [mode, setMode] = useState<'passive' | 'active'>('passive');
@@ -1348,7 +1349,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 [TARGET_LOCKED]
               </span>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
+              {onReplayIntro && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-[9px] text-[#38BDF8] hover:text-white px-2 py-0.5 border border-[#2563EB]/40 hover:border-[#38BDF8] bg-[#0A0E18] hover:bg-[#2563EB]/20 transition-all cursor-pointer shadow-sm font-mono rounded-sm"
+                  onClick={onReplayIntro}
+                  title="Watch boot video intro again"
+                >
+                  <span>↺</span>
+                  <span>BOOT_INTRO</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="flex items-center gap-1.5 text-[9px] text-[#94A3B8] hover:text-white px-2 py-0.5 border border-[#334155]/80 hover:border-[#EF4444] bg-[#0A0E18] hover:bg-[#E62E25]/20 transition-all cursor-pointer shadow-sm font-mono rounded-sm"
