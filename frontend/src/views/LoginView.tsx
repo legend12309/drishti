@@ -71,18 +71,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const physicsRef = useRef({
     mouseX: typeof window !== 'undefined' ? window.innerWidth / 2 : 700,
     mouseY: typeof window !== 'undefined' ? window.innerHeight / 2 : 400,
+    lastMouseX: typeof window !== 'undefined' ? window.innerWidth / 2 : 700,
+    lastMouseY: typeof window !== 'undefined' ? window.innerHeight / 2 : 400,
     currentEyeX: 0,
     currentEyeY: 0,
     targetEyeX: 0,
     targetEyeY: 0,
-    wanderX: 0,
-    wanderY: 0,
-    wanderTargetX: 0,
-    wanderTargetY: 0,
-    saccadeX: 0,
-    saccadeY: 0,
-    saccadeTargetX: 0,
-    saccadeTargetY: 0,
+    saccadeStartX: 0,
+    saccadeStartY: 0,
+    saccadeStartTime: 0,
+    saccadeDuration: 65,
+    isSaccading: false,
+    gazeMode: 'CURSOR' as 'CURSOR' | 'LOOK_AWAY',
+    tremorSeed: Math.random() * 100,
     currentPupilR: 21,
     targetPupilR: 21,
     colorMorph: 0, // 0 = Crimson Red, 1 = Electric Cobalt #00E5FF
@@ -267,9 +268,137 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     generateVessels();
     generateIrisFibers();
 
+    // -------------------------------------------------------------
+    // REALISTIC BIOLOGICAL SACCADE & FIXATION ENGINE
+    // In human ocular physiology, eye movements are NOT continuous drifts:
+    // 1. Saccades: Rapid ballistic snaps (40ms - 80ms)
+    // 2. Fixations: Steady holds on focal points (250ms - 900ms) with micro-tremor
+    // 3. Foveation: Alternating between following the cursor and darting to inspect UI targets
+    // -------------------------------------------------------------
+    let saccadeTimer: any;
+
+    const triggerSaccadeTo = (targetX: number, targetY: number, durationMs = 60) => {
+      const p = physicsRef.current;
+      p.saccadeStartX = p.currentEyeX;
+      p.saccadeStartY = p.currentEyeY;
+      p.targetEyeX = targetX;
+      p.targetEyeY = targetY;
+      p.saccadeStartTime = performance.now();
+      p.saccadeDuration = Math.max(35, durationMs);
+      p.isSaccading = true;
+
+      // Saccadic pupil reflex (slight dilation during eye snap)
+      p.targetPupilR = 22.8;
+    };
+
+    const scheduleNextGazeShift = () => {
+      // Natural human fixation duration: 250ms - 900ms
+      const fixationDuration = 280 + Math.random() * 750;
+
+      saccadeTimer = setTimeout(() => {
+        const p = physicsRef.current;
+        if (p.lockGazeToCenter) {
+          scheduleNextGazeShift();
+          return;
+        }
+
+        const arena = arenaRef.current;
+        let cursorNormX = 0;
+        let cursorNormY = 0;
+        if (arena) {
+          const rect = arena.getBoundingClientRect();
+          const ax = rect.left + rect.width / 2;
+          const ay = rect.top + rect.height / 2;
+          cursorNormX = Math.max(-1, Math.min(1, (p.mouseX - ax) / (window.innerWidth / 2)));
+          cursorNormY = Math.max(-1, Math.min(1, (p.mouseY - ay) / (window.innerHeight / 2)));
+        }
+
+        const cursorX = cursorNormX * 13;
+        const cursorY = cursorNormY * 13;
+
+        // Probabilities for next fixation target:
+        // 50% -> Dart to an exploratory target (curiously inspecting telemetry, terminal, header, corners)
+        // 38% -> Dart back to operator's cursor (focused interaction)
+        // 12% -> Sequential micro-scan (small jump nearby, e.g. reading line of data)
+        const roll = Math.random();
+
+        if (roll < 0.50) {
+          // EXPLORATORY SACCADE: Look around spontaneously
+          p.gazeMode = 'LOOK_AWAY';
+
+          const quadrant = Math.random();
+          let targetX = 0;
+          let targetY = 0;
+
+          if (quadrant < 0.28) {
+            // Glance left towards memory hex dump
+            targetX = -10.0 - Math.random() * 5.0; // -10px to -15px
+            targetY = (Math.random() - 0.5) * 8.0;
+          } else if (quadrant < 0.56) {
+            // Glance right towards packet sniffer
+            targetX = 10.0 + Math.random() * 5.0;  // +10px to +15px
+            targetY = (Math.random() - 0.5) * 8.0;
+          } else if (quadrant < 0.78) {
+            // Glance down towards CLI prompt and login execute button
+            targetX = (Math.random() - 0.5) * 8.0;
+            targetY = 9.0 + Math.random() * 5.5;   // +9px to +14.5px
+          } else {
+            // Glance up towards azimuth degrees & security status
+            targetX = (Math.random() - 0.5) * 8.0;
+            targetY = -9.0 - Math.random() * 5.5;  // -9px to -14.5px
+          }
+
+          // Real saccades take 45ms to 75ms
+          const jumpDuration = 45 + Math.random() * 30;
+          triggerSaccadeTo(targetX, targetY, jumpDuration);
+
+          // Occasional organic blink on wide glances
+          if (Math.abs(targetX) > 11 && Math.random() < 0.35) {
+            setTimeout(() => triggerBlink(110), 30);
+          }
+        } else if (roll < 0.88) {
+          // ATTENTION TO CURSOR: Dart back to user's cursor
+          p.gazeMode = 'CURSOR';
+          const jumpDuration = 40 + Math.random() * 30;
+          triggerSaccadeTo(cursorX, cursorY, jumpDuration);
+        } else {
+          // MICRO-SCAN: Quick reading jump (±3px to ±6px)
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 3.5 + Math.random() * 3.5;
+          const targetX = Math.max(-15, Math.min(15, p.currentEyeX + Math.cos(angle) * dist));
+          const targetY = Math.max(-15, Math.min(15, p.currentEyeY + Math.sin(angle) * dist));
+          const jumpDuration = 35 + Math.random() * 25;
+          triggerSaccadeTo(targetX, targetY, jumpDuration);
+        }
+
+        scheduleNextGazeShift();
+      }, fixationDuration);
+    };
+
+    scheduleNextGazeShift();
+
     const handleMouseMove = (e: MouseEvent) => {
-      physicsRef.current.mouseX = e.clientX;
-      physicsRef.current.mouseY = e.clientY;
+      const p = physicsRef.current;
+      const dx = e.clientX - p.lastMouseX;
+      const dy = e.clientY - p.lastMouseY;
+      p.lastMouseX = e.clientX;
+      p.lastMouseY = e.clientY;
+      p.mouseX = e.clientX;
+      p.mouseY = e.clientY;
+
+      // If user moves mouse vigorously while eye is looking away, eye snaps attention back to cursor!
+      if (Math.hypot(dx, dy) > 28 && p.gazeMode === 'LOOK_AWAY' && Math.random() < 0.45) {
+        p.gazeMode = 'CURSOR';
+        const arena = arenaRef.current;
+        if (arena) {
+          const rect = arena.getBoundingClientRect();
+          const ax = rect.left + rect.width / 2;
+          const ay = rect.top + rect.height / 2;
+          const normX = Math.max(-1, Math.min(1, (e.clientX - ax) / (window.innerWidth / 2)));
+          const normY = Math.max(-1, Math.min(1, (e.clientY - ay) / (window.innerHeight / 2)));
+          triggerSaccadeTo(normX * 13, normY * 13, 50);
+        }
+      }
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -283,48 +412,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       }, nextBlink);
     };
     scheduleNextBlink();
-
-    // Autonomous Exploratory Gaze: The eye glances here and there (random curious scanning)
-    let wanderTimer: any;
-    const scheduleNextWander = () => {
-      const delay = 650 + Math.random() * 1350; // shift gaze every 650ms to 2000ms
-      wanderTimer = setTimeout(() => {
-        // 75% chance of spontaneous exploratory glance, 25% chance of returning focus to cursor
-        if (Math.random() < 0.75) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = 5.5 + Math.random() * 8.0; // 5.5px to 13.5px exploratory glance
-          physicsRef.current.wanderTargetX = Math.cos(angle) * dist;
-          physicsRef.current.wanderTargetY = Math.sin(angle) * dist;
-
-          // Natural biological pupil flutter when shifting focus plane
-          const flutter = (Math.random() - 0.5) * 2.2;
-          physicsRef.current.targetPupilR = Math.max(18.5, Math.min(23.5, 21 + flutter));
-        } else {
-          physicsRef.current.wanderTargetX = 0;
-          physicsRef.current.wanderTargetY = 0;
-          physicsRef.current.targetPupilR = 21;
-        }
-        scheduleNextWander();
-      }, delay);
-    };
-    scheduleNextWander();
-
-    // Micro-Saccades: fine biological tremor and quick retinal jitter (±2.5px every 250ms - 850ms)
-    let saccadeTimer: any;
-    let saccadeResetTimer: any;
-    const scheduleNextSaccade = () => {
-      const delay = 250 + Math.random() * 600;
-      saccadeTimer = setTimeout(() => {
-        physicsRef.current.saccadeTargetX = (Math.random() - 0.5) * 5; // ±2.5px
-        physicsRef.current.saccadeTargetY = (Math.random() - 0.5) * 5; // ±2.5px
-        saccadeResetTimer = setTimeout(() => {
-          physicsRef.current.saccadeTargetX = 0;
-          physicsRef.current.saccadeTargetY = 0;
-        }, 80 + Math.random() * 70);
-        scheduleNextSaccade();
-      }, delay);
-    };
-    scheduleNextSaccade();
 
     // Live Jitter Metrics Interval (440ms)
     const jitterInterval = setInterval(() => {
@@ -346,57 +433,67 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       const p = physicsRef.current;
       const t = p.colorMorph; // 0.0 = Red Eye, 1.0 = Electric Cobalt #00E5FF
-
-      // 1. Calculate gaze offset: Cursor Following + Autonomous Exploratory Gaze ("looking here and there")
+      const now = performance.now();
       const arena = arenaRef.current;
-      if (arena && !p.lockGazeToCenter) {
-        const rect = arena.getBoundingClientRect();
-        const ax = rect.left + rect.width / 2;
-        const ay = rect.top + rect.height / 2;
 
-        // Smooth cursor follow vector across viewport (-1 to +1)
-        const normX = Math.max(-1, Math.min(1, (p.mouseX - ax) / (window.innerWidth / 2)));
-        const normY = Math.max(-1, Math.min(1, (p.mouseY - ay) / (window.innerHeight / 2)));
+      // 1. Biological Ocular Dynamics (Saccadic Flight vs Fixation Pursuit)
+      if (p.lockGazeToCenter) {
+        p.currentEyeX += (0 - p.currentEyeX) * 0.20;
+        p.currentEyeY += (0 - p.currentEyeY) * 0.20;
+      } else if (arena) {
+        if (p.isSaccading) {
+          // Ballistic Saccade: Steep acceleration & sharp mechanical landing
+          const elapsed = now - p.saccadeStartTime;
+          const progress = Math.min(1.0, elapsed / p.saccadeDuration);
 
-        // Cursor parallax displacement (up to ±12px)
-        const cursorGazeX = normX * 12;
-        const cursorGazeY = normY * 12;
+          // Quartic ease-out: explosive instantaneous jump, decelerating sharply at destination
+          const eased = 1 - Math.pow(1 - progress, 4);
 
-        // Smoothly interpolate wander position towards wander target (organic drift)
-        p.wanderX += (p.wanderTargetX - p.wanderX) * 0.075;
-        p.wanderY += (p.wanderTargetY - p.wanderY) * 0.075;
+          p.currentEyeX = p.saccadeStartX + (p.targetEyeX - p.saccadeStartX) * eased;
+          p.currentEyeY = p.saccadeStartY + (p.targetEyeY - p.saccadeStartY) * eased;
 
-        // Micro-saccade quick ballistic approach
-        p.saccadeX += (p.saccadeTargetX - p.saccadeX) * 0.26;
-        p.saccadeY += (p.saccadeTargetY - p.saccadeY) * 0.26;
+          if (progress >= 1.0) {
+            p.isSaccading = false;
+            p.currentEyeX = p.targetEyeX;
+            p.currentEyeY = p.targetEyeY;
+            p.targetPupilR = 21; // Pupil settles on fixation target
+          }
+        } else {
+          // Fixation Hold & Smooth Pursuit
+          if (p.gazeMode === 'CURSOR') {
+            // Smooth pursuit following mouse pointer
+            const rect = arena.getBoundingClientRect();
+            const ax = rect.left + rect.width / 2;
+            const ay = rect.top + rect.height / 2;
+            const normX = Math.max(-1, Math.min(1, (p.mouseX - ax) / (window.innerWidth / 2)));
+            const normY = Math.max(-1, Math.min(1, (p.mouseY - ay) / (window.innerHeight / 2)));
+            const cursorX = normX * 13;
+            const cursorY = normY * 13;
 
-        // Combine cursor tracking + autonomous glance around + micro-saccades
-        let combinedX = cursorGazeX + p.wanderX + p.saccadeX;
-        let combinedY = cursorGazeY + p.wanderY + p.saccadeY;
+            p.targetEyeX += (cursorX - p.targetEyeX) * 0.18;
+            p.targetEyeY += (cursorY - p.targetEyeY) * 0.18;
+            p.currentEyeX += (p.targetEyeX - p.currentEyeX) * 0.28;
+            p.currentEyeY += (p.targetEyeY - p.currentEyeY) * 0.28;
+          }
 
-        // Clamp to max circular orbital boundary (16.5px) so iris stays within beautiful sclera margins
-        const maxDisplacement = 16.5;
-        const dist = Math.sqrt(combinedX * combinedX + combinedY * combinedY);
-        if (dist > maxDisplacement) {
-          combinedX = (combinedX / dist) * maxDisplacement;
-          combinedY = (combinedY / dist) * maxDisplacement;
+          // Physiological micro-tremor (micro-nystagmus drift < 0.4px)
+          const tremorX = Math.sin(now * 0.04 + p.tremorSeed) * 0.35;
+          const tremorY = Math.cos(now * 0.048 + p.tremorSeed) * 0.35;
+          p.currentEyeX += tremorX * 0.12;
+          p.currentEyeY += tremorY * 0.12;
         }
 
-        p.targetEyeX = combinedX;
-        p.targetEyeY = combinedY;
-      } else if (p.lockGazeToCenter) {
-        p.targetEyeX = 0;
-        p.targetEyeY = 0;
-        p.wanderTargetX = 0;
-        p.wanderTargetY = 0;
-        p.wanderX += (0 - p.wanderX) * 0.12;
-        p.wanderY += (0 - p.wanderY) * 0.12;
+        // Clamp inside orbital sclera boundary
+        const dist = Math.hypot(p.currentEyeX, p.currentEyeY);
+        const maxDisplacement = 16.5;
+        if (dist > maxDisplacement) {
+          p.currentEyeX = (p.currentEyeX / dist) * maxDisplacement;
+          p.currentEyeY = (p.currentEyeY / dist) * maxDisplacement;
+        }
       }
 
-      // Smooth eye movement physics (viscous organic fluid damping)
-      p.currentEyeX += (p.targetEyeX - p.currentEyeX) * 0.14;
-      p.currentEyeY += (p.targetEyeY - p.currentEyeY) * 0.14;
-      p.currentPupilR += (p.targetPupilR - p.currentPupilR) * 0.12;
+      // Smooth pupil response
+      p.currentPupilR += (p.targetPupilR - p.currentPupilR) * 0.14;
 
       ctx.clearRect(0, 0, SIZE, SIZE);
 
@@ -691,10 +788,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      if (wanderTimer) clearTimeout(wanderTimer);
-      if (blinkTimer) clearTimeout(blinkTimer);
       if (saccadeTimer) clearTimeout(saccadeTimer);
-      if (saccadeResetTimer) clearTimeout(saccadeResetTimer);
+      if (blinkTimer) clearTimeout(blinkTimer);
       clearInterval(jitterInterval);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (morphAnimRef.current) cancelAnimationFrame(morphAnimRef.current);
@@ -705,9 +800,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const handleKeyInput = (val: string) => {
     setTokenInput(val);
     setScanMode('HIGH_FREQ_ACQUISITION');
-    physicsRef.current.targetPupilR = 14;
-    physicsRef.current.saccadeX = (Math.random() - 0.5) * 5.5;
-    physicsRef.current.saccadeY = (Math.random() - 0.5) * 4.5;
+    physicsRef.current.targetPupilR = 15;
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -775,14 +868,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     physicsRef.current.scanBeamProgress = -1;
     physicsRef.current.colorMorph = 0.0;
     physicsRef.current.targetPupilR = 21;
-    physicsRef.current.wanderTargetX = 0;
-    physicsRef.current.wanderTargetY = 0;
-    physicsRef.current.wanderX = 0;
-    physicsRef.current.wanderY = 0;
-    physicsRef.current.saccadeTargetX = 0;
-    physicsRef.current.saccadeTargetY = 0;
-    physicsRef.current.saccadeX = 0;
-    physicsRef.current.saccadeY = 0;
+    physicsRef.current.currentEyeX = 0;
+    physicsRef.current.currentEyeY = 0;
+    physicsRef.current.targetEyeX = 0;
+    physicsRef.current.targetEyeY = 0;
+    physicsRef.current.isSaccading = false;
     setEyeColorProgress(0.0);
     setIsScanningActive(false);
     setIsSuccess(false);
