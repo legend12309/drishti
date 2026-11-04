@@ -72,6 +72,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const rebootTimersRef = useRef<any[]>([]);
   const authTimersRef = useRef<any[]>([]);
   const morphAnimRef = useRef<number | null>(null);
+  const isAuthenticatingRef = useRef(false);
+  const isEnteringRef = useRef(false);
+  const eyeAwakenedRef = useRef(false);
+  const isBlinkingRef = useRef(false);
+  const blinkTimerRef = useRef<any>(null);
+  const blinkTimeoutRef = useRef<any>(null);
 
   // Eye Physics Parameters (Unified 280x280 Cyber-Portal Geometry)
   const SIZE = 280;
@@ -203,22 +209,42 @@ export const LoginView: React.FC<LoginViewProps> = ({
     irisFibersRef.current = fibers;
   }, []);
 
-  // Blinking reflex for circular portal eyelids
+  // Blinking reflex for circular portal eyelids (natural human blink: 75ms downstroke, 130ms upstroke)
   const triggerBlink = useCallback((duration = 140) => {
+    if (
+      isAuthenticatingRef.current ||
+      isEnteringRef.current ||
+      !eyeAwakenedRef.current ||
+      isBlinkingRef.current ||
+      physicsRef.current.lockGazeToCenter
+    ) {
+      return;
+    }
     const top = eyelidTopRef.current;
     const bottom = eyelidBottomRef.current;
     if (!top || !bottom) return;
 
-    top.style.transition = 'transform 0.08s ease-out';
-    bottom.style.transition = 'transform 0.08s ease-out';
+    isBlinkingRef.current = true;
+    top.style.transition = 'transform 0.075s cubic-bezier(0.4, 0.0, 1, 1)';
+    bottom.style.transition = 'transform 0.075s cubic-bezier(0.4, 0.0, 1, 1)';
     top.style.transform = 'translateY(0%)';
     bottom.style.transform = 'translateY(0%)';
 
-    setTimeout(() => {
-      top.style.transition = 'transform 0.12s ease-out';
-      bottom.style.transition = 'transform 0.12s ease-out';
+    if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
+    blinkTimeoutRef.current = setTimeout(() => {
+      // If authentication sequence took over while eyelids were down, DO NOT reopen!
+      if (isAuthenticatingRef.current || isEnteringRef.current) {
+        isBlinkingRef.current = false;
+        return;
+      }
+      top.style.transition = 'transform 0.13s cubic-bezier(0.0, 0.0, 0.2, 1)';
+      bottom.style.transition = 'transform 0.13s cubic-bezier(0.0, 0.0, 0.2, 1)';
       top.style.transform = 'translateY(-100%)';
       bottom.style.transform = 'translateY(100%)';
+
+      setTimeout(() => {
+        isBlinkingRef.current = false;
+      }, 130);
     }, duration);
   }, []);
 
@@ -227,6 +253,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     if (!startFadeIn) {
       hasTriggeredAwakenRef.current = false;
       setEyeAwakened(false);
+      eyeAwakenedRef.current = false;
       const top = eyelidTopRef.current;
       const bottom = eyelidBottomRef.current;
       if (top && bottom) {
@@ -265,6 +292,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         bottom.style.transform = 'translateY(100%)';
       }
       setEyeAwakened(true);
+      eyeAwakenedRef.current = true;
 
       // Smoothly dilate pupil from 12px to 21px as eye adapts to light
       const pupilStartTime = performance.now();
@@ -493,14 +521,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
     window.addEventListener('mousemove', handleMouseMove);
 
     // Blinking schedule: starts 4.8s after mount to let the slow awakening sequence complete undisturbed
-    let blinkTimer: any;
     const scheduleNextBlink = (initialDelay = 4800) => {
       const nextBlink = initialDelay + Math.random() * 3200;
-      blinkTimer = setTimeout(() => {
-        if (!physicsRef.current.lockGazeToCenter) {
-          triggerBlink(130 + Math.random() * 30);
+      blinkTimerRef.current = setTimeout(() => {
+        if (!physicsRef.current.lockGazeToCenter && !isAuthenticatingRef.current && !isEnteringRef.current && eyeAwakenedRef.current) {
+          triggerBlink(125 + Math.random() * 30);
         }
-        scheduleNextBlink(3000);
+        if (!isAuthenticatingRef.current && !isEnteringRef.current) {
+          scheduleNextBlink(3200 + Math.random() * 2400);
+        }
       }, nextBlink);
     };
     scheduleNextBlink(4800);
@@ -881,7 +910,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (saccadeTimer) clearTimeout(saccadeTimer);
-      if (blinkTimer) clearTimeout(blinkTimer);
+      if (blinkTimerRef.current) clearTimeout(blinkTimerRef.current);
+      if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
+      authTimersRef.current.forEach(clearTimeout);
       clearInterval(jitterInterval);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (morphAnimRef.current) cancelAnimationFrame(morphAnimRef.current);
@@ -968,7 +999,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setEyeColorProgress(0.0);
     setIsScanningActive(false);
     setIsSuccess(false);
+    setIsAuthenticating(false);
+    isAuthenticatingRef.current = false;
     setIsEntering(false);
+    isEnteringRef.current = false;
+    eyeAwakenedRef.current = true;
     setFlashOpacity(0);
 
     triggerBlink(160);
@@ -1020,37 +1055,53 @@ export const LoginView: React.FC<LoginViewProps> = ({
   };
 
   // Auth Protocol Execution:
-  // 1. Slow-motion cinematic eyelid closure (0.95s)
-  // 2. While shut, morph to glowing Blue Eye (1000ms)
-  // 3. Slow-motion cinematic eyelid opening (1.30s) revealing the Blue Eye looking here and there
-  // 4. White optical flash transition blooming into main software cockpit
+  // 1. Operator clicks Auth -> Eyelids smoothly close shut (0.85s)
+  // 2. While shut in darkness, morph to glowing Cobalt Blue Eye (at 950ms)
+  // 3. Eyelids slowly, dramatically part over 2000ms (at 1400ms) revealing the Blue Eye looking around
+  // 4. Operator observes the Blue Eye alive and conscious
+  // 5. White optical flash transition blooming into main software cockpit (at 4400ms)
   const simulateAuth = useCallback(() => {
     if (isAuthenticating || isEntering) return;
     setIsAuthenticating(true);
+    isAuthenticatingRef.current = true;
+
+    // Immediately cancel any ambient blink timers & blinks
+    if (blinkTimerRef.current) clearTimeout(blinkTimerRef.current);
+    if (blinkTimeoutRef.current) clearTimeout(blinkTimeoutRef.current);
+    isBlinkingRef.current = false;
+
+    // Center eye and lock gaze forward calmly
+    physicsRef.current.lockGazeToCenter = true;
+    physicsRef.current.targetEyeX = 0;
+    physicsRef.current.targetEyeY = 0;
+    physicsRef.current.currentEyeX = 0;
+    physicsRef.current.currentEyeY = 0;
+    physicsRef.current.isSaccading = false;
 
     // 1. Immediately update button text & status
     setButtonText('[ INGESTING BIOMETRIC KEY... ]');
     setAuthStatus({
       custom: true,
-      text: 'AUTHENTICATING OPERATOR IDENTITY // COMMENCING SLOW-MOTION OCULAR CONVERGENCE...',
+      text: 'AUTHENTICATING OPERATOR IDENTITY // COMMENCING OCULAR CONVERGENCE...',
       className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
     setBootProgress(50);
 
-    // 2. Slow-motion cinematic eyelid closure (0.95s duration)
+    // 2. Smooth, cinematic eyelid closure (0.85s duration)
     const top = eyelidTopRef.current;
     const bottom = eyelidBottomRef.current;
     if (top && bottom) {
-      top.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
-      bottom.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      top.style.transition = 'transform 0.85s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      bottom.style.transition = 'transform 0.85s cubic-bezier(0.4, 0.0, 0.2, 1)';
       top.style.transform = 'translateY(0%)';
       bottom.style.transform = 'translateY(0%)';
     }
 
-    // Pupil gently constricts in anticipation
-    physicsRef.current.targetPupilR = 16;
+    // Pupil constricts gently to 14px as eyelids close
+    physicsRef.current.targetPupilR = 14;
+    physicsRef.current.currentPupilR = 14;
 
-    // 3. While the eye is fully closed (at 1000ms), transform to glowing BLUE EYE
+    // 3. While the eye is fully shut in darkness (at 950ms), transform to glowing BLUE EYE
     const tClose = setTimeout(() => {
       physicsRef.current.colorMorph = 1.0;
       setEyeColorProgress(1.0);
@@ -1062,38 +1113,67 @@ export const LoginView: React.FC<LoginViewProps> = ({
         text: 'DEFCON-5: [ONLINE_ROOT]',
         className: 'text-[9px] px-1.5 py-0.5 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50 font-bold rounded-sm animate-pulse',
       });
-      setButtonText('[ BIOMETRICS CONFIRMED // REVEALING BLUE EYE... ]');
+      setButtonText('[ BIOMETRICS CONFIRMED // UNVEILING COBALT CORE... ]');
       setAuthStatus({
         custom: true,
         text: 'ACCESS GRANTED // BIOMETRIC SIGNATURE VERIFIED // UNVEILING COBALT CORE',
         className: 'text-center text-[9px] tracking-[0.15em] text-[#00E5FF] bg-[#00E5FF]/10 py-0.5 border border-[#00E5FF]/40 font-bold min-h-[14px] rounded-sm',
       });
       setIsSuccess(true);
-    }, 1000);
+    }, 950);
 
-    // 4. Slow-motion cinematic eyelid opening (1.30s duration) revealing the Blue Eye looking around
+    // 4. Slow-motion cinematic eyelid opening (2000ms duration) dramatically revealing the Blue Eye
     const tOpen = setTimeout(() => {
       if (top && bottom) {
-        top.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
-        bottom.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
+        top.style.transition = 'transform 2000ms cubic-bezier(0.16, 1, 0.3, 1)';
+        bottom.style.transition = 'transform 2000ms cubic-bezier(0.16, 1, 0.3, 1)';
         top.style.transform = 'translateY(-100%)';
         bottom.style.transform = 'translateY(100%)';
       }
-      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
+      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ⚡ ]');
       setAuthStatus({
         custom: true,
-        text: 'SESSION ACTIVE // COBALT OCULAR LINK ESTABLISHED // COMMENCING LAB LAUNCH',
+        text: 'SESSION ACTIVE // COBALT OCULAR LINK ESTABLISHED // COMMENCING COCKPIT LAUNCH',
         className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm animate-pulse',
       });
-    }, 1180);
 
-    // 5. Operator sees the Blue Eye in full motion looking here and there, then blinding white flash initiates
+      // Smooth pupil dilation as light enters the Blue Eye
+      const pupilStartTime = performance.now();
+      const dilateStep = (now: number) => {
+        const elapsed = now - pupilStartTime;
+        const p = Math.min(1, elapsed / 2000);
+        const eased = 1 - Math.pow(1 - p, 3);
+        physicsRef.current.targetPupilR = 14 + eased * 9; // up to 23px
+        physicsRef.current.currentPupilR = 14 + eased * 9;
+        setPupilDil(`${(3.4 + eased * 1.6).toFixed(2)}mm`);
+        if (p < 1) {
+          requestAnimationFrame(dilateStep);
+        }
+      };
+      requestAnimationFrame(dilateStep);
+    }, 1400);
+
+    // 5. At 3100ms (eyelids fully parted), unlock gaze so Blue Eye dynamically looks around
+    const tLookAround = setTimeout(() => {
+      physicsRef.current.lockGazeToCenter = false;
+      const p = physicsRef.current;
+      p.saccadeStartX = p.currentEyeX;
+      p.saccadeStartY = p.currentEyeY;
+      p.targetEyeX = (Math.random() - 0.5) * 12;
+      p.targetEyeY = (Math.random() - 0.5) * 9;
+      p.saccadeStartTime = performance.now();
+      p.saccadeDuration = 60;
+      p.isSaccading = true;
+    }, 3100);
+
+    // 6. At 4400ms: Blinding white optic flash initiates as Blue Eye shines
     const tFlash = setTimeout(() => {
       setIsEntering(true);
+      isEnteringRef.current = true;
       setFlashOpacity(1); // Blinding Optic White (#F8FAFC)
-    }, 3650);
+    }, 4400);
 
-    // 6. Complete transition into the main cockpit software as the flash blooms
+    // 7. At 4950ms: Complete transition into the main cockpit software as the flash blooms
     const tComplete = setTimeout(() => {
       const op: OperatorProfile = {
         id: 'local-operator-dev',
@@ -1126,10 +1206,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
       }
 
       setIsAuthenticating(false);
+      isAuthenticatingRef.current = false;
       onLoginSuccess(op, tokenInput.trim());
-    }, 4150);
+    }, 4950);
 
-    authTimersRef.current.push(tClose, tOpen, tFlash, tComplete);
+    authTimersRef.current.push(tClose, tOpen, tLookAround, tFlash, tComplete);
   }, [isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput]);
 
   // Keyboard shortcut Ctrl+Enter or Cmd+Enter
@@ -1260,12 +1341,14 @@ export const LoginView: React.FC<LoginViewProps> = ({
           transform-origin: top;
           border-bottom: 2px solid rgba(230, 46, 37, 0.45);
           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.98);
+          transform: translateY(0%);
         }
         .eyelid-bottom {
           bottom: 0;
           transform-origin: bottom;
           border-top: 2px solid rgba(230, 46, 37, 0.45);
           box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.98);
+          transform: translateY(0%);
         }
 
         /* Barcode styling */
@@ -1648,7 +1731,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="eyelidTop"
                 ref={eyelidTopRef}
                 style={{
-                  transform: eyeAwakened ? 'translateY(-100%)' : 'translateY(0%)',
                   borderBottomColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.5)',
                 }}
               ></div>
@@ -1657,7 +1739,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="eyelidBottom"
                 ref={eyelidBottomRef}
                 style={{
-                  transform: eyeAwakened ? 'translateY(100%)' : 'translateY(0%)',
                   borderTopColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.5)',
                 }}
               ></div>
