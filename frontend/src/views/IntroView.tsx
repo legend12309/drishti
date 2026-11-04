@@ -9,15 +9,16 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [duration, setDuration] = useState<number>(18);
   const [hasInteracted, setHasInteracted] = useState<boolean>(false);
-  const [isExiting, setIsExiting] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Smooth cinematic fade-to-black over the video's final 5 seconds
-  const [endFadeOpacity, setEndFadeOpacity] = useState<number>(0);
+  // Transition States:
+  // mounted: triggers initial fade-in (opacity 0 -> 1)
+  // isExiting: triggers crossfade out (opacity 1 -> 0 to reveal LoginView underneath)
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [isExiting, setIsExiting] = useState<boolean>(false);
 
-  // Smooth finish transition into LoginView
+  // Trigger the smooth cross-fade to reveal LoginView
   const handleTransitionToLogin = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
@@ -26,58 +27,54 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       document.exitFullscreen().catch(() => {});
     }
 
-    // Set fade overlay to full black smoothly
-    setEndFadeOpacity(1);
+    // Smoothly fade out audio
+    const v = videoRef.current;
+    if (v && !v.muted) {
+      const startVol = v.volume;
+      const fadeAudioInterval = setInterval(() => {
+        if (v.volume > 0.05) {
+          v.volume = Math.max(0, v.volume - 0.1);
+        } else {
+          v.volume = 0;
+          clearInterval(fadeAudioInterval);
+        }
+      }, 80);
+    }
 
+    // Wait for the 1200ms crossfade to complete, then unmount IntroView
     setTimeout(() => {
       onComplete();
-    }, 450);
+    }, 1250);
   }, [isExiting, onComplete]);
 
-  // Frame-by-frame check: Apply smooth fade-in effect to dark void over the final 5 seconds
+  // Step 1: Smooth Fade-In on initial mount
   useEffect(() => {
-    let animId: number;
-    const checkEndingFade = () => {
-      const v = videoRef.current;
-      if (v && duration > 0 && !isExiting) {
-        const remaining = duration - v.currentTime;
-        if (remaining <= 5 && remaining >= 0) {
-          // Progress from 0.0 at (duration - 5)s to 1.0 at end
-          const progress = Math.min(1, Math.max(0, (5 - remaining) / 5));
-          // Cinematic ease-in power curve
-          const curvedOpacity = Math.pow(progress, 1.25);
-          setEndFadeOpacity(curvedOpacity);
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 40);
+    return () => clearTimeout(timer);
+  }, []);
 
-          // Synchronized audio fade out over the final 5 seconds
-          if (!v.muted) {
-            v.volume = Math.max(0, 1 - progress);
-          }
-        } else if (remaining > 5) {
-          setEndFadeOpacity(0);
-          if (!v.muted) {
-            v.volume = 1;
-          }
-        }
-      }
-      animId = requestAnimationFrame(checkEndingFade);
-    };
+  // Step 2: "do not wait for end of the video just apply the effect and reveal the log in page"
+  // After 3.6 seconds of dramatic cinematic video playback, automatically begin the crossfade!
+  useEffect(() => {
+    if (!isPlaying || isExiting) return;
 
-    animId = requestAnimationFrame(checkEndingFade);
-    return () => cancelAnimationFrame(animId);
-  }, [duration, isExiting]);
+    const autoRevealTimer = setTimeout(() => {
+      handleTransitionToLogin();
+    }, 3600);
 
-  const handleLoadedMetadata = () => {
-    if (videoRef.current && !isNaN(videoRef.current.duration)) {
-      setDuration(videoRef.current.duration);
-    }
-  };
+    return () => clearTimeout(autoRevealTimer);
+  }, [isPlaying, isExiting, handleTransitionToLogin]);
 
+  // Video ended fallback (in case video is shorter than auto timer)
   const handleVideoEnded = () => {
     handleTransitionToLogin();
   };
 
   // Toggle play/pause
-  const togglePlay = () => {
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
@@ -90,8 +87,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   };
 
   // Toggle mute / unmute
-  const toggleMute = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
     v.muted = !v.muted;
@@ -100,8 +97,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   };
 
   // Toggle browser fullscreen
-  const toggleFullscreen = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+  const toggleFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen?.().catch(() => {
         document.documentElement.requestFullscreen?.().catch(() => {});
@@ -119,36 +116,46 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Keyboard controls: ESC or Enter to skip, M to mute, F for fullscreen, Space to play/pause
+  // Keyboard hotkeys: Space to pause, M to mute, F for fullscreen, Enter / Esc to reveal login immediately
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (document.fullscreenElement) {
-          // ESC exits fullscreen naturally
-        } else {
-          handleTransitionToLogin();
-        }
-      } else if (e.key === 'Enter') {
+      if (e.key === 'Escape' || e.key === 'Enter') {
         handleTransitionToLogin();
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
-        togglePlay();
+        const v = videoRef.current;
+        if (!v) return;
+        if (v.paused) {
+          v.play();
+          setIsPlaying(true);
+        } else {
+          v.pause();
+          setIsPlaying(false);
+        }
       } else if (e.key === 'm' || e.key === 'M') {
-        toggleMute();
+        const v = videoRef.current;
+        if (v) {
+          v.muted = !v.muted;
+          setIsMuted(v.muted);
+          setHasInteracted(true);
+        }
       } else if (e.key === 'f' || e.key === 'F') {
-        toggleFullscreen();
+        if (!document.fullscreenElement) {
+          containerRef.current?.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleTransitionToLogin]);
 
-  // Try initial autoplay
+  // Autoplay handler with graceful muted fallback
   useEffect(() => {
     const v = videoRef.current;
     if (v) {
       v.play().catch(() => {
-        // Autoplay policy fallback: keep muted and retry
         v.muted = true;
         setIsMuted(true);
         v.play().catch(() => setIsPlaying(false));
@@ -156,15 +163,21 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
     }
   }, []);
 
-  const controlsOpacity = Math.max(0, 1 - endFadeOpacity * 1.5);
-
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-screen h-screen bg-[#000000] text-[#E5E7EB] font-mono select-none overflow-hidden flex items-center justify-center"
+      onClick={handleTransitionToLogin}
+      className={`fixed inset-0 w-screen h-screen z-50 select-none overflow-hidden flex items-center justify-center transition-all duration-[1200ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        isMounted && !isExiting
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
+      }`}
+      style={{
+        backgroundColor: isExiting ? 'transparent' : '#030407',
+      }}
     >
       {/* ======================================================== */}
-      {/* 1. CINEMATIC CLEAN FULLSCREEN VIDEO (NO TIMELINE)        */}
+      {/* 1. CINEMATIC FULLSCREEN VIDEO CANVAS                     */}
       {/* ======================================================== */}
       <video
         ref={videoRef}
@@ -173,49 +186,22 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
         playsInline
         autoPlay
         muted={isMuted}
-        onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleVideoEnded}
-        onClick={togglePlay}
-        onDoubleClick={toggleFullscreen}
       />
 
       {/* Subtle CRT Scanline Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-20"></div>
 
-      {/* ======================================================== */}
-      {/* 2. PROGRESSIVE 5-SECOND FADE-IN TRANSITION TO BLACK      */}
-      {/* ======================================================== */}
-      <div
-        className="pointer-events-none fixed inset-0 z-40 bg-[#030407]"
-        id="introFadeOverlay"
-        style={{
-          opacity: endFadeOpacity,
-          transition: isExiting ? 'opacity 420ms cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
-        }}
-      ></div>
-
       {/* Tactical Edge Viewport Corner Brackets */}
-      <div
-        className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      ></div>
-      <div
-        className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      ></div>
-      <div
-        className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      ></div>
-      <div
-        className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      ></div>
+      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
+      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
+      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
+      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 opacity-80"></div>
 
       {/* Center Pause Indicator Overlay */}
       {!isPlaying && (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px] z-35 cursor-pointer"
+          className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px] z-35 cursor-pointer"
           onClick={togglePlay}
         >
           <div className="px-6 py-3 bg-[#0B101D]/90 border border-[#EF4444] text-[#EF4444] text-xs font-bold tracking-[0.2em] flex items-center gap-3 shadow-[0_0_35px_rgba(239,68,68,0.5)]">
@@ -226,9 +212,9 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       )}
 
       {/* Unmute Prompt Pill if video started muted */}
-      {isMuted && !hasInteracted && isPlaying && endFadeOpacity < 0.5 && (
+      {isMuted && !hasInteracted && isPlaying && !isExiting && (
         <div
-          className="absolute top-16 right-6 md:right-10 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 transition-all flex items-center gap-2 backdrop-blur-sm"
+          className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 transition-all flex items-center gap-2 backdrop-blur-sm"
           onClick={toggleMute}
         >
           <span>🔊</span>
@@ -237,12 +223,9 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       )}
 
       {/* ======================================================== */}
-      {/* 3. MINIMAL FLOATING TOP CONTROLS (NO TIMELINE)           */}
+      {/* 2. MINIMAL FLOATING TOP CONTROLS                         */}
       {/* ======================================================== */}
-      <header
-        className="absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-4 flex items-center justify-between text-[10px] pointer-events-auto transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      >
+      <header className="absolute top-0 inset-x-0 z-30 px-6 md:px-8 pt-4 flex items-center justify-between text-[10px] pointer-events-auto">
         <div className="flex items-center gap-2">
           <span className="font-bold text-white tracking-[0.22em] text-[11px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             DRISHTI <span className="text-[#EF4444]">//</span> BOOT_INTRO
@@ -277,19 +260,24 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       </header>
 
       {/* ======================================================== */}
-      {/* 4. MINIMAL BOTTOM SKIP ACTION (NO TIMELINE BAR)          */}
+      {/* 3. MINIMAL BOTTOM SKIP / REVEAL ACTION                   */}
       {/* ======================================================== */}
-      <footer
-        className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto transition-opacity duration-300"
-        style={{ opacity: controlsOpacity }}
-      >
+      <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-between pointer-events-auto">
+        <div className="text-[9px] text-[#64748B] font-mono tracking-widest hidden sm:flex items-center gap-2">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping"></span>
+          <span>CLICK ANYWHERE TO REVEAL LOGIN GATEWAY</span>
+        </div>
+
         <button
           type="button"
-          onClick={handleTransitionToLogin}
-          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white transition-all cursor-pointer flex items-center gap-2 group backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTransitionToLogin();
+          }}
+          className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white transition-all cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
           id="skipIntroBtn"
         >
-          <span>[ SKIP INTRO // ENTER GATEWAY ⌘↵ ]</span>
+          <span>[ REVEAL COCKPIT // SKIP ⌘↵ ]</span>
           <span className="group-hover:translate-x-1 transition-transform">→</span>
         </button>
       </footer>

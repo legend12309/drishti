@@ -153,21 +153,25 @@ export default function App() {
     }
   };
 
-  if (!hasSeenIntro) {
-    return <IntroView onComplete={() => setHasSeenIntro(true)} />;
-  }
-
   if (!isAuthenticated) {
     return (
-      <LoginView
-        onLoginSuccess={(op) => {
-          setOperator(op);
-          setIsAuthenticated(true);
-          setEntranceFlash(true);
-        }}
-        onReplayIntro={() => setHasSeenIntro(false)}
-        showToast={showToast}
-      />
+      <div className="relative w-screen h-screen overflow-hidden bg-[#030407]">
+        {/* Living Login Gateway (Biometric circular eye and cyber HUD) */}
+        <LoginView
+          onLoginSuccess={(op) => {
+            setOperator(op);
+            setIsAuthenticated(true);
+            setEntranceFlash(true);
+          }}
+          onReplayIntro={() => setHasSeenIntro(false)}
+          showToast={showToast}
+        />
+
+        {/* Cinematic Video Intro Overlay that cross-fades directly into LoginView */}
+        {!hasSeenIntro && (
+          <IntroView onComplete={() => setHasSeenIntro(true)} />
+        )}
+      </div>
     );
   }
 

@@ -1059,7 +1059,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast,
     : 'shadow-[0_0_40px_rgba(230,46,37,0.45),inset_0_0_45px_rgba(0,0,0,0.95)] border-rose-500/60';
 
   return (
-    <div className="relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono login-fade-in-entry">
+    <div className="relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono">
       {/* CRT Scanlines, Analog Noise, Vignette Screen Layer */}
       <div className="crt-overlay"></div>
 
