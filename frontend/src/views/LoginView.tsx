@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OperatorProfile } from '../types';
-import { soundEngine } from '../utils/SoundEngine';
 
 interface LoginViewProps {
   onLoginSuccess: (operator: OperatorProfile, token: string) => void;
@@ -16,18 +15,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const [isEntering, setIsEntering] = useState(false);
   const [isScanningActive, setIsScanningActive] = useState(false);
   const [flashOpacity, setFlashOpacity] = useState(0);
-
-  // Choreography State Machine
-  // 'IDLE' -> 'PHASE_A' (0-180ms) -> 'PHASE_B' (180-900ms) -> 'PHASE_C' (900-1400ms)
-  // -> 'SHUTTER_SNAP' (1400-1620ms) -> 'SINGULARITY' (1620-1740ms) -> 'FLASH' (1740-1820ms)
-  const [choreographyPhase, setChoreographyPhase] = useState<
-    'IDLE' | 'PHASE_A' | 'PHASE_B' | 'PHASE_C' | 'SHUTTER_SNAP' | 'SINGULARITY' | 'FLASH'
-  >('IDLE');
-  const [reticleLocked, setReticleLocked] = useState(false);
-  const [shockwaveActive, setShockwaveActive] = useState(false);
-  const [shutterSnapped, setShutterSnapped] = useState(false);
-  const [singularityDetonated, setSingularityDetonated] = useState(false);
-  const [irisSpringScale, setIrisSpringScale] = useState(1.0);
 
   // Live Telemetry States
   const [depth, setDepth] = useState('54.0 cm');
@@ -723,24 +710,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     authTimersRef.current.forEach(clearTimeout);
     authTimersRef.current = [];
 
-    soundEngine.stopSubBassDrone();
-    soundEngine.stopTelemetryTicks();
-
-    // Reset choreography state machine
-    setChoreographyPhase('IDLE');
-    setReticleLocked(false);
-    setShockwaveActive(false);
-    setShutterSnapped(false);
-    setSingularityDetonated(false);
-    setIrisSpringScale(1.0);
+    // Reset eyelids to open
+    const top = eyelidTopRef.current;
+    const bottom = eyelidBottomRef.current;
+    if (top && bottom) {
+      top.style.transition = 'transform 0.22s ease-out';
+      bottom.style.transition = 'transform 0.22s ease-out';
+      top.style.transform = 'translateY(-100%)';
+      bottom.style.transform = 'translateY(100%)';
+    }
 
     // Smoothly transition back to Red Eye (0.0)
     physicsRef.current.lockGazeToCenter = false;
     physicsRef.current.scanBeamActive = false;
     physicsRef.current.scanBeamProgress = -1;
+    physicsRef.current.colorMorph = 0.0;
     physicsRef.current.targetPupilR = 21;
+    setEyeColorProgress(0.0);
     setIsScanningActive(false);
-    animateEyeColor(physicsRef.current.colorMorph, 0.0, 700);
     setIsSuccess(false);
     setIsEntering(false);
     setFlashOpacity(0);
@@ -794,68 +781,36 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   };
 
   // Auth Protocol Execution:
-  // Phase A (0-180ms) -> Phase B (180-900ms) -> Phase C (900-1400ms) -> Optical Shutter Transition (1400-1820ms)
+  // When clicked: eye smoothly closes eyelids -> while closed, turns to Blue Eye -> eye opens showing Blue Eye -> flash into workspace
   const simulateAuth = useCallback(() => {
     if (isAuthenticating || isEntering) return;
     setIsAuthenticating(true);
 
-    // ==========================================
-    // PHASE A (Anticipation - 0ms to 180ms)
-    // ==========================================
-    setChoreographyPhase('PHASE_A');
-    soundEngine.playSubBassDrone(3200);
-    soundEngine.playTelemetryTicks();
-
-    // Snap pupil scale to 0.62 using cubic-bezier(0.85, 0, 0.15, 1)
-    physicsRef.current.targetPupilR = 21 * 0.62; // ~13.02px
-    setButtonText('[ LOCKING IRIS & DERIVING ENCLAVE KEY... ]');
+    // 1. Immediately update button text & status
+    setButtonText('[ INGESTING BIOMETRIC KEY... ]');
     setAuthStatus({
       custom: true,
-      text: 'ACTIVE_PERSON_SCAN: PHOTOMETRIC STEREO MATCHING // EXTRACTING 4096-BIT RETINA HASH...',
+      text: 'AUTHENTICATING OPERATOR IDENTITY // INGESTING RETINAL BIOMETRICS...',
       className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
-    setBootProgress(65);
+    setBootProgress(50);
 
-    // ==========================================
-    // PHASE B (Blue Biometric Lock - 180ms to 900ms)
-    // ==========================================
-    const tPhaseB = setTimeout(() => {
-      setChoreographyPhase('PHASE_B');
-      soundEngine.playIrisLockChirp();
+    // 2. Smoothly close the eye (eyelids slide shut over 260ms)
+    const top = eyelidTopRef.current;
+    const bottom = eyelidBottomRef.current;
+    if (top && bottom) {
+      top.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
+      bottom.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
+      top.style.transform = 'translateY(0%)';
+      bottom.style.transform = 'translateY(0%)';
+    }
 
-      // Dilate iris to scale(1.22) using spring physics curve cubic-bezier(0.34, 1.56, 0.64, 1)
-      setIrisSpringScale(1.22);
-      physicsRef.current.targetPupilR = 21 * 1.15; // 24.15px
-
-      // Emit expanding radial shockwave ring (scale 0.8 -> 2.4, opacity 0.9 -> 0)
-      setShockwaveActive(true);
-
-      // Shift palette from Crimson (#EF4444) to Electric Cobalt (#00E5FF) over 720ms
-      animateEyeColor(0.0, 1.0, 720);
-
-      setAuthStatus({
-        custom: true,
-        text: 'ZERO-KNOWLEDGE BIOMETRIC PROOF CONFIRMED // SHIFTING TO COBALT CIPHER...',
-        className: 'text-center text-[9px] tracking-[0.14em] text-[#00E5FF] font-mono min-h-[14px] rounded-sm',
-      });
-      setBootProgress(88);
-    }, 180);
-
-    // ==========================================
-    // PHASE C (Session Verified - 900ms to 1400ms)
-    // ==========================================
-    const tPhaseC = setTimeout(() => {
-      setChoreographyPhase('PHASE_C');
-      soundEngine.stopTelemetryTicks();
-
-      // Lock all rotating reticles to 0deg with sharp mechanical snap
-      setReticleLocked(true);
-
-      // Iris scale settles
-      setIrisSpringScale(1.0);
+    // 3. While the eye is fully closed, transform eye to BLUE EYE
+    const tClose = setTimeout(() => {
+      physicsRef.current.colorMorph = 1.0;
+      setEyeColorProgress(1.0);
       physicsRef.current.targetPupilR = 21;
 
-      // Pulse [ COCKPIT RUNNING // SESSION ESTABLISHED ] emerald badge
       setBootProgress(100);
       setStages({ step1: true, step2: true, step3: true, step4: true });
       setEngineBadge({
@@ -869,33 +824,25 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm animate-pulse',
       });
       setIsSuccess(true);
-      triggerBlink(140);
-    }, 900);
+    }, 280);
 
-    // ==========================================
-    // 3. EYELID SHUTDOWN & CRT OPTIC FLASH TRANSITION (1400ms -> 1820ms)
-    // ==========================================
-    // Stage 1: Biomechanical Eyelid Snap (0ms -> 220ms, i.e., 1400ms -> 1620ms)
-    const tShutter = setTimeout(() => {
-      setChoreographyPhase('SHUTTER_SNAP');
-      setShutterSnapped(true);
+    // 4. Open the eyelids, revealing the radiant BLUE EYE!
+    const tOpen = setTimeout(() => {
+      if (top && bottom) {
+        top.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+        bottom.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+        top.style.transform = 'translateY(-100%)';
+        bottom.style.transform = 'translateY(100%)';
+      }
+    }, 380);
+
+    // 5. Operator sees the Blue Eye in all its glory for ~950ms, then the smooth optic white flash initiates
+    const tFlash = setTimeout(() => {
       setIsEntering(true);
-      soundEngine.playEyelidShutAndFlash();
-    }, 1400);
-
-    // Stage 2: Singularity Hold for 120ms (220ms -> 340ms, i.e., 1620ms -> 1740ms)
-    const tSingularityHold = setTimeout(() => {
-      setChoreographyPhase('SINGULARITY');
-    }, 1620);
-
-    // Stage 2 (cont.): Singularity Detonation vertically into Optic White flash (340ms -> 420ms, i.e., 1740ms -> 1820ms)
-    const tDetonate = setTimeout(() => {
-      setChoreographyPhase('FLASH');
-      setSingularityDetonated(true);
       setFlashOpacity(1); // Blinding Optic White (#F8FAFC)
-    }, 1740);
+    }, 1350);
 
-    // Stage 3: Handoff to main workspace (420ms onwards, i.e., 1820ms)
+    // 6. Complete transition into the main cockpit software
     const tComplete = setTimeout(() => {
       const op: OperatorProfile = {
         id: 'local-operator-dev',
@@ -929,10 +876,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       setIsAuthenticating(false);
       onLoginSuccess(op, tokenInput.trim());
-    }, 1820);
+    }, 1750);
 
-    authTimersRef.current.push(tPhaseB, tPhaseC, tShutter, tSingularityHold, tDetonate, tComplete);
-  }, [animateEyeColor, isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput, triggerBlink]);
+    authTimersRef.current.push(tClose, tOpen, tFlash, tComplete);
+  }, [isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput]);
 
   // Keyboard shortcut Ctrl+Enter or Cmd+Enter
   useEffect(() => {
@@ -956,45 +903,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       {/* CRT Scanlines, Analog Noise, Vignette Screen Layer */}
       <div className="crt-overlay"></div>
 
-      {/* ========================================== */}
-      {/* 3-STAGE OPTICAL SHUTTER & SINGULARITY FLASH */}
-      {/* ========================================== */}
-      {/* Stage 1: Upper and Lower Black Shutter Masks (#05070A) meeting at center (0ms -> 220ms) */}
+      {/* Fullscreen blinding white optic flash overlay that smoothly saturates the viewport before entering the app */}
       <div
-        className={`fixed inset-x-0 top-0 z-[55] pointer-events-none bg-[#05070A] border-b border-[#00E5FF]/80 shadow-[0_4px_30px_rgba(0,229,255,0.7)] transition-transform duration-220 ease-[cubic-bezier(0.85,0,0.15,1)] ${
-          shutterSnapped ? 'translate-y-0' : '-translate-y-full'
-        }`}
-        style={{ height: '50%' }}
-      />
-      <div
-        className={`fixed inset-x-0 bottom-0 z-[55] pointer-events-none bg-[#05070A] border-t border-[#00E5FF]/80 shadow-[0_-4px_30px_rgba(0,229,255,0.7)] transition-transform duration-220 ease-[cubic-bezier(0.85,0,0.15,1)] ${
-          shutterSnapped ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        style={{ height: '50%' }}
-      />
-
-      {/* Stage 2: Razor-Thin Singularity Laser Singlet Line Across Center Viewport */}
-      {shutterSnapped && (
-        <div className="fixed inset-x-0 top-1/2 -translate-y-1/2 z-[56] pointer-events-none flex flex-col items-center justify-center">
-          <div
-            className={`w-full bg-[#FFFFFF] shadow-[0_0_20px_#00E5FF,0_0_40px_#FFFFFF] ${
-              singularityDetonated ? 'singularity-detonate-line' : 'h-[2px]'
-            }`}
-          />
-          {/* Singularity Hold Overlay Text (120ms hold) */}
-          {choreographyPhase === 'SINGULARITY' && !singularityDetonated && (
-            <div className="absolute -top-10 text-center z-[57] pointer-events-none entrance-text-fade">
-              <div className="text-[13px] md:text-[16px] font-mono font-black tracking-[0.28em] text-[#00E5FF] drop-shadow-[0_0_18px_#00E5FF]">
-                ENTER DRISHTI SOVEREIGN COCKPIT
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Fullscreen blinding white optic flash overlay that saturates the viewport before entering the app */}
-      <div
-        className="pointer-events-none fixed inset-0 z-[60] bg-[#F8FAFC] transition-opacity duration-80 ease-in"
+        className="pointer-events-none fixed inset-0 z-[60] bg-[#F8FAFC] transition-opacity duration-350 ease-in-out"
         id="flashOverlay"
         style={{
           opacity: flashOpacity,
@@ -1029,116 +940,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         }
 
         /* Reticle SVG Rotations */
-        @keyframes reticleRotateClockwise {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
         @keyframes reticleRotateCounter {
           0% { transform: rotate(360deg); }
           100% { transform: rotate(0deg); }
         }
-        .reticle-outer-clockwise {
-          transform-origin: 170px 170px;
-          animation: reticleRotateClockwise 24s linear infinite;
-        }
-        .reticle-outer-spiked {
-          transform-origin: 170px 170px;
-          animation: reticleRotateClockwise 4s linear infinite; /* 6x speed spike */
-        }
         .reticle-inner-ticks {
           transform-origin: 170px 170px;
-          animation: reticleRotateCounter 12s steps(60, end) infinite;
-        }
-        .reticle-locked {
-          transform-origin: 170px 170px;
-          transform: rotate(0deg) !important;
-          transition: transform 0.12s cubic-bezier(0, 0, 0.2, 1);
-        }
-
-        /* Expanding Radial Shockwave Ring (scale 0.8 -> 2.4, opacity 0.9 -> 0) */
-        @keyframes shockwaveExpandPhaseB {
-          0% {
-            transform: translate(-50%, -50%) scale(0.8);
-            opacity: 0.9;
-            box-shadow: 0 0 25px #00E5FF, inset 0 0 25px #00E5FF;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(2.4);
-            opacity: 0;
-            box-shadow: 0 0 60px #00E5FF;
-          }
-        }
-        .shockwave-phase-b {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          width: 280px;
-          height: 280px;
-          border-radius: 9999px;
-          border: 2px solid #00E5FF;
-          pointer-events: none;
-          animation: shockwaveExpandPhaseB 720ms cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
-          z-index: 15;
-        }
-
-        /* Side Telemetry Panels Horizontal Chromatic Aberration Glitch (2px) */
-        @keyframes telemetryGlitchAnim {
-          0% {
-            transform: translate(0, 0);
-            filter: drop-shadow(-2px 0 rgba(239, 68, 68, 0.9)) drop-shadow(2px 0 rgba(0, 229, 255, 0.9));
-          }
-          25% {
-            transform: translate(-2px, 0.5px);
-            filter: drop-shadow(-3px 0 rgba(239, 68, 68, 1)) drop-shadow(3px 0 rgba(0, 229, 255, 1));
-          }
-          50% {
-            transform: translate(2px, -0.5px);
-            filter: drop-shadow(-2px 0 rgba(239, 68, 68, 0.8)) drop-shadow(2px 0 rgba(0, 229, 255, 0.8));
-          }
-          75% {
-            transform: translate(-1.5px, 0);
-            filter: drop-shadow(-2.5px 0 rgba(239, 68, 68, 1)) drop-shadow(2.5px 0 rgba(0, 229, 255, 1));
-          }
-          100% {
-            transform: translate(0, 0);
-            filter: none;
-          }
-        }
-        .telemetry-glitch-active {
-          animation: telemetryGlitchAnim 180ms ease-out forwards;
-        }
-
-        /* Biomechanical Eyelid Snap: Eye crushing vertically (scaleY 0.008, scaleX 1.35) into razor-thin singlet line */
-        @keyframes eyeCrushSingletAnim {
-          0% {
-            transform: scaleY(1) scaleX(1);
-            filter: brightness(1);
-          }
-          100% {
-            transform: scaleY(0.008) scaleX(1.35);
-            filter: brightness(3.5) drop-shadow(0 0 16px #00E5FF);
-          }
-        }
-        .eye-crushed-singlet {
-          animation: eyeCrushSingletAnim 220ms cubic-bezier(0.85, 0, 0.15, 1) forwards;
-          will-change: transform, filter;
-        }
-
-        /* Singularity Detonation vertically (scaleY 100) into Optic White flash */
-        @keyframes singularityDetonateVertical {
-          0% {
-            transform: scaleY(1);
-            opacity: 1;
-          }
-          100% {
-            transform: scaleY(100);
-            opacity: 1;
-          }
-        }
-        .singularity-detonate-line {
-          height: 2px;
-          animation: singularityDetonateVertical 80ms ease-in forwards;
-          will-change: transform;
+          animation: reticleRotateCounter 16s steps(60, end) infinite;
         }
 
         /* Hacker Terminal Feeds Auto-Scroll Effect */
@@ -1422,7 +1230,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             id="leftFlankDump"
             className={`hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0 transition-all duration-500 ${
               isEntering ? 'opacity-0 -translate-x-8 pointer-events-none' : 'opacity-100'
-            } ${choreographyPhase === 'PHASE_A' ? 'telemetry-glitch-active' : ''}`}
+            }`}
           >
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
@@ -1493,9 +1301,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
           {/* CENTER: PURE CIRCULAR OCULAR ARENA WITH 60FPS PRECISION RETICLES */}
           <div
-            className={`relative w-[340px] h-[340px] flex items-center justify-center shrink-0 ${
-              shutterSnapped ? 'eye-crushed-singlet' : ''
-            }`}
+            className="relative w-[340px] h-[340px] flex items-center justify-center shrink-0"
             id="scanArena"
             ref={arenaRef}
           >
@@ -1507,29 +1313,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               AZM 180° // APERTURE_SOUTH
             </div>
 
-            {/* Precision SVG Reticle Counter-Rotation System */}
+            {/* Precision SVG Reticle System (Counter-rotating precision ticks, zero extra outer rings) */}
             <svg
               className="absolute w-[340px] h-[340px] pointer-events-none z-10 overflow-visible"
               viewBox="0 0 340 340"
             >
-              {/* Outer Dashed SVG Ring: 24s linear infinite clockwise, spiked 6x to 4s in Phase A, locked to 0deg in Phase C */}
-              <circle
-                cx="170"
-                cy="170"
-                r="164"
-                fill="none"
-                stroke={t > 0.5 ? '#00E5FF' : '#2563EB'}
-                strokeWidth="1.6"
-                strokeDasharray="9 6"
-                className={
-                  reticleLocked
-                    ? 'reticle-locked'
-                    : choreographyPhase === 'PHASE_A'
-                    ? 'reticle-outer-spiked'
-                    : 'reticle-outer-clockwise'
-                }
-              />
-              {/* Inner Tick Ring: 60 precision ticks driven at 12s steps(60, end) infinite counter-clockwise */}
+              {/* Inner Tick Ring: 60 precision ticks driven at 16s steps(60, end) infinite counter-clockwise */}
               <circle
                 cx="170"
                 cy="170"
@@ -1538,7 +1327,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 stroke={t > 0.5 ? 'rgba(0, 229, 255, 0.75)' : 'rgba(239, 68, 68, 0.55)'}
                 strokeWidth="2.8"
                 strokeDasharray="2.5 12.789"
-                className={reticleLocked ? 'reticle-locked' : 'reticle-inner-ticks'}
+                className="reticle-inner-ticks"
               />
               {/* Aperture Crosshair Micro-Accents */}
               <line x1="170" y1="0" x2="170" y2="10" stroke={t > 0.5 ? '#00E5FF' : '#EF4444'} strokeWidth="2" />
@@ -1547,37 +1336,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               <line x1="330" y1="170" x2="340" y2="170" stroke={t > 0.5 ? '#00E5FF' : '#EF4444'} strokeWidth="2" />
             </svg>
 
-            {/* Expanding Radial Shockwave Ring in Phase B (scale 0.8 -> 2.4, opacity 0.9 -> 0) */}
-            {shockwaveActive && <div className="shockwave-phase-b" />}
-
             {/* PURE CIRCULAR BIOMETRIC LENS / IRIS PORTAL VIEWPORT */}
             <div
               className={`relative w-[280px] h-[280px] rounded-full overflow-hidden bg-[#070b14] border-2 transition-all duration-500 flex items-center justify-center z-20 ${portalGlow}`}
               id="eyeOrbit"
             >
-              {/* Dynamic Iris Spring Physical Scaling Container (Snap 0.62 in Phase A, Dilate 1.22 in Phase B) */}
-              <div
-                className="w-full h-full flex items-center justify-center"
-                style={{
-                  transform: `scale(${irisSpringScale})`,
-                  transition:
-                    choreographyPhase === 'PHASE_B'
-                      ? 'transform 720ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-                      : choreographyPhase === 'PHASE_A'
-                      ? 'transform 180ms cubic-bezier(0.85, 0, 0.15, 1)'
-                      : 'transform 300ms ease-out',
-                  willChange: 'transform',
-                }}
-              >
-                {/* Unified Eye Rendering HTML5 Canvas */}
-                <canvas
-                  className="absolute inset-0 w-full h-full block"
-                  height={280}
-                  id="eyeCanvas"
-                  ref={canvasRef}
-                  width={280}
-                />
-              </div>
+              {/* Unified Eye Rendering HTML5 Canvas */}
+              <canvas
+                className="absolute inset-0 w-full h-full block"
+                height={280}
+                id="eyeCanvas"
+                ref={canvasRef}
+                width={280}
+              />
 
               {/* Optical Glass Antireflective Depth Layer */}
               <div className="absolute inset-0 rounded-full shadow-[inset_0_0_50px_rgba(0,0,0,0.9),inset_0_15px_30px_rgba(0,0,0,0.7),inset_0_-15px_30px_rgba(0,0,0,0.7)] pointer-events-none z-25"></div>
@@ -1587,13 +1358,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
                 className="eyelid eyelid-top"
                 id="eyelidTop"
                 ref={eyelidTopRef}
-                style={{ transform: 'translateY(-100%)' }}
+                style={{
+                  transform: 'translateY(-100%)',
+                  borderBottomColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
+                }}
               ></div>
               <div
                 className="eyelid eyelid-bottom"
                 id="eyelidBottom"
                 ref={eyelidBottomRef}
-                style={{ transform: 'translateY(100%)' }}
+                style={{
+                  transform: 'translateY(100%)',
+                  borderTopColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
+                }}
               ></div>
             </div>
           </div>
@@ -1636,7 +1413,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             id="rightFlankSniffer"
             className={`hidden xl:flex flex-col w-[205px] h-[270px] border border-[#1E293B]/70 bg-[#04060C]/90 p-2 overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.85)] text-[8px] font-mono leading-relaxed relative rounded-sm shrink-0 transition-all duration-500 ${
               isEntering ? 'opacity-0 translate-x-8 pointer-events-none' : 'opacity-100'
-            } ${choreographyPhase === 'PHASE_A' ? 'telemetry-glitch-active' : ''}`}
+            }`}
           >
             <div className="flex items-center justify-between border-b border-[#1E293B]/80 pb-1 mb-1 text-[8.5px] font-bold tracking-wider">
               <div className="flex items-center gap-1.5">
@@ -1797,12 +1574,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             onClick={simulateAuth}
           >
             <span id="authButtonText">{buttonText}</span>
-            <span
-              className={`w-2 h-2 bg-[#E62E25] animate-ping ${
-                isAuthenticating && !isSuccess ? '' : 'hidden'
-              }`}
-              id="authSpinner"
-            ></span>
           </button>
 
           {/* Live Terminal Feedback Log */}
