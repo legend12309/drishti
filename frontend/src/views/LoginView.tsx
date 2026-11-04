@@ -75,6 +75,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     currentEyeY: 0,
     targetEyeX: 0,
     targetEyeY: 0,
+    wanderX: 0,
+    wanderY: 0,
+    wanderTargetX: 0,
+    wanderTargetY: 0,
     saccadeX: 0,
     saccadeY: 0,
     saccadeTargetX: 0,
@@ -280,18 +284,43 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     };
     scheduleNextBlink();
 
-    // Micro-Saccades: randomized interval (400ms - 1800ms) that shifts pupil/iris group by ±3px X/Y
+    // Autonomous Exploratory Gaze: The eye glances here and there (random curious scanning)
+    let wanderTimer: any;
+    const scheduleNextWander = () => {
+      const delay = 650 + Math.random() * 1350; // shift gaze every 650ms to 2000ms
+      wanderTimer = setTimeout(() => {
+        // 75% chance of spontaneous exploratory glance, 25% chance of returning focus to cursor
+        if (Math.random() < 0.75) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 5.5 + Math.random() * 8.0; // 5.5px to 13.5px exploratory glance
+          physicsRef.current.wanderTargetX = Math.cos(angle) * dist;
+          physicsRef.current.wanderTargetY = Math.sin(angle) * dist;
+
+          // Natural biological pupil flutter when shifting focus plane
+          const flutter = (Math.random() - 0.5) * 2.2;
+          physicsRef.current.targetPupilR = Math.max(18.5, Math.min(23.5, 21 + flutter));
+        } else {
+          physicsRef.current.wanderTargetX = 0;
+          physicsRef.current.wanderTargetY = 0;
+          physicsRef.current.targetPupilR = 21;
+        }
+        scheduleNextWander();
+      }, delay);
+    };
+    scheduleNextWander();
+
+    // Micro-Saccades: fine biological tremor and quick retinal jitter (±2.5px every 250ms - 850ms)
     let saccadeTimer: any;
     let saccadeResetTimer: any;
     const scheduleNextSaccade = () => {
-      const delay = 400 + Math.random() * 1400; // 400ms - 1800ms
+      const delay = 250 + Math.random() * 600;
       saccadeTimer = setTimeout(() => {
-        physicsRef.current.saccadeTargetX = (Math.random() - 0.5) * 6; // ±3px
-        physicsRef.current.saccadeTargetY = (Math.random() - 0.5) * 6; // ±3px
+        physicsRef.current.saccadeTargetX = (Math.random() - 0.5) * 5; // ±2.5px
+        physicsRef.current.saccadeTargetY = (Math.random() - 0.5) * 5; // ±2.5px
         saccadeResetTimer = setTimeout(() => {
           physicsRef.current.saccadeTargetX = 0;
           physicsRef.current.saccadeTargetY = 0;
-        }, 110 + Math.random() * 80);
+        }, 80 + Math.random() * 70);
         scheduleNextSaccade();
       }, delay);
     };
@@ -318,37 +347,56 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       const p = physicsRef.current;
       const t = p.colorMorph; // 0.0 = Red Eye, 1.0 = Electric Cobalt #00E5FF
 
-      // 1. Calculate gaze offset relative to center viewport (±8px max displacement parallax)
+      // 1. Calculate gaze offset: Cursor Following + Autonomous Exploratory Gaze ("looking here and there")
       const arena = arenaRef.current;
       if (arena && !p.lockGazeToCenter) {
         const rect = arena.getBoundingClientRect();
         const ax = rect.left + rect.width / 2;
         const ay = rect.top + rect.height / 2;
-        const maxDisplacement = 8; // subtle ±8px max displacement bound to inner iris and specular highlight
 
+        // Smooth cursor follow vector across viewport (-1 to +1)
         const normX = Math.max(-1, Math.min(1, (p.mouseX - ax) / (window.innerWidth / 2)));
         const normY = Math.max(-1, Math.min(1, (p.mouseY - ay) / (window.innerHeight / 2)));
 
-        p.targetEyeX = normX * maxDisplacement;
-        p.targetEyeY = normY * maxDisplacement;
+        // Cursor parallax displacement (up to ±12px)
+        const cursorGazeX = normX * 12;
+        const cursorGazeY = normY * 12;
 
-        const dist = Math.sqrt(p.targetEyeX * p.targetEyeX + p.targetEyeY * p.targetEyeY);
+        // Smoothly interpolate wander position towards wander target (organic drift)
+        p.wanderX += (p.wanderTargetX - p.wanderX) * 0.075;
+        p.wanderY += (p.wanderTargetY - p.wanderY) * 0.075;
+
+        // Micro-saccade quick ballistic approach
+        p.saccadeX += (p.saccadeTargetX - p.saccadeX) * 0.26;
+        p.saccadeY += (p.saccadeTargetY - p.saccadeY) * 0.26;
+
+        // Combine cursor tracking + autonomous glance around + micro-saccades
+        let combinedX = cursorGazeX + p.wanderX + p.saccadeX;
+        let combinedY = cursorGazeY + p.wanderY + p.saccadeY;
+
+        // Clamp to max circular orbital boundary (16.5px) so iris stays within beautiful sclera margins
+        const maxDisplacement = 16.5;
+        const dist = Math.sqrt(combinedX * combinedX + combinedY * combinedY);
         if (dist > maxDisplacement) {
-          p.targetEyeX = (p.targetEyeX / dist) * maxDisplacement;
-          p.targetEyeY = (p.targetEyeY / dist) * maxDisplacement;
+          combinedX = (combinedX / dist) * maxDisplacement;
+          combinedY = (combinedY / dist) * maxDisplacement;
         }
+
+        p.targetEyeX = combinedX;
+        p.targetEyeY = combinedY;
       } else if (p.lockGazeToCenter) {
         p.targetEyeX = 0;
         p.targetEyeY = 0;
+        p.wanderTargetX = 0;
+        p.wanderTargetY = 0;
+        p.wanderX += (0 - p.wanderX) * 0.12;
+        p.wanderY += (0 - p.wanderY) * 0.12;
       }
 
-      // Approach micro-saccade target with cubic-bezier(0.22, 1, 0.36, 1) responsiveness
-      p.saccadeX += (p.saccadeTargetX - p.saccadeX) * 0.22;
-      p.saccadeY += (p.saccadeTargetY - p.saccadeY) * 0.22;
-
-      p.currentEyeX += (p.targetEyeX + p.saccadeX - p.currentEyeX) * 0.18;
-      p.currentEyeY += (p.targetEyeY + p.saccadeY - p.currentEyeY) * 0.18;
-      p.currentPupilR += (p.targetPupilR - p.currentPupilR) * 0.14;
+      // Smooth eye movement physics (viscous organic fluid damping)
+      p.currentEyeX += (p.targetEyeX - p.currentEyeX) * 0.14;
+      p.currentEyeY += (p.targetEyeY - p.currentEyeY) * 0.14;
+      p.currentPupilR += (p.targetPupilR - p.currentPupilR) * 0.12;
 
       ctx.clearRect(0, 0, SIZE, SIZE);
 
@@ -630,8 +678,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       ctx.restore(); // end clip
 
       // Update Gaze Vector readout smoothly
-      const vx = (p.currentEyeX / 34).toFixed(2);
-      const vy = (p.currentEyeY / 34).toFixed(2);
+      const vx = (p.currentEyeX / 16.5).toFixed(2);
+      const vy = (p.currentEyeY / 16.5).toFixed(2);
       const sx = Number(vx) >= 0 ? '+' : '';
       const sy = Number(vy) >= 0 ? '+' : '';
       setGazeVector(`[${sx}${vx}, ${sy}${vy}]`);
@@ -643,6 +691,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      if (wanderTimer) clearTimeout(wanderTimer);
       if (blinkTimer) clearTimeout(blinkTimer);
       if (saccadeTimer) clearTimeout(saccadeTimer);
       if (saccadeResetTimer) clearTimeout(saccadeResetTimer);
@@ -726,6 +775,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     physicsRef.current.scanBeamProgress = -1;
     physicsRef.current.colorMorph = 0.0;
     physicsRef.current.targetPupilR = 21;
+    physicsRef.current.wanderTargetX = 0;
+    physicsRef.current.wanderTargetY = 0;
+    physicsRef.current.wanderX = 0;
+    physicsRef.current.wanderY = 0;
+    physicsRef.current.saccadeTargetX = 0;
+    physicsRef.current.saccadeTargetY = 0;
+    physicsRef.current.saccadeX = 0;
+    physicsRef.current.saccadeY = 0;
     setEyeColorProgress(0.0);
     setIsScanningActive(false);
     setIsSuccess(false);
@@ -781,7 +838,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   };
 
   // Auth Protocol Execution:
-  // When clicked: eye smoothly closes eyelids -> while closed, turns to Blue Eye -> eye opens showing Blue Eye -> flash into workspace
+  // 1. Slow-motion cinematic eyelid closure (0.95s)
+  // 2. While shut, morph to glowing Blue Eye (1000ms)
+  // 3. Slow-motion cinematic eyelid opening (1.30s) revealing the Blue Eye looking here and there
+  // 4. White optical flash transition blooming into main software cockpit
   const simulateAuth = useCallback(() => {
     if (isAuthenticating || isEntering) return;
     setIsAuthenticating(true);
@@ -790,26 +850,29 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setButtonText('[ INGESTING BIOMETRIC KEY... ]');
     setAuthStatus({
       custom: true,
-      text: 'AUTHENTICATING OPERATOR IDENTITY // INGESTING RETINAL BIOMETRICS...',
+      text: 'AUTHENTICATING OPERATOR IDENTITY // COMMENCING SLOW-MOTION OCULAR CONVERGENCE...',
       className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
     setBootProgress(50);
 
-    // 2. Smoothly close the eye (eyelids slide shut over 260ms)
+    // 2. Slow-motion cinematic eyelid closure (0.95s duration)
     const top = eyelidTopRef.current;
     const bottom = eyelidBottomRef.current;
     if (top && bottom) {
-      top.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
-      bottom.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
+      top.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      bottom.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
       top.style.transform = 'translateY(0%)';
       bottom.style.transform = 'translateY(0%)';
     }
 
-    // 3. While the eye is fully closed, transform eye to BLUE EYE
+    // Pupil gently constricts in anticipation
+    physicsRef.current.targetPupilR = 16;
+
+    // 3. While the eye is fully closed (at 1000ms), transform to glowing BLUE EYE
     const tClose = setTimeout(() => {
       physicsRef.current.colorMorph = 1.0;
       setEyeColorProgress(1.0);
-      physicsRef.current.targetPupilR = 21;
+      physicsRef.current.targetPupilR = 23;
 
       setBootProgress(100);
       setStages({ step1: true, step2: true, step3: true, step4: true });
@@ -817,32 +880,38 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         text: 'DEFCON-5: [ONLINE_ROOT]',
         className: 'text-[9px] px-1.5 py-0.5 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50 font-bold rounded-sm animate-pulse',
       });
-      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
+      setButtonText('[ BIOMETRICS CONFIRMED // REVEALING BLUE EYE... ]');
       setAuthStatus({
         custom: true,
-        text: 'ACCESS GRANTED // BIOMETRIC SIGNATURE VERIFIED // ROOT SHELL UNLOCKED',
-        className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm animate-pulse',
+        text: 'ACCESS GRANTED // BIOMETRIC SIGNATURE VERIFIED // UNVEILING COBALT CORE',
+        className: 'text-center text-[9px] tracking-[0.15em] text-[#00E5FF] bg-[#00E5FF]/10 py-0.5 border border-[#00E5FF]/40 font-bold min-h-[14px] rounded-sm',
       });
       setIsSuccess(true);
-    }, 280);
+    }, 1000);
 
-    // 4. Open the eyelids, revealing the radiant BLUE EYE!
+    // 4. Slow-motion cinematic eyelid opening (1.30s duration) revealing the Blue Eye looking around
     const tOpen = setTimeout(() => {
       if (top && bottom) {
-        top.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
-        bottom.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+        top.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
+        bottom.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
         top.style.transform = 'translateY(-100%)';
         bottom.style.transform = 'translateY(100%)';
       }
-    }, 380);
+      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
+      setAuthStatus({
+        custom: true,
+        text: 'SESSION ACTIVE // COBALT OCULAR LINK ESTABLISHED // COMMENCING LAB LAUNCH',
+        className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm animate-pulse',
+      });
+    }, 1180);
 
-    // 5. Operator sees the Blue Eye in all its glory for ~950ms, then the smooth optic white flash initiates
+    // 5. Operator sees the Blue Eye in full motion looking here and there, then blinding white flash initiates
     const tFlash = setTimeout(() => {
       setIsEntering(true);
       setFlashOpacity(1); // Blinding Optic White (#F8FAFC)
-    }, 1350);
+    }, 3650);
 
-    // 6. Complete transition into the main cockpit software
+    // 6. Complete transition into the main cockpit software as the flash blooms
     const tComplete = setTimeout(() => {
       const op: OperatorProfile = {
         id: 'local-operator-dev',
@@ -876,7 +945,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       setIsAuthenticating(false);
       onLoginSuccess(op, tokenInput.trim());
-    }, 1750);
+    }, 4150);
 
     authTimersRef.current.push(tClose, tOpen, tFlash, tComplete);
   }, [isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput]);
@@ -905,7 +974,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       {/* Fullscreen blinding white optic flash overlay that smoothly saturates the viewport before entering the app */}
       <div
-        className="pointer-events-none fixed inset-0 z-[60] bg-[#F8FAFC] transition-opacity duration-350 ease-in-out"
+        className="pointer-events-none fixed inset-0 z-[60] bg-[#F8FAFC] transition-opacity duration-500 ease-in-out"
         id="flashOverlay"
         style={{
           opacity: flashOpacity,
