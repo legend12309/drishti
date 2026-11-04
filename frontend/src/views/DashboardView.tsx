@@ -25,18 +25,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const [findings, setFindings] = useState<any[]>([]);
   const [attackPaths, setAttackPaths] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(true);
-
-  // Probe testing state
-  const [probeUrl, setProbeUrl] = useState<string>(() => {
-    const saved = localStorage.getItem('drishti_target_domain') || 'targetcompany.com';
-    return `https://${saved}/cgi-bin/php-cgi?%add+allow_url_include=1`;
-  });
-  const [probing, setProbing] = useState<boolean>(false);
-  const [probeSecured, setProbeSecured] = useState<boolean>(true);
-  const [probeLatency, setProbeLatency] = useState<number>(18);
   const [synthesizing, setSynthesizing] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState(false);
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>('00:00:00 UTC');
 
   // Live UTC Clock
@@ -55,20 +45,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     const handleTargetUpdated = (e: any) => {
       if (typeof e.detail === 'string' && e.detail !== targetDomain) {
         setTargetDomain(e.detail);
-        if (!probeUrl || probeUrl.includes(targetDomain)) {
-          setProbeUrl(e.detail ? `https://${e.detail}/cgi-bin/php-cgi?%add+allow_url_include=1` : '');
-        }
       }
     };
     window.addEventListener('drishti_target_updated', handleTargetUpdated);
     return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
-  }, [targetDomain, probeUrl]);
+  }, [targetDomain]);
 
   const handleTargetChange = (val: string) => {
     setTargetDomain(val);
     localStorage.setItem('drishti_target_domain', val);
     window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val }));
-    setProbeUrl(val ? `https://${val}/cgi-bin/php-cgi?%add+allow_url_include=1` : '');
   };
 
   const handleRunRecon = () => {
@@ -171,40 +157,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     },
   ];
 
-  // Execute diagnostic micro-probe
-  const handleExecuteProbe = async () => {
-    setProbing(true);
-    try {
-      const res = await fetch('/api/defense/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          target_url: probeUrl,
-          expected_status: 403,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setProbeSecured(data.verified ?? true);
-        setProbeLatency(data.latency_ms ?? 18);
-        if (showToast) {
-          showToast('success', 'Boundary Verified', `Confirmed HTTP ${data.status_code || 403} in ${data.latency_ms || 18}ms`);
-        }
-      } else {
-        setProbeSecured(true);
-        setProbeLatency(18);
-        if (showToast) showToast('success', 'Boundary Verified', 'Confirmed HTTP 403 Forbidden in 18ms');
-      }
-    } catch {
-      setProbeSecured(true);
-      setProbeLatency(18);
-      if (showToast) showToast('success', 'Boundary Verified', 'Confirmed HTTP 403 Forbidden in 18ms');
-    } finally {
-      setProbing(false);
-    }
-  };
-
   // Synthesize autonomous defense
   const handleSynthesizeDefense = async (cveId: string) => {
     setSynthesizing(true);
@@ -228,34 +180,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
       }
     } finally {
       setSynthesizing(false);
-    }
-  };
-
-  // Download complete security assessment PDF into OS Downloads folder
-  const handleDownloadPdf = async () => {
-    setDownloadingPdf(true);
-    try {
-      if (showToast) showToast('info', 'Compiling PDF Report...', `Building executive security assessment for ${targetDomain}`);
-      const res = await fetch(`/api/scans/reports/latest/download?target=${encodeURIComponent(targetDomain)}`);
-      if (!res.ok) throw new Error('Download request failed');
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `drishti-security-assessment-${targetDomain}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      if (showToast) {
-        showToast('success', 'PDF Assessment Delivered', `Report saved directly into your system Downloads folder.`);
-      }
-    } catch (err: any) {
-      if (showToast) showToast('error', 'Download Error', err.message || 'Could not export PDF report.');
-    } finally {
-      setDownloadingPdf(false);
     }
   };
 
@@ -434,25 +358,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             </div>
 
             {/* Launch Recon Action Pod (2 cols) */}
-            <div className="lg:col-span-2 flex flex-col gap-2">
+            <div className="lg:col-span-2 flex flex-col justify-stretch">
               <button
                 type="button"
                 onClick={handleRunRecon}
-                className="w-full py-3.5 px-4 bg-vermilion hover:bg-crimson text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-hairline shadow-md active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 group text-center"
+                className="w-full h-full min-h-[52px] py-3.5 px-4 bg-vermilion hover:bg-crimson text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-hairline shadow-md active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 group text-center"
               >
-                <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
+                <DoodleIcon name="spark" className="w-4 h-4 text-white" />
                 <span>RUN RECON</span>
                 <span className="group-hover:translate-x-1 transition-transform">➔</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                disabled={downloadingPdf}
-                className="w-full py-2 px-3 bg-white hover:bg-boneDark border border-hairline text-ink font-mono font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                <span>↓</span>
-                <span>{downloadingPdf ? 'GENERATING...' : 'EXPORT DOSSIER'}</span>
               </button>
             </div>
 
@@ -708,38 +622,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 </pre>
               </div>
             </div>
-
-            {/* Diagnostic Micro-Probe Testing Strip */}
-            <div className="p-3 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-              <div className="flex items-center space-x-2 truncate flex-1">
-                <span className="text-vermilion font-black shrink-0">[ PROBE TEST ]:</span>
-                <input
-                  type="text"
-                  value={probeUrl}
-                  onChange={(e) => setProbeUrl(e.target.value)}
-                  placeholder="https://targetcompany.com/test-endpoint"
-                  className="bg-pureWhite px-3 py-1.5 text-ink border border-hairline text-xs font-mono w-full outline-none focus:border-ink shadow-inner font-bold"
-                />
-              </div>
-
-              <div className="flex items-center space-x-3 shrink-0">
-                <div className="text-[10px] text-charcoal font-bold">
-                  STATUS: <strong className="text-signalGreen">HTTP 403 ({probeLatency}ms)</strong>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExecuteProbe}
-                  disabled={probing}
-                  className="px-4 py-1.5 bg-ink hover:bg-vermilion text-white font-black text-xs border border-ink shadow-sm cursor-pointer disabled:opacity-50 transition-colors flex items-center gap-1.5"
-                >
-                  <DoodleIcon name="probe" className="w-3.5 h-3.5 text-white" />
-                  <span>{probing ? '[ PROBING... ]' : '[ FIRE PROBE ]'}</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Right 4 Cols: Live Telemetry Matrix & Frequency Visualizer */}
+          {/* Right 4 Cols: Live Telemetry Matrix */}
           <div className="lg:col-span-4 bg-pureWhite border-2 border-hairline p-5 shadow-sm flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-hairline">
@@ -750,28 +635,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 <span className="text-[9.5px] text-charcoal font-bold font-mono">UTC SYNCED</span>
               </div>
 
-              {/* Simulated Live Packet Sniffer Frequency Spectrum */}
-              <div className="p-2.5 bg-boneLight border border-hairline space-y-1.5">
-                <div className="flex items-center justify-between text-[8.5px] text-charcoal font-bold font-mono">
-                  <span>PACKET FREQUENCY MONITOR // 127.0.0.1:8000</span>
-                  <span className="text-signalGreen">99.8% REALTIME</span>
-                </div>
-                <div className="flex items-end gap-1 h-7 px-1.5 py-1 bg-white border border-hairlineLight">
-                  {[40, 75, 55, 95, 80, 45, 90, 100, 65, 45, 75, 85, 60, 70, 90, 40, 80, 60].map((h, i) => (
-                    <div
-                      key={i}
-                      className="w-1 bg-ink opacity-75"
-                      style={{
-                        height: `${h}%`,
-                        animation: `spectrumBounce 1.2s ease-in-out infinite ${i * 65}ms alternate`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
               {/* Real-time Telemetry Logs */}
-              <div className="space-y-2 text-[10px] font-mono max-h-[200px] overflow-y-auto scrollbar-tactical pr-1">
+              <div className="space-y-2 text-[10px] font-mono max-h-[260px] overflow-y-auto scrollbar-tactical pr-1">
                 {telemetryLogs.map((log) => (
                   <div key={log.id} className="p-2 bg-boneLight border border-hairlineLight flex items-start space-x-2">
                     <span className="text-charcoal shrink-0 font-bold">[{log.timestamp}]</span>
@@ -796,10 +661,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               </span>
               <button
                 type="button"
-                onClick={() => onNavigate('audit')}
+                onClick={() => onNavigate('guard')}
                 className="hover:text-vermilion font-bold underline cursor-pointer"
               >
-                [ VIEW AUDIT LOGS ]
+                [ VIEW GUARD FIREWALL ➔ ]
               </button>
             </div>
           </div>
@@ -910,12 +775,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
 
       {/* Scoped CSS Keyframes for High-Tech Instrument HUD */}
       <style>{`
-        @keyframes spectrumBounce {
-          0% { height: 15%; opacity: 0.35; }
-          50% { height: 95%; opacity: 0.95; }
-          100% { height: 40%; opacity: 0.55; }
-        }
-
         @keyframes brutalistCascadeSlide {
           0% {
             opacity: 0;

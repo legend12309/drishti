@@ -1,5 +1,6 @@
 import React from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from './DoodleIcon';
 
 interface SidebarProps {
   activeTab: TabId;
@@ -11,23 +12,21 @@ interface SidebarProps {
 }
 
 interface NavItem {
-  id: TabId | 'login';
+  id: TabId;
   index: string;
   label: string;
 }
 
+// Canonical DRISHTI Operational Engines
 const NAV_ITEMS: NavItem[] = [
-  { id: 'login', index: '01_', label: 'LOGIN' },
-  { id: 'dashboard', index: '02_', label: 'COCKPIT' },
-  { id: 'recon', index: '03_', label: 'RECON' },
-  { id: 'intel', index: '04_', label: 'INTEL' },
-  { id: 'graph', index: '05_', label: 'GRAPH' },
-  { id: 'guard', index: '06_', label: 'GUARD' },
-  { id: 'stix', index: '07_', label: 'STIX' },
-  { id: 'reports', index: '08_', label: 'REP' },
-  { id: 'audit', index: '09_', label: 'AUDIT' },
-  { id: 'settings', index: '10_', label: 'CONF' },
-  { id: 'profile', index: '11_', label: 'AUTH' },
+  { id: 'dashboard', index: '01_', label: 'COCKPIT' },
+  { id: 'recon', index: '02_', label: 'RECON' },
+  { id: 'intel', index: '03_', label: 'INTEL' },
+  { id: 'graph', index: '04_', label: 'GRAPH' },
+  { id: 'guard', index: '05_', label: 'GUARD' },
+  { id: 'stix', index: '06_', label: 'STIX' },
+  { id: 'reports', index: '07_', label: 'REPORTS' },
+  { id: 'settings', index: '08_', label: 'CONFIG' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -47,13 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.index}
-              onClick={() => {
-                if (item.id === 'login') {
-                  if (onLogout) onLogout();
-                } else {
-                  onSelectTab(item.id as TabId);
-                }
-              }}
+              onClick={() => onSelectTab(item.id)}
               className={`w-full py-2 px-1 flex flex-col items-center justify-center active:scale-95 transition-all duration-150 text-center cursor-pointer ${
                 isActive
                   ? 'text-signalGreen bg-pureWhite border-l-[3px] border-signalGreen shadow-xs'
@@ -69,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {item.index}
               </span>
               <span
-                className={`text-[10px] font-mono tracking-wider mt-0.5 uppercase ${
+                className={`text-[9.5px] font-mono tracking-wider mt-0.5 uppercase ${
                   isActive ? 'font-black text-ink' : 'font-bold text-charcoal'
                 }`}
               >
@@ -80,9 +73,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </div>
 
-      {/* Rail Footer Hardware Telemetry */}
-      <div className="flex flex-col items-center space-y-1.5 pt-2 border-t border-hairline">
-        <span className="text-[10px] font-mono text-signalGreen font-black flex items-center gap-1">
+      {/* Rail Footer: Hardware Telemetry & Quick Exit */}
+      <div className="flex flex-col items-center space-y-2 pt-2 border-t border-hairline">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-12 py-1 flex flex-col items-center justify-center text-charcoal hover:text-vermilion hover:bg-boneDark border border-transparent hover:border-hairline transition-colors cursor-pointer text-[9px] font-mono font-bold"
+          title="Disconnect Enclave & Terminate Session"
+        >
+          <DoodleIcon name="lock" className="w-3.5 h-3.5 mb-0.5" />
+          <span>EXIT</span>
+        </button>
+        <span className="text-[9.5px] font-mono text-signalGreen font-black flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-signalGreen animate-ping"></span>
           <span>14ms</span>
         </span>

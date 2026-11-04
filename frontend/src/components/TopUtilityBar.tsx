@@ -91,18 +91,9 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
           )}
         </div>
 
-        <span className="hidden md:inline-block border border-hairline px-2 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">
+        <span className="hidden md:inline-block border border-hairline px-2.5 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">
           RFC 8655 READY
         </span>
-
-        <button
-          onClick={onCreateScan}
-          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider active:scale-95 transition-all duration-150 border border-hairline shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
-          title="Launch Autonomous Recon Pipeline"
-        >
-          <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
-          <span className="hidden sm:inline">[ RUN AUDIT ]</span>
-        </button>
       </div>
 
       {/* 3. Right: Telemetry, CLI & Operator Credentials */}

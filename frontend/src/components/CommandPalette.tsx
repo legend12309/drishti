@@ -33,7 +33,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     { id: 'nav-graph', category: 'NAVIGATION', title: 'Attack Graph & Topology', subtitle: 'NetworkX topology and Dijkstra shortest attack paths', icon: 'hub', tab: 'graph' },
     { id: 'nav-guard', category: 'NAVIGATION', title: 'AI Guard & Injection Defense', subtitle: '3-Layer defense evaluation and threat sandbox', icon: 'verified_user', tab: 'guard' },
     { id: 'nav-stix', category: 'NAVIGATION', title: 'STIX 2.1 Threat Sharing', subtitle: 'Standardized threat bundles, audit reports, and exports', icon: 'description', tab: 'stix' },
-    { id: 'nav-audit', category: 'NAVIGATION', title: 'Audit Trail', subtitle: 'Cryptographic provenance and consent logs', icon: 'history_edu', tab: 'audit' },
+    { id: 'nav-reports', category: 'NAVIGATION', title: 'Reports & Executive Dossier', subtitle: 'Automated executive threat briefing and PDF exports', icon: 'description', tab: 'reports' },
     { id: 'nav-settings', category: 'NAVIGATION', title: 'Settings & Providers', subtitle: 'Configure LLM providers and scanner paths', icon: 'tune', tab: 'settings' },
     { id: 'act-scan', category: 'ACTION', title: 'Start Security Assessment', subtitle: 'Dispatch unified AutoRecon audit', icon: 'play_arrow', tab: 'recon' },
     { id: 'act-export-stix', category: 'ACTION', title: 'Export STIX 2.1 Threat Bundle', subtitle: 'Download drishti-stix-bundle.json', icon: 'download', tab: 'stix' },
