@@ -1233,7 +1233,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   return (
     <div
-      className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-all duration-[1800ms] ease-out ${
+      className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-all duration-[1400ms] ease-out ${
         startFadeIn
           ? 'opacity-100 filter brightness-100 scale-100 pointer-events-auto'
           : 'opacity-0 filter brightness-50 scale-[0.99] pointer-events-none'

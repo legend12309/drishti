@@ -29,6 +29,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     if (isExiting) return;
     setIsExiting(true);
 
+    const v = videoRef.current;
+    if (v) {
+      // Immediately freeze video playback so it NEVER renders into the white flash or copyright text
+      v.pause();
+    }
+
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
@@ -36,8 +42,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     // Notify LoginView to begin its smooth cinematic fade-in simultaneously
     onBeginExit?.();
 
-    // Smoothly fade out audio over the 1800ms transition to prevent popping
-    const v = videoRef.current;
+    // Smoothly fade out audio over the 1400ms transition to prevent popping
     if (v && !v.muted) {
       const fadeAudioInterval = setInterval(() => {
         if (v.volume > 0.05) {
@@ -49,20 +54,22 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       }, 50);
     }
 
-    // Wait for the 1800ms cinematic fade-out to complete, then unmount IntroView
+    // Wait for the 1400ms cinematic fade-out to complete, then unmount IntroView
     setTimeout(() => {
       onComplete();
-    }, 1800);
+    }, 1400);
   }, [isExiting, onBeginExit, onComplete]);
 
-  // Video time tracker: detect when video reaches right before the copyright line appears
+  // Video time tracker: detect when video reaches right before the flash & copyright text appears
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (v && !isNaN(v.duration) && v.duration > 0) {
-      // The copyright notice '© 2025 RYLES COPYRIGHT RESERVED.' appears at ~15.15s (total duration 18.37s).
-      // Trigger cinematic fade-out at 14.85s, right as the glitch peaks and strictly before the copyright text appears.
-      const fadeTriggerTime = v.duration > 16.0 ? 14.85 : Math.max(1.0, v.duration - 2.8);
+      // Cut strictly at 13.90s (end of main sequence), before the white flash (14.50s) and copyright frame (15.15s)
+      const fadeTriggerTime = v.duration > 15.0 ? 13.90 : Math.max(1.0, v.duration - 2.8);
       if (v.currentTime >= fadeTriggerTime) {
+        if (videoRef.current) {
+          videoRef.current.pause();
+        }
         handleTransitionToLogin();
       }
     }
@@ -167,7 +174,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[1800ms] ease-out ${
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[1400ms] ease-out ${
         isExiting
           ? 'opacity-0 pointer-events-none filter brightness-50 contrast-125'
           : isReady

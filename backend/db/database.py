@@ -528,6 +528,12 @@ async def init_db():
                     ddl_010 = schema_file_010.read_text(encoding="utf-8")
                     await conn.execute(ddl_010)
 
+                # Apply PostgreSQL Row Level Security (RLS) & PostgREST hardening migration
+                schema_file_011 = DATA_DIR / "migrations" / "011_enable_supabase_rls.sql"
+                if schema_file_011.exists():
+                    ddl_011 = schema_file_011.read_text(encoding="utf-8")
+                    await conn.execute(ddl_011)
+
                 # Mark interrupted scans from prior runs as failed
                 await conn.execute("""
                     UPDATE scans
