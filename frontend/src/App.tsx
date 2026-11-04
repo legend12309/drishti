@@ -42,24 +42,14 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 };
 
 export default function App() {
-  // Track and persist application lifecycle phase ('INTRO' -> 'GATEWAY' -> 'COCKPIT')
-  const [currentPhase, setCurrentPhase] = useState<string>(() => {
-    return localStorage.getItem('drishti_phase') || 'INTRO';
-  });
-
-  // Play intro video sequence on initial startup unless already progressed past INTRO phase
-  const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(() => {
-    const saved = localStorage.getItem('drishti_phase');
-    return saved === 'GATEWAY' || saved === 'COCKPIT';
-  });
+  // Always start from intro video on initial launch / open
+  const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(false);
   const [isIntroExiting, setIsIntroExiting] = useState<boolean>(false);
+  const [isExitReturn, setIsExitReturn] = useState<boolean>(false);
+  const [loginResetKey, setLoginResetKey] = useState<number>(0);
 
-  // Always show login page first on open unless verified token in COCKPIT phase
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const token = localStorage.getItem('drishti_auth_token');
-    const saved = localStorage.getItem('drishti_phase');
-    return Boolean(token && saved === 'COCKPIT');
-  });
+  // Authentication state: starts unauthenticated until operator logs in
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [operator, setOperator] = useState<OperatorProfile | null>(() => {
     const saved = localStorage.getItem('drishti_operator');
@@ -116,12 +106,13 @@ export default function App() {
   const handleLogout = useCallback(() => {
     localStorage.removeItem('drishti_auth_token');
     localStorage.removeItem('drishti_operator');
-    try {
-      localStorage.setItem('drishti_phase', 'GATEWAY');
-      setCurrentPhase('GATEWAY');
-    } catch {}
     setIsAuthenticated(false);
-    showToast('info', 'Session Ended', 'Operator logged out.');
+    // When user exits, start again directly from the RED EYE without re-playing the intro video
+    setHasSeenIntro(true);
+    setIsIntroExiting(false);
+    setIsExitReturn(true);
+    setLoginResetKey((prev) => prev + 1);
+    showToast('info', 'Session Terminated', 'Operator logged out. Re-engaged Ocular Biolock.');
   }, [showToast]);
 
   // Fetch System Health status
@@ -175,26 +166,21 @@ export default function App() {
       <div className="relative w-screen h-screen overflow-hidden bg-[#030407]">
         {/* Living Login Gateway (Biometric circular eye and cyber HUD) */}
         <LoginView
+          key={`login-view-${loginResetKey}`}
           onLoginSuccess={(op) => {
             setOperator(op);
             setIsAuthenticated(true);
             setEntranceFlash(true);
-            try {
-              localStorage.setItem('drishti_phase', 'COCKPIT');
-              setCurrentPhase('COCKPIT');
-            } catch {}
+            setIsExitReturn(false);
           }}
           onReplayIntro={() => {
-            try {
-              localStorage.setItem('drishti_phase', 'INTRO');
-              localStorage.removeItem('drishti_has_seen_intro');
-              setCurrentPhase('INTRO');
-            } catch {}
+            setIsExitReturn(false);
             setIsIntroExiting(false);
             setHasSeenIntro(false);
           }}
           showToast={showToast}
           startFadeIn={hasSeenIntro || isIntroExiting}
+          isExitReturn={isExitReturn}
         />
 
         {/* Cinematic Video Intro Overlay (Runs completely, then fades out from last black frame) */}
@@ -202,20 +188,10 @@ export default function App() {
           <IntroView
             onBeginExit={() => {
               setIsIntroExiting(true);
-              try {
-                localStorage.setItem('drishti_phase', 'GATEWAY');
-                localStorage.setItem('drishti_has_seen_intro', 'true');
-                setCurrentPhase('GATEWAY');
-              } catch {}
             }}
             onComplete={() => {
               setHasSeenIntro(true);
               setIsIntroExiting(false);
-              try {
-                localStorage.setItem('drishti_phase', 'GATEWAY');
-                localStorage.setItem('drishti_has_seen_intro', 'true');
-                setCurrentPhase('GATEWAY');
-              } catch {}
             }}
           />
         )}

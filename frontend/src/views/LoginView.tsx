@@ -7,6 +7,7 @@ interface LoginViewProps {
   showToast?: (type: 'success' | 'warning' | 'error' | 'info', title: string, detail?: string) => void;
   onReplayIntro?: () => void;
   startFadeIn?: boolean;
+  isExitReturn?: boolean;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
@@ -14,6 +15,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   showToast,
   onReplayIntro,
   startFadeIn = true,
+  isExitReturn = false,
 }) => {
   // Input & Mode States
   const [tokenInput, setTokenInput] = useState('ED25519-948A-AUTH-BIO-09');
@@ -283,6 +285,42 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   // Handle cinematic fade-in, background voice dialogue, and slow physiological eye opening
   useEffect(() => {
+    // When returning from user exit / logout, start directly from the awakened RED EYE
+    if (isExitReturn) {
+      stopWakeAudio(0);
+      physicsRef.current.colorMorph = 0.0;
+      setEyeColorProgress(0.0);
+      physicsRef.current.scanBeamActive = false;
+      physicsRef.current.scanBeamProgress = -1;
+      physicsRef.current.targetPupilR = 21;
+      physicsRef.current.currentPupilR = 21;
+      physicsRef.current.lockGazeToCenter = false;
+      setPupilDil('4.80mm');
+      setCorneaRefract('OK [NOMINAL]');
+      setBiolockStatus('ENGAGED');
+      setButtonText('[ EXECUTE COCKPIT LOGIN ⌘↵ ]');
+      setAuthStatus({ custom: false, text: '', className: '' });
+      setBootProgress(78.4);
+      setStages({ step1: true, step2: true, step3: true, step4: false });
+      setEngineBadge({
+        text: 'DEFCON-1: [RECON_ACTIVE]',
+        className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold rounded-sm',
+      });
+      setEyeAwakened(true);
+      eyeAwakenedRef.current = true;
+      hasTriggeredAwakenRef.current = true;
+
+      const top = eyelidTopRef.current;
+      const bottom = eyelidBottomRef.current;
+      if (top && bottom) {
+        top.style.transition = 'none';
+        bottom.style.transition = 'none';
+        top.style.transform = 'translateY(-100%)';
+        bottom.style.transform = 'translateY(100%)';
+      }
+      return;
+    }
+
     if (!startFadeIn) {
       stopWakeAudio(0);
       hasTriggeredAwakenRef.current = false;
@@ -385,7 +423,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       clearTimeout(tOpen);
       stopWakeAudio(0);
     };
-  }, [startFadeIn, stopWakeAudio]);
+  }, [startFadeIn, isExitReturn, stopWakeAudio]);
 
   // Cinematic biometric laser scan & smooth color morph animation from Red to Blue (or vice-versa)
   const animateEyeColor = useCallback((from: number, to: number, duration = 1800) => {
