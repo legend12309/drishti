@@ -105,10 +105,15 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     setLoading(true);
     try {
       const scansRes = await fetch('/api/scans?limit=15').then((r) => r.json()).catch(() => ({ scans: [] }));
-      const scanList = scansRes.scans || [];
+      const scanList: any[] = scansRes.scans || [];
       setScans(scanList);
 
-      const targetScan = scanId === 'latest' ? (scanList[0]?.id || 'latest') : scanId;
+      const savedTarget = (localStorage.getItem('drishti_target_domain') || '').toLowerCase();
+      let targetScan = scanId;
+      if (scanId === 'latest' || !scanId) {
+        const matching = savedTarget ? scanList.find((s: any) => s.target && (s.target.toLowerCase() === savedTarget || s.target.toLowerCase().includes(savedTarget))) : null;
+        targetScan = matching ? matching.id : (scanList[0]?.id || 'latest');
+      }
 
       const [graphRes, pathsRes] = await Promise.all([
         fetch(`/api/graph/${targetScan}`),
@@ -140,6 +145,33 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
 
   useEffect(() => {
     loadGraphData();
+  }, [loadGraphData]);
+
+  // Synchronize attack graph with global target domain updates across Cockpit and Recon
+  useEffect(() => {
+    const handleTargetUpdated = (e: any) => {
+      const newTarget = typeof e.detail === 'string' ? e.detail.trim().toLowerCase() : '';
+      if (newTarget) {
+        fetch('/api/scans?limit=15')
+          .then((r) => r.json())
+          .then((scansRes) => {
+            const scanList: any[] = scansRes.scans || [];
+            setScans(scanList);
+            const matching = scanList.find(
+              (s: any) => s.target && (s.target.toLowerCase() === newTarget || s.target.toLowerCase().includes(newTarget))
+            );
+            if (matching) {
+              setSelectedScanId(matching.id);
+              loadGraphData(matching.id);
+            } else {
+              loadGraphData('latest');
+            }
+          })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('drishti_target_updated', handleTargetUpdated);
+    return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
   }, [loadGraphData]);
 
   // Build the Top 3 Prioritized Routes dynamically from real scan data or fall back to high-fidelity targets

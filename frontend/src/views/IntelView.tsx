@@ -147,9 +147,13 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
       const scanList: ScanOption[] = scansRes.scans || [];
       setScans(scanList);
 
+      const savedTarget = localStorage.getItem('drishti_target_domain') || '';
       let targetScanId = selectedScanId;
       if (!targetScanId && scanList.length > 0) {
-        targetScanId = scanList[0].id;
+        const matching = savedTarget
+          ? scanList.find((s) => s.target.toLowerCase() === savedTarget.toLowerCase() || s.target.toLowerCase().includes(savedTarget.toLowerCase()))
+          : null;
+        targetScanId = matching ? matching.id : scanList[0].id;
         setSelectedScanId(targetScanId);
       }
 
@@ -245,6 +249,30 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
   useEffect(() => {
     loadIntelligence();
   }, [loadIntelligence]);
+
+  // Synchronize with global target domain updates across Cockpit and Recon
+  useEffect(() => {
+    const handleTargetUpdated = (e: any) => {
+      const newTarget = typeof e.detail === 'string' ? e.detail.trim().toLowerCase() : '';
+      if (newTarget) {
+        fetch('/api/scans?limit=15')
+          .then((r) => r.json())
+          .then((scansRes) => {
+            const scanList: ScanOption[] = scansRes.scans || [];
+            setScans(scanList);
+            const matching = scanList.find(
+              (s) => s.target.toLowerCase() === newTarget || s.target.toLowerCase().includes(newTarget)
+            );
+            if (matching) {
+              setSelectedScanId(matching.id);
+            }
+          })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('drishti_target_updated', handleTargetUpdated);
+    return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
+  }, []);
 
   // Telemetry KPIs
   const stats = useMemo(() => {
