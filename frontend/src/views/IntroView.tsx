@@ -11,10 +11,13 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(18);
-  const [flashOpacity, setFlashOpacity] = useState<number>(0);
   const [hasInteracted, setHasInteracted] = useState<boolean>(false);
   const [isExiting, setIsExiting] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // Progressive Fade-In Transition over the video's final 5 seconds
+  const [endFadeOpacity, setEndFadeOpacity] = useState<number>(0);
+  const [fadeRemainingSec, setFadeRemainingSec] = useState<number | null>(null);
 
   // Smooth finish transition into LoginView
   const handleTransitionToLogin = useCallback(() => {
@@ -26,13 +29,47 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       document.exitFullscreen().catch(() => {});
     }
 
-    // Trigger smooth optic white exposure flash bloom
-    setFlashOpacity(1);
+    // Snap ending fade overlay to 100% opacity smoothly
+    setEndFadeOpacity(1);
 
     setTimeout(() => {
       onComplete();
-    }, 420);
+    }, 450);
   }, [isExiting, onComplete]);
+
+  // High precision frame-by-frame check for the 5-second ending fade transition
+  useEffect(() => {
+    let animId: number;
+    const checkEndingFade = () => {
+      const v = videoRef.current;
+      if (v && duration > 0 && !isExiting) {
+        const remaining = duration - v.currentTime;
+        if (remaining <= 5 && remaining >= 0) {
+          // Progress from 0.0 at (duration - 5)s to 1.0 at duration
+          const progress = Math.min(1, Math.max(0, (5 - remaining) / 5));
+          // Power curve for natural cinematic ease-in darkening
+          const curvedOpacity = Math.pow(progress, 1.25);
+          setEndFadeOpacity(curvedOpacity);
+          setFadeRemainingSec(remaining);
+
+          // Smooth synchronized audio fade out over the final 5 seconds
+          if (!v.muted) {
+            v.volume = Math.max(0, 1 - progress);
+          }
+        } else if (remaining > 5) {
+          setEndFadeOpacity(0);
+          setFadeRemainingSec(null);
+          if (!v.muted) {
+            v.volume = 1;
+          }
+        }
+      }
+      animId = requestAnimationFrame(checkEndingFade);
+    };
+
+    animId = requestAnimationFrame(checkEndingFade);
+    return () => cancelAnimationFrame(animId);
+  }, [duration, isExiting]);
 
   // Video time and duration tracking
   const handleTimeUpdate = () => {
@@ -99,8 +136,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (document.fullscreenElement) {
-          // ESC will exit fullscreen naturally, but if pressed again or if already exited, skip
-          // User can also use Enter to immediately skip
+          // ESC exits fullscreen naturally
         } else {
           handleTransitionToLogin();
         }
@@ -140,11 +176,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const hudOpacity = Math.max(0, 1 - endFadeOpacity * 1.4);
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-screen h-screen bg-[#020306] text-[#E5E7EB] font-mono select-none overflow-hidden"
+      className="fixed inset-0 w-screen h-screen bg-[#030407] text-[#E5E7EB] font-mono select-none overflow-hidden"
     >
       {/* ======================================================== */}
       {/* 1. FULLSCREEN EDGE-TO-EDGE VIDEO CANVAS                  */}
@@ -163,24 +200,59 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
         onDoubleClick={toggleFullscreen}
       />
 
-      {/* Cinematic Dark Ambient Gradients for Text Legibility */}
-      <div className="absolute inset-0 pointer-events-none z-20 bg-gradient-to-b from-black/85 via-black/20 to-black/90"></div>
+      {/* Cinematic Ambient Vignette & Gradients for High Readability */}
+      <div className="absolute inset-0 pointer-events-none z-20 bg-gradient-to-b from-black/80 via-black/15 to-black/85"></div>
 
       {/* CRT Scanline & Phosphor Vignette Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-25"></div>
 
-      {/* Fullscreen Optic White Exposure Flash on transition into Login */}
+      {/* ======================================================== */}
+      {/* 2. PROGRESSIVE 5-SECOND FADE-IN TRANSITION OVERLAY       */}
+      {/* ======================================================== */}
       <div
-        className="pointer-events-none fixed inset-0 z-50 bg-[#F8FAFC] transition-opacity duration-450 ease-in-out"
-        id="introFlashOverlay"
-        style={{ opacity: flashOpacity }}
-      ></div>
+        className="pointer-events-none fixed inset-0 z-40 bg-[#030407] flex flex-col items-center justify-center"
+        id="introFadeOverlay"
+        style={{
+          opacity: endFadeOpacity,
+          transition: isExiting ? 'opacity 420ms cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+        }}
+      >
+        {/* Cinematic Tactical Gateway Calibration Status during the final 5s */}
+        {fadeRemainingSec !== null && fadeRemainingSec <= 5 && !isExiting && (
+          <div className="flex flex-col items-center gap-3 px-4 text-center animate-pulse">
+            <div
+              className="w-14 h-14 rounded-full border-2 border-[#EF4444]/60 flex items-center justify-center animate-spin"
+              style={{ animationDuration: '4s' }}
+            >
+              <div className="w-7 h-7 rounded-full border-t-2 border-b-2 border-[#00E5FF]"></div>
+            </div>
+            <div className="text-xs md:text-sm font-bold tracking-[0.25em] text-[#EF4444] drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]">
+              DRISHTI // SYNCHRONIZING SEC_KERNEL GATEWAY
+            </div>
+            <div className="text-[10px] font-mono tracking-widest text-[#94A3B8]">
+              CALIBRATING BIOMETRIC OCULAR RETICLE IN {Math.max(0, fadeRemainingSec).toFixed(1)}s
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Tactical Edge Viewport Corner Brackets */}
-      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30"></div>
-      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30"></div>
-      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30"></div>
-      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30"></div>
+      <div
+        className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      ></div>
+      <div
+        className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      ></div>
+      <div
+        className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      ></div>
+      <div
+        className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-[#EF4444] pointer-events-none z-30 transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      ></div>
 
       {/* Center Pause Indicator Overlay */}
       {!isPlaying && (
@@ -196,7 +268,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       )}
 
       {/* Unmute Prompt Pill if video started muted */}
-      {isMuted && !hasInteracted && isPlaying && (
+      {isMuted && !hasInteracted && isPlaying && endFadeOpacity < 0.6 && (
         <div
           className="absolute top-16 right-6 md:right-10 z-35 px-3 py-1.5 bg-[#0B101D]/95 border border-[#38BDF8] text-[#38BDF8] text-[10px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 transition-all flex items-center gap-2"
           onClick={toggleMute}
@@ -207,9 +279,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       )}
 
       {/* ======================================================== */}
-      {/* 2. FLOATING TOP HUD TELEMETRY BAR                        */}
+      {/* 3. FLOATING TOP HUD TELEMETRY BAR                        */}
       {/* ======================================================== */}
-      <header className="absolute top-0 inset-x-0 z-30 px-6 md:px-10 pt-4 pb-3 flex items-center justify-between text-[10px] tracking-wider text-[#94A3B8] pointer-events-auto">
+      <header
+        className="absolute top-0 inset-x-0 z-30 px-6 md:px-10 pt-4 pb-3 flex items-center justify-between text-[10px] tracking-wider text-[#94A3B8] pointer-events-auto transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      >
         <div className="flex items-center gap-3">
           <span className="font-bold text-[#FFFFFF] tracking-[0.25em] text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             DRISHTI <span className="text-[#EF4444]">//</span> BOOT_INTRO
@@ -252,9 +327,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
       </header>
 
       {/* ======================================================== */}
-      {/* 3. FLOATING BOTTOM HUD TIMELINE & FAST SKIP BAR          */}
+      {/* 4. FLOATING BOTTOM HUD TIMELINE & FAST SKIP BAR          */}
       {/* ======================================================== */}
-      <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-10 pb-5 pt-3 flex flex-col gap-2.5 pointer-events-auto">
+      <footer
+        className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-10 pb-5 pt-3 flex flex-col gap-2.5 pointer-events-auto transition-opacity duration-300"
+        style={{ opacity: hudOpacity }}
+      >
         {/* Full-bleed timeline scrubber bar */}
         <div className="w-full flex flex-col gap-1">
           <div className="w-full h-1.5 bg-black/70 border border-[#334155]/80 rounded-sm overflow-hidden relative backdrop-blur-sm">

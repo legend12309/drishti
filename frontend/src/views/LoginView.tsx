@@ -1059,7 +1059,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast,
     : 'shadow-[0_0_40px_rgba(230,46,37,0.45),inset_0_0_45px_rgba(0,0,0,0.95)] border-rose-500/60';
 
   return (
-    <div className="relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono">
+    <div className="relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono login-fade-in-entry">
       {/* CRT Scanlines, Analog Noise, Vignette Screen Layer */}
       <div className="crt-overlay"></div>
 
@@ -1220,6 +1220,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast,
         }
         .entrance-text-fade {
           animation: entranceTextAnim 1100ms ease-out forwards;
+        }
+
+        /* Seamless Entrance Fade-In from Intro Reel */
+        @keyframes loginFadeIn {
+          0% {
+            opacity: 0;
+            filter: brightness(0.7) contrast(1.05);
+          }
+          100% {
+            opacity: 1;
+            filter: brightness(1) contrast(1);
+          }
+        }
+        .login-fade-in-entry {
+          animation: loginFadeIn 850ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
