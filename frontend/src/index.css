@@ -16,20 +16,24 @@
   border-radius: 0px;
 }
 
-html {
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   background-color: #F8F7F2;
   color: #0D0E11;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
 }
 
-body {
-  background-color: #F8F7F2;
-  color: #0D0E11;
-  font-family: 'JetBrains Mono', monospace;
-  overflow-x: hidden;
-  position: relative;
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Material Symbols */
@@ -86,30 +90,37 @@ body {
   opacity: 0.75;
 }
 
-/* Editorial Print Scrollbars */
+/* Editorial Print Scrollbars - Ergonomic 8px width with standard cross-browser support */
+.scrollbar-tactical {
+  scrollbar-width: thin;
+  scrollbar-color: #A8A398 #ECE8DF;
+  overscroll-behavior-y: contain;
+}
 .scrollbar-tactical::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 .scrollbar-tactical::-webkit-scrollbar-track {
   background: #ECE8DF;
 }
 .scrollbar-tactical::-webkit-scrollbar-thumb {
   background: #A8A398;
+  border-radius: 2px;
 }
 .scrollbar-tactical::-webkit-scrollbar-thumb:hover {
   background: #E63926;
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: #ECE8DF;
 }
 ::-webkit-scrollbar-thumb {
   background: #A8A398;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #E63926;

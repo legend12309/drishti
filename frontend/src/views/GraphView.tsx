@@ -473,15 +473,18 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     return [col0, col1, col2, col3, col4, col5];
   }, [allRenderNodes, currentTargetDomain]);
 
-  // Canvas Layout with Integrated Stage Swimlanes
+  // Canvas Layout with Integrated Stage Swimlanes (Non-squishing predictable grid)
   const layout = useMemo(() => {
     const CANVAS_WIDTH = 1580;
     const maxNodesInCol = Math.max(...categorizedNodes.map((c) => c.length), 3);
-    const CANVAS_HEIGHT = Math.max(580, maxNodesInCol * 105 + 120);
-
-    const colCenters = [135, 395, 655, 915, 1175, 1435];
     const nodeWidth = 205;
     const nodeHeight = 74;
+    const nodeGap = 18;
+    const nodeStep = nodeHeight + nodeGap; // 92px fixed step prevents squishing
+    const colCenters = [135, 395, 655, 915, 1175, 1435];
+
+    // Maintain uncompressed canvas world dimensions
+    const totalWorldHeight = Math.max(620, 100 + maxNodesInCol * nodeStep + 60);
 
     const positionedNodes: Record<string, { x: number; y: number; w: number; h: number; node: any }> = {};
 
@@ -489,13 +492,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       const count = colNodes.length;
       const x = colCenters[colIdx];
       colNodes.forEach((node, nodeIdx) => {
-        let y = 0;
+        // Uniform, legible vertical spacing per node regardless of column density
+        let y = 100 + nodeIdx * nodeStep;
         if (count === 1) {
-          y = CANVAS_HEIGHT / 2 + 20;
-        } else {
-          const availableHeight = CANVAS_HEIGHT - 170;
-          const step = availableHeight / (count - 1 || 1);
-          y = 110 + nodeIdx * step;
+          y = 146; // Aligned with the direct primary horizontal attack trajectory
         }
         positionedNodes[node.id] = {
           x,
@@ -509,7 +509,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
 
     return {
       width: CANVAS_WIDTH,
-      height: CANVAS_HEIGHT,
+      height: totalWorldHeight,
       colCenters,
       nodes: positionedNodes,
     };
@@ -571,11 +571,17 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     return `M ${x1} ${y1} C ${x1 - 45} ${y1 - 30}, ${x2 + 45} ${y2 - 30}, ${x2} ${y2}`;
   }, []);
 
-  // Mouse Controls (Pan & Zoom)
+  // Mouse Controls (Pan & Zoom) - Ergonomic behavior: Ctrl+Wheel zooms, standard Wheel pans vertically
   const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.08 : -0.08;
-    setZoom((prev) => Math.min(Math.max(0.40, Number((prev + delta).toFixed(2))), 2.2));
+    if (e.ctrlKey || e.metaKey) {
+      const delta = e.deltaY < 0 ? 0.08 : -0.08;
+      setZoom((prev) => Math.min(Math.max(0.35, Number((prev + delta).toFixed(2))), 2.4));
+    } else {
+      setPan((prev) => ({
+        x: prev.x - (e.shiftKey ? e.deltaY * 0.8 : 0),
+        y: prev.y - (!e.shiftKey ? e.deltaY * 0.8 : 0),
+      }));
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -600,12 +606,36 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
   };
 
   const fitToView = () => {
-    setZoom(0.82);
-    setPan({ x: 20, y: 15 });
+    const allPositions = Object.values(layout.nodes);
+    if (allPositions.length === 0) {
+      setZoom(0.92);
+      setPan({ x: 40, y: 30 });
+      return;
+    }
+    const minX = Math.min(...allPositions.map((p) => p.x - p.w / 2));
+    const maxX = Math.max(...allPositions.map((p) => p.x + p.w / 2));
+    const minY = Math.min(...allPositions.map((p) => p.y - p.h / 2));
+    const maxY = Math.max(...allPositions.map((p) => p.y + p.h / 2));
+
+    const graphWidth = Math.max(maxX - minX + 160, 600);
+    const graphHeight = Math.max(maxY - minY + 160, 400);
+
+    const containerWidth = canvasRef.current?.clientWidth || 1400;
+    const containerHeight = canvasRef.current?.clientHeight || 620;
+
+    const scaleX = containerWidth / graphWidth;
+    const scaleY = containerHeight / graphHeight;
+    const optimalZoom = Math.min(Math.max(0.35, Number(Math.min(scaleX, scaleY).toFixed(2))), 1.05);
+
+    setZoom(optimalZoom);
+    setPan({
+      x: Math.round((containerWidth - (maxX + minX) * optimalZoom) / 2),
+      y: Math.round((containerHeight - (maxY + minY) * optimalZoom) / 2),
+    });
   };
 
-  const zoomIn = () => setZoom((prev) => Math.min(Number((prev + 0.12).toFixed(2)), 2.2));
-  const zoomOut = () => setZoom((prev) => Math.max(Number((prev - 0.12).toFixed(2)), 0.40));
+  const zoomIn = () => setZoom((prev) => Math.min(Number((prev + 0.12).toFixed(2)), 2.4));
+  const zoomOut = () => setZoom((prev) => Math.max(Number((prev - 0.12).toFixed(2)), 0.35));
 
   // Focus on specific node
   const focusOnNode = (nodeId: string) => {
@@ -666,7 +696,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+    <div className="flex-1 h-full min-h-0 overflow-y-auto p-4 lg:p-6 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
       <div className="max-w-[1440px] mx-auto space-y-4">
 
         {/* ========================================================================= */}
@@ -911,7 +941,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           {/* Canvas Interactive Helper Badge */}
           <div className="absolute bottom-3 left-4 z-20 pointer-events-none bg-pureWhite/95 border border-hairline px-3 py-1 text-[9.5px] font-mono text-charcoal shadow-xs flex items-center gap-2">
             <DoodleIcon name="radar" className="w-3.5 h-3.5 text-charcoal" />
-            <span><strong>CANVAS CONTROLS:</strong> Click & Drag to Pan • Scroll to Zoom • Click Node to Inspect Telemetry</span>
+            <span><strong>CANVAS CONTROLS:</strong> Drag to Pan • Wheel to Scroll Nodes • Ctrl+Wheel to Zoom</span>
           </div>
 
           {/* Interactive Draggable Canvas Area */}
@@ -929,7 +959,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           >
             <svg
               className="w-full h-full block"
-              viewBox={`0 0 ${layout.width} ${layout.height}`}
+              viewBox="0 0 1580 620"
               style={{ width: '100%', height: '100%' }}
             >
               <defs>

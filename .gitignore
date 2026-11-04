@@ -10,10 +10,16 @@ __pycache__/
 .pytest_cache/
 
 # Databases & Runtime Data
+*.db
 data/*.db
 data/*.db-wal
 data/*.db-shm
 data/chromadb/
+
+# Temporary Inspection Artifacts
+.chrome_tmp/
+.chrome_tmp_inspect/
+.frames_inspect/
 
 # Frontend Node & Build Artifacts
 frontend/node_modules/

@@ -186,6 +186,19 @@ def test_disconnected_graph_and_cycles_handling():
     assert paths_missing == []
 
 
+def test_deep_attack_graph_traversal_long_paths():
+    """Verifies that long multi-hop attack paths (10+ hops) succeed without failing or dropping valid attack routes."""
+    g = nx.DiGraph()
+    nodes = [f"hop_{i}" for i in range(16)]
+    for i in range(len(nodes) - 1):
+        g.add_edge(nodes[i], nodes[i+1], weight=0.4, priority_score=8.5, assumptions=[f"Pivot {i}"])
+
+    paths = find_candidate_attack_paths(g, source_node="hop_0", target_node="hop_15", scan_id="s1", snapshot_id="snap1")
+    assert len(paths) >= 1
+    assert paths[0].path_nodes == nodes
+    assert len(paths[0].path_nodes) == 16
+
+
 def test_isolated_mitigation_simulation(mock_evidence):
     """Verifies that defensive mitigation simulation operates on an isolated copy without mutating source data."""
     findings, vulns = mock_evidence

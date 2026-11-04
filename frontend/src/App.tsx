@@ -218,7 +218,7 @@ export default function App() {
       />
 
       {/* Core Layout Container (Rail + Main Workspace Canvas) */}
-      <div className="flex flex-1 w-full overflow-hidden bg-bone">
+      <div className="flex flex-1 w-full overflow-hidden bg-bone min-h-0">
         {/* Left Vertical Navigation Rail (Swiss Index Style) */}
         <Sidebar
           activeTab={activeTab}
@@ -228,7 +228,7 @@ export default function App() {
         />
 
         {/* Main Command Workspace View Container */}
-        <main className="flex-1 flex flex-col bg-bone overflow-hidden min-w-0">
+        <main className="flex-1 flex flex-col bg-bone overflow-hidden min-w-0 min-h-0">
           {activeTab === 'dashboard' && (
             <DashboardView
               health={health}

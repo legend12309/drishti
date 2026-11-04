@@ -25,7 +25,7 @@ def find_candidate_attack_paths(
     scan_id: str,
     snapshot_id: str,
     k: int = 3,
-    max_depth: int = 10,
+    max_depth: int = 50,
 ) -> List[CandidateAttackPath]:
     """
     Finds top-K candidate attack paths from source to target using weighted traversal cost.

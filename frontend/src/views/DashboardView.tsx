@@ -205,7 +205,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
       ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-bone text-ink font-mono text-xs select-none scrollbar-tactical p-4 lg:p-6 space-y-5">
+    <div className="flex-1 h-full min-h-0 overflow-y-auto bg-bone text-ink font-mono text-xs scrollbar-tactical p-4 lg:p-6 space-y-5">
       <div className="max-w-[1520px] mx-auto space-y-5">
 
         {/* ========================================================================= */}

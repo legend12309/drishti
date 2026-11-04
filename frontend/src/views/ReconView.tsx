@@ -662,7 +662,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 select-none font-mono text-xs bg-bone text-ink scrollbar-tactical">
+    <div className="flex-1 h-full min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-8 font-mono text-xs bg-bone text-ink scrollbar-tactical">
       <div className="max-w-[1400px] mx-auto space-y-4">
         
         {/* Page Header */}

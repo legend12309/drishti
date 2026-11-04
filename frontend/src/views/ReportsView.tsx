@@ -125,7 +125,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
+    <div className="flex-1 h-full min-h-0 overflow-y-auto p-4 lg:p-6 bg-bone text-ink font-mono text-xs select-none scrollbar-tactical">
       <div className="max-w-[1400px] mx-auto space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
