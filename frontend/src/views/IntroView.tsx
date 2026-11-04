@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface IntroViewProps {
+  onStartReveal?: () => void;
   onComplete: () => void;
 }
 
-export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
+export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -22,6 +23,9 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete }) => {
   const handleTransitionToLogin = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
+
+    // Awaken and cinematically open the ocular eye in LoginView simultaneously
+    onStartReveal?.();
 
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});

@@ -44,6 +44,7 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 export default function App() {
   // Play intro video sequence on initial startup
   const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(false);
+  const [isIntroRevealing, setIsIntroRevealing] = useState<boolean>(false);
 
   // Always show login page first on open
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -163,13 +164,23 @@ export default function App() {
             setIsAuthenticated(true);
             setEntranceFlash(true);
           }}
-          onReplayIntro={() => setHasSeenIntro(false)}
+          onReplayIntro={() => {
+            setHasSeenIntro(false);
+            setIsIntroRevealing(false);
+          }}
           showToast={showToast}
+          isIntroRevealing={hasSeenIntro || isIntroRevealing}
         />
 
         {/* Cinematic Video Intro Overlay that cross-fades directly into LoginView */}
         {!hasSeenIntro && (
-          <IntroView onComplete={() => setHasSeenIntro(true)} />
+          <IntroView
+            onStartReveal={() => setIsIntroRevealing(true)}
+            onComplete={() => {
+              setHasSeenIntro(true);
+              setIsIntroRevealing(true);
+            }}
+          />
         )}
       </div>
     );
