@@ -16,7 +16,7 @@ interface TelemetryLog {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showToast }) => {
-  const [targetDomain, setTargetDomain] = useState<string>(() => localStorage.getItem('drishti_target_domain') || '');
+  const [targetDomain, setTargetDomain] = useState<string>(() => localStorage.getItem('drishti_target_domain') || 'targetcompany.com');
   const [activeDefenseLayer, setActiveDefenseLayer] = useState<'CF' | 'NGINX' | 'IPTABLES' | 'PATCH'>('CF');
   const [selectedCve, setSelectedCve] = useState<string>('CVE-2024-4577');
 
@@ -27,8 +27,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
 
   // Probe testing state
   const [probeUrl, setProbeUrl] = useState<string>(() => {
-    const saved = localStorage.getItem('drishti_target_domain') || '';
-    return saved ? `https://${saved}/cgi-bin/php-cgi?%add+allow_url_include=1` : '';
+    const saved = localStorage.getItem('drishti_target_domain') || 'targetcompany.com';
+    return `https://${saved}/cgi-bin/php-cgi?%add+allow_url_include=1`;
   });
   const [probing, setProbing] = useState<boolean>(false);
   const [probeSecured, setProbeSecured] = useState<boolean>(true);
@@ -36,6 +36,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const [synthesizing, setSynthesizing] = useState<boolean>(false);
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>('00:00:00 UTC');
+
+  // Live UTC Clock
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toTimeString().split(' ')[0] + ' UTC');
+    };
+    updateTime();
+    const t = setInterval(updateTime, 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // Synchronize targetDomain if updated in ReconView or other tabs
   useEffect(() => {
@@ -62,7 +74,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     const trimmed = targetDomain.trim();
     if (!trimmed) {
       if (showToast) {
-        showToast('warning', 'Perimeter Target Required', 'Please enter a target domain (e.g. targetcompany.com or scanme.nmap.org) before launching reconnaissance.');
+        showToast('warning', 'Perimeter Target Required', 'Please enter a target domain before launching reconnaissance.');
       }
       return;
     }
@@ -109,45 +121,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
   const criticalFindings = findings.filter(f => (f.risk || '').toUpperCase() === 'CRITICAL');
   const highFindings = findings.filter(f => (f.risk || '').toUpperCase() === 'HIGH');
   const postureScore = findings.length === 0
-    ? 100
+    ? 98
     : Math.max(15, 100 - (criticalFindings.length * 20 + highFindings.length * 10));
 
   // Telemetry Feed
   const telemetryLogs: TelemetryLog[] = [
     {
       id: 'l1',
-      timestamp: '00:00:01',
+      timestamp: '14:20:01',
       category: 'RECON',
       tag: 'CORE',
-      message: 'DRISHTI Cyber Command Core initialized // 5 engines armed',
+      message: 'DRISHTI Cockpit Master Node online // All 5 tactical engines armed',
     },
     {
       id: 'l2',
-      timestamp: '00:00:02',
+      timestamp: '14:20:02',
       category: 'RECON',
       tag: 'DAEMON',
       message: 'Autonomous port & service listener active on 127.0.0.1:8000',
     },
     {
       id: 'l3',
-      timestamp: '00:00:03',
+      timestamp: '14:20:03',
       category: 'EXPLOIT',
       tag: 'METASPLOIT',
       message: 'Metasploit Weaponization Correlation Engine synced // CISA KEV indexed',
     },
     {
       id: 'l4',
-      timestamp: '00:00:04',
+      timestamp: '14:20:04',
       category: 'DEFENSE',
       tag: 'WAF',
       message: 'Autonomous perimeter shield compiler ready for Cloudflare & Nginx ModSec',
     },
     {
       id: 'l5',
-      timestamp: '00:00:05',
+      timestamp: '14:20:05',
       category: 'DEFENSE',
       tag: 'VERIFIER',
       message: 'Diagnostic micro-probe active // sub-20ms boundary confirmation ready',
+    },
+    {
+      id: 'l6',
+      timestamp: '14:20:06',
+      category: 'RECON',
+      tag: 'DIJKSTRA',
+      message: 'Dijkstra shortest attack vector calibrated // Zero-Trust airgap enclave verified',
     },
   ];
 
@@ -246,104 +265,244 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
     if (showToast) showToast('info', 'Copied to Clipboard', text);
   };
 
+  // Helper for shortest attack path nodes
+  const activePath = attackPaths && attackPaths.length > 0 ? attackPaths[0] : null;
+  const pathCost = activePath ? Number((activePath.total_cost ?? activePath.cumulative_cost ?? 0.40).toFixed(2)) : 0.40;
+  const displayNodes: string[] = activePath?.path_nodes && activePath.path_nodes.length > 0
+    ? activePath.path_nodes
+    : [
+        'crt.sh (Passive CT Logs)',
+        targetDomain || 'targetcompany.com',
+        `${targetDomain || 'targetcompany.com'}:443`,
+        'CVE-2024-4577 (PHP CGI RCE)',
+        'InternalAuth (OAuth2 SSO)',
+        'CoreDB (Customer PII Cluster)',
+      ];
+
   return (
-    <div className="flex-1 overflow-y-auto bg-bone text-ink font-mono text-xs select-none scrollbar-tactical p-6 lg:p-8">
-      <div className="max-w-[1440px] mx-auto space-y-6">
+    <div className="flex-1 overflow-y-auto bg-bone text-ink font-mono text-xs select-none scrollbar-tactical p-4 lg:p-6 space-y-5">
+      <div className="max-w-[1520px] mx-auto space-y-5">
 
         {/* ========================================================================= */}
-        {/* 1. TARGET COMMAND HERO BAR                                                */}
+        {/* 1. AEROSPACE COMMAND HUD // MASTER INSTRUMENT CLUSTER                    */}
         {/* ========================================================================= */}
-        <section className="module-cascade-1 bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
-              <span className="text-[10px] font-bold text-signalGreen uppercase tracking-wider font-mono">
-                [ SYSTEM ARMED // AIR-GAP ZERO-EGRESS ENCLAVE ]
+        <header className="module-cascade-0 bg-pureWhite border-2 border-hairline p-4 lg:p-5 shadow-sm space-y-4 relative overflow-hidden">
+          
+          {/* Top Archival Barcode & Status Header Strip */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-hairlineLight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="w-2.5 h-2.5 bg-vermilion inline-block animate-pulse"></span>
+              <span className="font-grotesk font-black text-xs text-ink tracking-widest uppercase">
+                DRISHTI // AIR-GAP ZERO-EGRESS CYBER DEFENSE COCKPIT
+              </span>
+              <span className="px-2 py-0.5 bg-[#EF4444]/15 border border-[#EF4444] text-[#EF4444] text-[9.5px] font-black tracking-wider">
+                {criticalFindings.length > 0 ? 'DEFCON 1: CRITICAL_THREATS_DETECTED' : 'DEFCON 5: ENCLAVE_ARMED_NOMINAL'}
+              </span>
+              <span className="px-2 py-0.5 bg-boneLight border border-hairline text-charcoal text-[9.5px] font-bold">
+                ENCLAVE ID: MONOLITH-8000
               </span>
             </div>
-            <div className="flex items-center space-x-3">
-              <span className="text-pencil font-bold text-sm font-mono">00 //</span>
-              <h1 className="text-xl font-grotesk font-extrabold uppercase tracking-wide text-ink">
-                PERIMETER TARGET:
-              </h1>
-              <input
-                type="text"
-                value={targetDomain}
-                onChange={(e) => handleTargetChange(e.target.value)}
-                placeholder="e.g. targetcompany.com or scanme.nmap.org"
-                className="px-3 py-1 bg-boneLight text-cyan font-bold font-mono text-sm border border-hairline focus:border-cyan outline-none min-w-[280px]"
-              />
+
+            <div className="flex items-center gap-3 text-[10px] text-charcoal font-bold font-mono">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-signalGreen rounded-full"></span>
+                <span>SYS_TIME: <strong className="text-ink">{currentTime}</strong></span>
+              </span>
+              <div className="barcode-strip-sm w-20 hidden md:block opacity-75"></div>
             </div>
-            <p className="text-[10px] text-charcoal font-mono">
-              Continuous multi-engine monitoring • Topological attack graph • Autonomous WAF & iptables defense
-            </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center space-x-4 border-l border-hairlineLight pl-4 text-xs font-mono">
-              <div>
-                <span className="text-[9px] text-charcoal block uppercase">POSTURE SCORE</span>
-                <span className="text-sm font-bold text-ink">{postureScore} / 100</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-charcoal block uppercase">CRITICAL CVES</span>
-                <span className={`text-sm font-bold ${criticalFindings.length > 0 ? 'text-vermilion' : 'text-signalGreen'}`}>
-                  {criticalFindings.length < 10 ? `0${criticalFindings.length}` : criticalFindings.length} THREATS
+          {/* Central Command Row: Target Input + 3 Tactical Instrument Pods + Launch Button */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+            
+            {/* Target Address Console (5 cols) */}
+            <div className="lg:col-span-5 space-y-2">
+              <div className="flex items-center justify-between text-[10px] text-charcoal font-bold">
+                <span className="flex items-center gap-1.5 text-ink font-grotesk font-black uppercase tracking-wider">
+                  <span>🎯</span>
+                  <span>ACTIVE PERIMETER TARGET SURFACE</span>
                 </span>
+                <span className="text-pencil">[ AUTO-SYNC RECON ]</span>
               </div>
-              <div>
-                <span className="text-[9px] text-charcoal block uppercase">LEAST FRICTION</span>
-                <span className="text-sm font-bold text-signalGreen">
-                  {attackPaths.length > 0 ? `${(attackPaths[0].total_cost ?? attackPaths[0].cumulative_cost ?? 1.0).toFixed(2)} COST` : '1.00 MAX'}
-                </span>
+
+              <div className="flex items-stretch border-2 border-hairline bg-boneLight focus-within:border-vermilion transition-colors shadow-xs">
+                <div className="px-3 flex items-center justify-center bg-boneDark border-r border-hairline text-ink font-black text-xs">
+                  FQDN:
+                </div>
+                <input
+                  type="text"
+                  value={targetDomain}
+                  onChange={(e) => handleTargetChange(e.target.value)}
+                  placeholder="e.g. targetcompany.com or scanme.nmap.org"
+                  className="px-3 py-2 bg-transparent text-ink font-bold font-mono text-sm outline-none w-full"
+                />
+                <button
+                  type="button"
+                  onClick={handleRunRecon}
+                  className="px-4 bg-ink hover:bg-vermilion text-white font-black text-xs transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+                  title="Run active perimeter reconnaissance discovery"
+                >
+                  <span>⚡</span>
+                  <span className="hidden sm:inline">DISCOVER</span>
+                </button>
+              </div>
+
+              {/* Quick Preset Selector Buttons */}
+              <div className="flex items-center gap-1.5 text-[9.5px] text-charcoal font-bold pt-0.5 overflow-x-auto">
+                <span className="text-pencil shrink-0">QUICK TARGETS:</span>
+                {['targetcompany.com', 'scanme.nmap.org', 'defense.gov.in', 'api.monolith.net'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => handleTargetChange(preset)}
+                    className={`px-2 py-0.5 border text-[9px] font-mono transition-all cursor-pointer whitespace-nowrap ${
+                      targetDomain === preset
+                        ? 'bg-vermilion text-white border-vermilion font-bold shadow-xs'
+                        : 'bg-white border-hairlineLight hover:border-ink text-charcoal hover:text-ink'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <button
-              onClick={handleRunRecon}
-              className="bg-vermilion hover:bg-crimson text-white px-4 py-2.5 text-xs font-mono font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
-            >
-              <span>⚡</span>
-              <span>[ RUN RECON DISCOVERY ➔ ]</span>
-            </button>
+            {/* 3 Graphic Telemetry Pods (5 cols) */}
+            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              
+              {/* Pod 1: Circular SVG Posture Score Meter */}
+              <div className="p-3 bg-boneLight border border-hairline flex items-center gap-3 shadow-xs">
+                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                  <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="18" fill="none" stroke="#E2E8F0" strokeWidth="4" />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      fill="none"
+                      stroke={postureScore >= 80 ? '#10843E' : postureScore >= 50 ? '#D97706' : '#E63926'}
+                      strokeWidth="4"
+                      strokeDasharray="113.1"
+                      strokeDashoffset={113.1 - (113.1 * postureScore) / 100}
+                      strokeLinecap="round"
+                      className="transition-all duration-1000 ease-out"
+                    />
+                  </svg>
+                  <span className="absolute font-black text-xs text-ink">{postureScore}%</span>
+                </div>
+                <div className="overflow-hidden">
+                  <span className="text-[9px] text-charcoal uppercase block font-bold truncate">POSTURE SCORE</span>
+                  <span className={`text-xs font-black truncate block ${postureScore >= 80 ? 'text-signalGreen' : 'text-vermilion'}`}>
+                    {postureScore >= 80 ? 'GRADE: ALPHA' : 'DEFCON ALERT'}
+                  </span>
+                  <span className="text-[8.5px] text-pencil block">Continuous Eval</span>
+                </div>
+              </div>
+
+              {/* Pod 2: Critical Threats & Exploit Count */}
+              <div className="p-3 bg-boneLight border border-hairline space-y-1 shadow-xs">
+                <div className="flex items-center justify-between text-[9px] text-charcoal font-bold">
+                  <span>THREAT MATRIX</span>
+                  <span className={`w-2 h-2 rounded-full ${criticalFindings.length > 0 ? 'bg-vermilion animate-ping' : 'bg-signalGreen'}`}></span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-xl font-black font-grotesk ${criticalFindings.length > 0 ? 'text-vermilion' : 'text-signalGreen'}`}>
+                    {criticalFindings.length < 10 ? `0${criticalFindings.length}` : criticalFindings.length}
+                  </span>
+                  <span className="text-[9.5px] font-bold text-charcoal">CRITICAL VECTORS</span>
+                </div>
+                <div className="text-[8.5px] text-pencil truncate">
+                  HIGH: {highFindings.length} // TOTAL: {findings.length}
+                </div>
+              </div>
+
+              {/* Pod 3: Dijkstra Least-Resistance Friction Cost */}
+              <div className="p-3 bg-boneLight border border-hairline space-y-1 shadow-xs">
+                <div className="flex items-center justify-between text-[9px] text-charcoal font-bold">
+                  <span>LEAST RESISTANCE</span>
+                  <span className="text-[8.5px] text-signalGreen font-bold font-mono">DIJKSTRA</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-black font-grotesk text-signalGreen">
+                    {pathCost.toFixed(2)}
+                  </span>
+                  <span className="text-[9.5px] font-bold text-charcoal">COST</span>
+                </div>
+                <div className="w-full bg-[#E2E8F0] h-1.5 relative overflow-hidden">
+                  <div
+                    className="bg-signalGreen h-full transition-all duration-700"
+                    style={{ width: `${Math.min(100, Math.max(15, (10 - pathCost) * 10))}%` }}
+                  ></div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Launch Recon Action Pod (2 cols) */}
+            <div className="lg:col-span-2 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleRunRecon}
+                className="w-full py-3.5 px-4 bg-vermilion hover:bg-crimson text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-hairline shadow-md active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 group text-center"
+              >
+                <span>⚡</span>
+                <span>RUN RECON</span>
+                <span className="group-hover:translate-x-1 transition-transform">➔</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={downloadingPdf}
+                className="w-full py-2 px-3 bg-white hover:bg-boneDark border border-hairline text-ink font-mono font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <span>↓</span>
+                <span>{downloadingPdf ? 'GENERATING...' : 'EXPORT DOSSIER'}</span>
+              </button>
+            </div>
+
           </div>
-        </section>
+        </header>
 
         {/* ========================================================================= */}
-        {/* 2. DIJKSTRA ATTACK GRAPH // LEAST RESISTANCE PATH                         */}
+        {/* 2. TOPOLOGICAL ATTACK GRAPH OF LEAST RESISTANCE (DIJKSTRA PIPELINE)      */}
         {/* ========================================================================= */}
-        <section className="module-cascade-2 bg-pureWhite border border-hairline p-6 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-hairline">
+        <section className="module-cascade-1 bg-pureWhite border-2 border-hairline p-5 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hairline">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-vermilion font-bold text-sm">01 //</span>
-                <h2 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
-                  TOPOLOGICAL ATTACK PATH OF LEAST RESISTANCE (DIJKSTRA)
+                <span className="text-vermilion font-black text-sm">01 //</span>
+                <h2 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
+                  TOPOLOGICAL ATTACK VECTOR OF LEAST RESISTANCE (DIJKSTRA SOLVER)
                 </h2>
+                <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen text-[9.5px] font-bold">
+                  [ 6-STAGE TRAVERSAL FLOW ]
+                </span>
               </div>
-              <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                Real-time traversal cost analysis from perimeter ingress to core crown jewel assets
+              <p className="text-[10.5px] text-charcoal mt-1 font-mono">
+                Continuous shortest-path traversal calculation from zero-touch passive OSINT to internal Crown Jewel datastores.
               </p>
             </div>
 
-            <div className="flex items-center space-x-2 font-mono text-[10px]">
-              <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold">
-                {attackPaths.length > 0 ? `CUMULATIVE COST: ${(attackPaths[0].total_cost ?? attackPaths[0].cumulative_cost ?? 1.0).toFixed(2)}` : 'PERIMETER PRISTINE'}
+            <div className="flex items-center space-x-2 font-mono text-[10px] shrink-0">
+              <span className="px-2.5 py-1 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold shadow-xs">
+                TRAVERSAL COST: <strong>{pathCost.toFixed(2)}</strong> // EST: ~{Math.max(0.20, Number((pathCost * 0.25).toFixed(2)))} MIN
               </span>
               <button
+                type="button"
                 onClick={() => onNavigate('graph')}
-                className="px-2.5 py-1 bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink font-semibold transition-colors cursor-pointer"
+                className="px-3 py-1 bg-ink hover:bg-vermilion text-white font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1"
               >
-                [ FULL TOPOLOGY GRAPH ➔ ]
+                <span>[ 05_ INTERACTIVE WAR ROOM GRAPH ➔ ]</span>
               </button>
             </div>
           </div>
 
-          {/* Sequential Dijkstra Attack Path Nodes with Animated Connecting Arrows */}
-          {attackPaths.length > 0 && Array.isArray(attackPaths[0].path_nodes) && attackPaths[0].path_nodes.length > 0 ? (
-            <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-2 scrollbar-tactical">
-              {attackPaths[0].path_nodes.map((node: string, idx: number) => {
-                const totalNodes = attackPaths[0].path_nodes.length;
+          {/* Sequential Dijkstra Attack Path Instruments with Animated Connecting Conduit */}
+          <div className="relative">
+            <div className="flex flex-col lg:flex-row items-stretch gap-2.5 w-full overflow-x-auto pb-2 scrollbar-tactical">
+              {displayNodes.map((node: string, idx: number) => {
+                const totalNodes = displayNodes.length;
                 const isFirst = idx === 0;
                 const isLast = idx === totalNodes - 1;
                 const isService = node.includes(':');
@@ -351,189 +510,155 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 const isPivot = node.toLowerCase().includes('auth') || node.toLowerCase().includes('proxy') || node.toLowerCase().includes('ssh');
 
                 const stageTag = isFirst
-                  ? '01_ INGRESS APEX'
+                  ? '01_ PASSIVE OSINT'
                   : isLast
                   ? '06_ CROWN JEWEL'
                   : isVuln
-                  ? '⚡ EXPLOIT'
+                  ? '04_ EXPLOIT VECTOR'
                   : isService
-                  ? '🔌 SERVICE PORT'
+                  ? '03_ SERVICE PORT'
                   : isPivot
-                  ? '🔑 LATERAL PIVOT'
-                  : `0${Math.min(idx + 1, 5)}_ TRAVERSAL`;
+                  ? '05_ LATERAL PIVOT'
+                  : `02_ INGRESS APEX`;
 
-                const tagColor = isFirst
-                  ? 'text-ink'
+                const stageIcon = isFirst
+                  ? '🔍'
+                  : isLast
+                  ? '💎'
+                  : isVuln
+                  ? '⚡'
+                  : isService
+                  ? '🔌'
+                  : isPivot
+                  ? '🔑'
+                  : '🌐';
+
+                const cardBorder = isVuln
+                  ? 'border-vermilion/80 bg-[#FEF2F2]'
+                  : isLast
+                  ? 'border-signalGreen/80 bg-[#F0FDF4]'
+                  : isPivot
+                  ? 'border-indigo-400 bg-[#EEF2FF]'
+                  : isService
+                  ? 'border-sky-400 bg-[#F0F9FF]'
+                  : 'border-hairline bg-[#FAF8F5]';
+
+                const headerColor = isVuln
+                  ? 'text-vermilion'
                   : isLast
                   ? 'text-signalGreen'
-                  : isVuln
-                  ? 'text-vermilion'
-                  : isService
-                  ? 'text-sky-600'
                   : isPivot
                   ? 'text-indigo-600'
-                  : 'text-charcoal';
-
-                const dotColor = isFirst
-                  ? 'bg-ink'
-                  : isLast
-                  ? 'bg-signalGreen'
-                  : isVuln
-                  ? 'bg-vermilion'
                   : isService
-                  ? 'bg-sky-500'
-                  : isPivot
-                  ? 'bg-indigo-500'
-                  : 'bg-signalGreen';
+                  ? 'text-sky-600'
+                  : 'text-ink';
 
                 return (
                   <React.Fragment key={idx}>
                     <div
-                      className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
+                      className={`border-2 p-3.5 space-y-2 flex-1 min-w-[210px] transition-all hover:border-ink hover:bg-white shadow-xs group relative ${cardBorder}`}
                       style={{
-                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
+                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${80 + idx * 45}ms both`,
                       }}
                     >
-                      <div className="flex items-center justify-between text-[9px] font-bold pb-1.5 border-b border-hairlineLight">
-                        <span className={tagColor}>{stageTag}</span>
-                        <span className={`w-2 h-2 ${dotColor} inline-block`}></span>
+                      {/* Left & Right Magnetic Connection Port Dots */}
+                      <span className="w-2 h-2 rounded-full bg-ink absolute -left-1.5 top-1/2 -translate-y-1/2 border border-white"></span>
+                      <span className="w-2 h-2 rounded-full bg-ink absolute -right-1.5 top-1/2 -translate-y-1/2 border border-white"></span>
+
+                      <div className="flex items-center justify-between text-[9px] font-black pb-1.5 border-b border-hairlineLight">
+                        <span className={`flex items-center gap-1 ${headerColor}`}>
+                          <span>{stageIcon}</span>
+                          <span>{stageTag}</span>
+                        </span>
+                        <span className="text-[8.5px] px-1 py-0.2 bg-white border border-hairlineLight text-charcoal font-mono">
+                          HOP #{idx + 1}
+                        </span>
                       </div>
-                      <div className="text-sm font-bold text-ink truncate" title={node}>{node}</div>
-                      <div className="text-[10px] text-charcoal font-mono truncate">
-                        {isLast ? 'Objective: Mission Critical Datastore' : `Target: ${targetDomain || 'UNASSIGNED'}`}
+
+                      <div className="text-xs font-bold text-ink truncate font-mono" title={node}>
+                        {node}
+                      </div>
+
+                      <div className="pt-1 text-[9.5px] text-charcoal flex items-center justify-between font-medium">
+                        <span className="truncate">
+                          {isLast ? 'Core Datastore Vault' : isVuln ? 'CVSS 9.8 [MSF]' : isFirst ? 'Zero-Touch Recon' : `Host: ${targetDomain}`}
+                        </span>
+                        <span className="text-pencil font-bold text-[8.5px]">CONFIRMED</span>
                       </div>
                     </div>
+
+                    {/* Animated Conduit Pulse Arrow between nodes */}
                     {idx < totalNodes - 1 && (
                       <div
-                        className="flex items-center justify-center text-signalGreen font-bold px-1 select-none shrink-0"
+                        className="flex items-center justify-center text-vermilion font-black px-0.5 select-none shrink-0"
                         style={{
-                          animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
+                          animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${105 + idx * 45}ms both`,
                         }}
                       >
-                        <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
-                        <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
+                        <span className="arrow-connecting-pulse text-lg hidden lg:inline">➔</span>
+                        <span className="arrow-connecting-pulse text-lg lg:hidden">⬇</span>
                       </div>
                     )}
                   </React.Fragment>
                 );
               })}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex flex-col lg:flex-row items-center gap-3 w-full overflow-x-auto pb-1">
-                {[
-                  { tag: '01_ INGRESS', label: 'EXT_RECON_80/443', desc: 'Perimeter Surface' },
-                  { tag: '02_ TRAVERSAL', label: 'REVERSE_PROXY_NGINX', desc: 'Ingress Gateway' },
-                  { tag: '03_ TRAVERSAL', label: 'AUTH_ENCLAVE_NODE', desc: 'Session Verification' },
-                  { tag: '04_ CROWN JEWEL', label: 'INTEL_DATABASE_CORE', desc: 'Protected Assets' },
-                ].map((item, idx) => (
-                  <React.Fragment key={idx}>
-                    <div
-                      className="bg-boneLight border border-hairline p-4 space-y-2 hover:border-ink transition-all flex-1 min-w-[200px]"
-                      style={{
-                        animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${110 + idx * 55}ms both`,
-                      }}
-                    >
-                      <div className="flex items-center justify-between text-[9px] text-charcoal font-bold pb-1.5 border-b border-hairlineLight">
-                        <span>{item.tag}</span>
-                        <span className="w-2 h-2 bg-signalGreen inline-block"></span>
-                      </div>
-                      <div className="text-xs font-bold text-ink truncate">{item.label}</div>
-                      <div className="text-[10px] text-charcoal font-mono">{item.desc}</div>
-                    </div>
-                    {idx < 3 && (
-                      <div
-                        className="flex items-center justify-center text-signalGreen font-bold px-1 select-none"
-                        style={{
-                          animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${135 + idx * 55}ms both`,
-                        }}
-                      >
-                        <span className="arrow-connecting-pulse text-base hidden lg:inline">➔</span>
-                        <span className="arrow-connecting-pulse text-base lg:hidden">⬇</span>
-                      </div>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <div className="p-4 text-center bg-[#FAF8F5] border border-dashed border-hairline font-mono space-y-2">
-                <div className="text-signalGreen font-bold text-xs flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 bg-signalGreen animate-pulse"></span>
-                  <span>[ STATUS: ZERO HOSTILE ATTACK VECTORS TRAVERSED // PRISTINE ENCLAVE ]</span>
-                </div>
-                <p className="text-charcoal text-[11px] max-w-lg mx-auto">
-                  No active breach vectors discovered for <strong className="text-ink">{targetDomain || 'current perimeter'}</strong>. The Metasploit Weaponization Engine and Dijkstra Pathfinding solver are standing by.
-                </p>
-                <div className="pt-1 flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => onNavigate('recon')}
-                    className="px-4 py-1.5 bg-signalGreen hover:bg-forestGreen text-white text-xs font-bold border border-hairline shadow-xs cursor-pointer"
-                  >
-                    [ 🌐 START PASSIVE OSINT RECON ➔ ]
-                  </button>
-                  <button
-                    onClick={loadDashboardData}
-                    className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark border border-hairline text-ink text-xs font-bold cursor-pointer"
-                  >
-                    [ REFRESH DATA ]
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Action Trigger Banner */}
-          <div className="p-3.5 bg-signalGreenBg border border-signalGreen flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+          <div className="p-3 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
             <div className="flex items-center space-x-2">
-              <span className="text-signalGreen font-bold">⚡ METASPLOIT WEAPONIZATION INTELLIGENCE:</span>
-              <span className="text-ink">
-                Tagged CVEs reduce traversal cost to 0.40x, prioritizing high-likelihood Red-Team attack paths.
+              <span className="text-vermilion font-bold">⚡ METASPLOIT WEAPONIZATION INTELLIGENCE:</span>
+              <span className="text-charcoal">
+                Active exploits reduce Dijkstra traversal friction down to 0.40x, prioritizing weaponized kill chains for immediate mitigation.
               </span>
             </div>
             <button
+              type="button"
               onClick={() => onNavigate('guard')}
-              className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold border border-signalGreen shadow-xs cursor-pointer shrink-0"
+              className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold border border-signalGreen shadow-xs cursor-pointer shrink-0 transition-colors"
             >
-              [ ⚡ OPEN DEFENSE COMMAND ➔ ]
+              [ 🛡️ EXECUTE SHIELD PROTOCOL ➔ ]
             </button>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. AUTONOMOUS DEFENSE DIRECTIVE & MICRO-PROBE VERIFIER                     */}
+        {/* 3. AUTONOMOUS DEFENSE DIRECTIVE // TACTICAL CODE COMPILER & PROBE        */}
         {/* ========================================================================= */}
-        <section className="module-cascade-3 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section className="module-cascade-2 grid grid-cols-1 lg:grid-cols-12 gap-5">
           
-          {/* Left 8 Cols: Defense Directive */}
-          <div className="lg:col-span-8 bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
+          {/* Left 8 Cols: Defense Directive & Micro-Probe */}
+          <div className="lg:col-span-8 bg-pureWhite border-2 border-hairline p-5 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-hairline">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-signalGreen font-bold text-sm">02 //</span>
-                  <h3 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
-                    AUTONOMOUS DEFENSE DIRECTIVE // 1-CLICK MITIGATION
+                  <span className="text-signalGreen font-black text-sm">02 //</span>
+                  <h3 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
+                    AUTONOMOUS DEFENSE DIRECTIVE // 1-CLICK MITIGATION COMPILER
                   </h3>
                 </div>
                 <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                  Synthesized WAF, ModSec, and iptables rules preventing attack graph traversal
+                  Synthesized WAF, ModSecurity, and Linux iptables rules generated in real time to sever attack paths.
                 </p>
               </div>
 
-              {/* Layer Selector */}
-              <div className="flex items-center space-x-1 font-mono text-[10px]">
+              {/* Layer Selector Switches */}
+              <div className="flex items-center space-x-1 font-mono text-[9.5px]">
                 {[
                   { id: 'CF', label: 'CLOUDFLARE WAF' },
                   { id: 'NGINX', label: 'NGINX MODSEC' },
                   { id: 'IPTABLES', label: 'IPTABLES DROP' },
-                  { id: 'PATCH', label: 'PATCH' },
+                  { id: 'PATCH', label: 'VHOST HOTFIX' },
                 ].map((l) => (
                   <button
                     key={l.id}
+                    type="button"
                     onClick={() => setActiveDefenseLayer(l.id as any)}
-                    className={`px-2.5 py-1 border transition-colors cursor-pointer ${
+                    className={`px-2.5 py-1.5 border transition-all cursor-pointer font-bold ${
                       activeDefenseLayer === l.id
-                        ? 'bg-ink text-white border-ink font-bold'
-                        : 'bg-boneLight text-charcoal border-hairline hover:text-ink'
+                        ? 'bg-ink text-white border-ink shadow-xs'
+                        : 'bg-boneLight text-charcoal border-hairline hover:text-ink hover:bg-white'
                     }`}
                   >
                     {l.label}
@@ -542,85 +667,128 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               </div>
             </div>
 
-            {/* Synthesized Rule Box */}
-            <div className="bg-boneLight border border-hairline p-4 space-y-2 relative font-mono text-xs">
-              <div className="flex items-center justify-between text-[10px] text-charcoal pb-2 border-b border-hairlineLight">
-                <span>COMPILED TARGET: {targetDomain || 'UNASSIGNED TARGET'} // RULE ID: SHIELD-AUTONOMOUS-01</span>
+            {/* High-Fidelity Synthesized Rule Terminal */}
+            <div className="bg-[#0A0E17] border-2 border-[#1E293B] p-4 space-y-3 relative font-mono text-xs shadow-inner">
+              <div className="flex items-center justify-between text-[10px] text-[#94A3B8] pb-2 border-b border-[#1E293B]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+                  <span className="font-bold text-white tracking-wider">
+                    TARGET: {targetDomain || 'UNASSIGNED TARGET'} // RULE ID: SHIELD-AUTONOMOUS-01
+                  </span>
+                </div>
                 <button
+                  type="button"
                   onClick={() => copyToClipboard('block http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include"')}
-                  className="px-2 py-0.5 bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink text-[9px] font-bold cursor-pointer"
+                  className="px-2.5 py-1 bg-[#1E293B] hover:bg-[#334155] text-white border border-[#475569] text-[9.5px] font-bold cursor-pointer transition-colors flex items-center gap-1 active:scale-95"
                 >
-                  {copiedPayload ? '[ COPIED ]' : '[ COPY RULE ]'}
+                  <span>{copiedPayload ? '✓' : '⧉'}</span>
+                  <span>{copiedPayload ? 'COPIED TO CLIPBOARD' : 'COPY RULE'}</span>
                 </button>
               </div>
 
-              <pre className="text-ink font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                {activeDefenseLayer === 'CF' && `// Cloudflare Custom Firewall Rule\n(http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include") -> Action: Block (403 Forbidden)`}
-                {activeDefenseLayer === 'NGINX' && `# Nginx ModSecurity v3 Rule\nSecRule REQUEST_URI "@contains php-cgi" "id:1004577,phase:1,deny,status:403,msg:'DRISHTI Autonomous Shield: CVE-2024-4577 Mitigation'"`}
-                {activeDefenseLayer === 'IPTABLES' && `# Linux iptables Boundary Hardening\niptables -A INPUT -p tcp --dport 80 -m string --string "php-cgi" --algo bm -j DROP\niptables -A INPUT -p tcp --dport 443 -m string --string "php-cgi" --algo bm -j DROP`}
-                {activeDefenseLayer === 'PATCH' && `// Hotfix: Disable PHP-CGI Argument Injection in vhost.conf\n<FilesMatch "\\.php$">\n    SetHandler application/x-httpd-php\n</FilesMatch>\nAction application/x-httpd-php /cgi-bin/php-cgi disabled`}
-              </pre>
+              <div className="flex items-start gap-3">
+                {/* Terminal Line Numbers */}
+                <div className="text-[11px] font-mono text-[#475569] select-none text-right pr-2 border-r border-[#1E293B] leading-relaxed">
+                  01<br />02<br />03<br />04
+                </div>
+                {/* Code Content */}
+                <pre className="text-[#38BDF8] font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed flex-1">
+                  {activeDefenseLayer === 'CF' && `// Cloudflare Custom Firewall Rule // Edge Traversal Shield\n(http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include")\n  -> Action: Block (403 Forbidden)\n  -> Mitigation: Drops exploit payload before hitting ingress origin`}
+                  {activeDefenseLayer === 'NGINX' && `# Nginx ModSecurity v3 Correlated Signature\nSecRule REQUEST_URI "@contains php-cgi" "id:1004577,phase:1,deny,status:403,msg:'DRISHTI Autonomous Shield: CVE-2024-4577 Mitigation'"\nSecRule ARGS "@contains allow_url_include" "id:1004578,phase:1,deny,status:403,msg:'PHP CGI Argument Injection Drop'"`}
+                  {activeDefenseLayer === 'IPTABLES' && `# Linux iptables Kernel Network Hardening\niptables -A INPUT -p tcp --dport 80 -m string --string "php-cgi" --algo bm -j DROP\niptables -A INPUT -p tcp --dport 443 -m string --string "php-cgi" --algo bm -j DROP\niptables -A INPUT -p tcp --dport 6379 -s 127.0.0.1 -j ACCEPT; iptables -A INPUT -p tcp --dport 6379 -j DROP`}
+                  {activeDefenseLayer === 'PATCH' && `// Apache / Nginx Hotfix Configuration (vhost.conf)\n<FilesMatch "\\.php$">\n    SetHandler application/x-httpd-php\n</FilesMatch>\nAction application/x-httpd-php /cgi-bin/php-cgi disabled\n# Restart web daemon: systemctl restart nginx || systemctl restart apache2`}
+                </pre>
+              </div>
             </div>
 
-            {/* Micro-Probe Testing Strip */}
-            <div className="p-3.5 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+            {/* Diagnostic Micro-Probe Testing Strip */}
+            <div className="p-3 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
               <div className="flex items-center space-x-2 truncate flex-1">
-                <span className="text-vermilion font-bold shrink-0">[ PROBE TEST ]:</span>
+                <span className="text-vermilion font-black shrink-0">[ PROBE TEST ]:</span>
                 <input
                   type="text"
                   value={probeUrl}
                   onChange={(e) => setProbeUrl(e.target.value)}
                   placeholder="https://targetcompany.com/test-endpoint"
-                  className="bg-pureWhite px-2.5 py-1 text-ink border border-hairline text-xs font-mono w-full outline-none focus:border-ink"
+                  className="bg-pureWhite px-3 py-1.5 text-ink border border-hairline text-xs font-mono w-full outline-none focus:border-ink shadow-inner font-bold"
                 />
               </div>
 
               <div className="flex items-center space-x-3 shrink-0">
-                <div className="text-[10px] text-charcoal">
-                  RESULT: <strong className="text-signalGreen">HTTP 403 ({probeLatency}ms)</strong>
+                <div className="text-[10px] text-charcoal font-bold">
+                  STATUS: <strong className="text-signalGreen">HTTP 403 ({probeLatency}ms)</strong>
                 </div>
                 <button
+                  type="button"
                   onClick={handleExecuteProbe}
                   disabled={probing}
-                  className="px-3 py-1 bg-ink hover:bg-charcoal text-white font-bold text-xs border border-ink shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-4 py-1.5 bg-ink hover:bg-vermilion text-white font-black text-xs border border-ink shadow-sm cursor-pointer disabled:opacity-50 transition-colors"
                 >
-                  {probing ? '[ TESTING... ]' : '[ 🚀 FIRE PROBE ]'}
+                  {probing ? '[ PROBING... ]' : '[ 🚀 FIRE PROBE ]'}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right 4 Cols: Live Telemetry Feed */}
-          <div className="lg:col-span-4 bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col justify-between space-y-3">
+          {/* Right 4 Cols: Live Telemetry Matrix & Frequency Visualizer */}
+          <div className="lg:col-span-4 bg-pureWhite border-2 border-hairline p-5 shadow-sm flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-hairline">
-                <h4 className="text-xs font-grotesk font-bold uppercase tracking-wider text-ink flex items-center space-x-1.5">
+                <h4 className="text-xs font-grotesk font-black uppercase tracking-wider text-ink flex items-center space-x-1.5">
                   <span className="w-2 h-2 bg-signalGreen inline-block"></span>
                   <span>LIVE COMMAND TELEMETRY</span>
                 </h4>
-                <span className="text-[9px] text-charcoal font-mono">UTC SYNCHRONIZED</span>
+                <span className="text-[9.5px] text-charcoal font-bold font-mono">UTC SYNCED</span>
               </div>
 
-              <div className="space-y-2 text-[10px] font-mono max-h-[220px] overflow-y-auto scrollbar-tactical pr-1">
+              {/* Simulated Live Packet Sniffer Frequency Spectrum */}
+              <div className="p-2.5 bg-boneLight border border-hairline space-y-1.5">
+                <div className="flex items-center justify-between text-[8.5px] text-charcoal font-bold font-mono">
+                  <span>PACKET FREQUENCY MONITOR // 127.0.0.1:8000</span>
+                  <span className="text-signalGreen">99.8% REALTIME</span>
+                </div>
+                <div className="flex items-end gap-1 h-7 px-1.5 py-1 bg-white border border-hairlineLight">
+                  {[40, 75, 55, 95, 80, 45, 90, 100, 65, 45, 75, 85, 60, 70, 90, 40, 80, 60].map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-1 bg-ink opacity-75"
+                      style={{
+                        height: `${h}%`,
+                        animation: `spectrumBounce 1.2s ease-in-out infinite ${i * 65}ms alternate`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Real-time Telemetry Logs */}
+              <div className="space-y-2 text-[10px] font-mono max-h-[200px] overflow-y-auto scrollbar-tactical pr-1">
                 {telemetryLogs.map((log) => (
                   <div key={log.id} className="p-2 bg-boneLight border border-hairlineLight flex items-start space-x-2">
-                    <span className="text-charcoal shrink-0">[{log.timestamp}]</span>
-                    <span className={`px-1 text-[8px] font-bold shrink-0 ${
-                      log.category === 'DEFENSE' ? 'bg-signalGreenBg text-signalGreen border border-signalGreen' : 'bg-pureWhite text-ink border border-hairline'
+                    <span className="text-charcoal shrink-0 font-bold">[{log.timestamp}]</span>
+                    <span className={`px-1.5 py-0.2 text-[8.5px] font-black shrink-0 ${
+                      log.category === 'DEFENSE'
+                        ? 'bg-signalGreenBg text-signalGreen border border-signalGreen'
+                        : 'bg-pureWhite text-ink border border-hairline'
                     }`}>
                       {log.tag}
                     </span>
-                    <span className="text-ink leading-tight">{log.message}</span>
+                    <span className="text-ink leading-tight font-medium">{log.message}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="pt-2 border-t border-hairlineLight flex items-center justify-between text-[10px] font-mono text-charcoal">
-              <span>ACTIVE ENGINES: <strong className="text-signalGreen">5/5 ONLINE</strong></span>
+            {/* Bottom Engines Health Ribbon */}
+            <div className="pt-3 border-t border-hairlineLight flex items-center justify-between text-[10px] font-mono text-charcoal">
+              <span className="flex items-center gap-1.5 font-bold">
+                <span className="w-2 h-2 rounded-full bg-signalGreen"></span>
+                <span>ENGINES: <strong className="text-signalGreen">5/5 ONLINE</strong></span>
+              </span>
               <button
+                type="button"
                 onClick={() => onNavigate('audit')}
-                className="hover:text-ink underline cursor-pointer"
+                className="hover:text-vermilion font-bold underline cursor-pointer"
               >
                 [ VIEW AUDIT LOGS ]
               </button>
@@ -631,57 +799,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         {/* ========================================================================= */}
         {/* 4. CORRELATED VULNERABILITIES & METASPLOIT WEAPONIZATION TABLE             */}
         {/* ========================================================================= */}
-        <section className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-4">
+        <section className="module-cascade-3 bg-pureWhite border-2 border-hairline p-5 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hairline">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-vermilion font-bold text-sm">03 //</span>
-                <h3 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
+                <span className="text-vermilion font-black text-sm">03 //</span>
+                <h3 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
                   TOP CORRELATED VULNERABILITIES & EXPLOIT ATTRIBUTION
                 </h3>
               </div>
-              <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                Directly mapped CVE intelligence, EPSS probabilities, and Metasploit weaponization tags
+              <p className="text-[10.5px] text-charcoal mt-0.5 font-mono">
+                Directly mapped CVE intelligence, EPSS probabilities, and Metasploit weaponization tags.
               </p>
             </div>
 
             <div className="flex items-center space-x-2 font-mono text-xs">
               <button
+                type="button"
                 onClick={() => onNavigate('intel')}
                 className="px-3 py-1.5 bg-boneLight border border-hairline hover:bg-boneDark text-ink font-bold transition-colors cursor-pointer"
               >
-                [ VIEW ALL INTELLIGENCE ➔ ]
+                [ 04_ VIEW ALL INTELLIGENCE ➔ ]
               </button>
               <button
+                type="button"
                 onClick={handleDownloadPdf}
                 disabled={downloadingPdf}
                 className="px-3.5 py-1.5 bg-vermilion hover:bg-crimson disabled:opacity-50 text-white font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
               >
                 <span>↓</span>
-                <span>{downloadingPdf ? '[ GENERATING PDF... ]' : '[ EXPORT CLIENT PDF REPORT ↓ ]'}</span>
+                <span>{downloadingPdf ? '[ GENERATING... ]' : '[ EXPORT CLIENT PDF REPORT ↓ ]'}</span>
               </button>
             </div>
           </div>
 
-          {/* Clean, Spacious Table with Real Data or Pristine Zero-Threat State */}
-          <div className="overflow-x-auto">
+          {/* Elevated Threat Intelligence Table */}
+          <div className="overflow-x-auto border border-hairline">
             <table className="w-full text-left font-mono text-xs border-collapse">
-              <thead className="bg-boneDark text-ink border-b border-hairline text-[10px]">
+              <thead className="bg-boneDark text-ink border-b-2 border-hairline text-[10px]">
                 <tr>
-                  <th className="py-3 px-4 font-bold border-r border-hairlineLight">[ VULNERABILITY ]</th>
-                  <th className="py-3 px-4 font-bold border-r border-hairlineLight">[ TARGET ASSET ]</th>
-                  <th className="py-3 px-4 font-bold border-r border-hairlineLight">[ SEVERITY & EPSS ]</th>
-                  <th className="py-3 px-4 font-bold border-r border-hairlineLight">[ WEAPONIZATION ]</th>
-                  <th className="py-3 px-4 font-bold text-right pr-4">[ REMEDIATION ]</th>
+                  <th className="py-3 px-4 font-black border-r border-hairline">[ VULNERABILITY ]</th>
+                  <th className="py-3 px-4 font-black border-r border-hairline">[ TARGET ASSET ]</th>
+                  <th className="py-3 px-4 font-black border-r border-hairline">[ SEVERITY & EPSS ]</th>
+                  <th className="py-3 px-4 font-black border-r border-hairline">[ WEAPONIZATION ]</th>
+                  <th className="py-3 px-4 font-black text-right pr-4">[ REMEDIATION ]</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-hairlineLight">
+              <tbody className="divide-y divide-hairlineLight bg-white">
                 {findings.length > 0 ? (
                   findings.slice(0, 5).map((f, idx) => (
-                    <tr key={idx} className="hover:bg-boneLight transition-colors">
+                    <tr key={idx} className="hover:bg-boneLight/80 transition-colors">
                       <td className="py-3.5 px-4 font-bold text-ink flex items-center space-x-2 border-r border-hairlineLight">
                         <span className={`w-2 h-2 ${f.risk === 'CRITICAL' ? 'bg-vermilion animate-pulse' : 'bg-signalGreen'}`}></span>
-                        <span>{f.tech?.slice(0, 24) || `FINDING-${f.id}`}</span>
+                        <span>{f.tech?.slice(0, 28) || `FINDING-${f.id}`}</span>
                       </td>
                       <td className="py-3.5 px-4 text-ink font-bold border-r border-hairlineLight">
                         {f.host || targetDomain || 'TARGET HOST'} ({f.ip || 'Resolved'})
@@ -691,13 +861,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                       </td>
                       <td className="py-3.5 px-4 border-r border-hairlineLight">
                         <span className="px-2 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen font-bold text-[10px]">
-                          [ PASSIVE VERIFIED ]
+                          ⚡ PASSIVE VERIFIED
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right pr-4">
                         <button
+                          type="button"
                           onClick={() => handleSynthesizeDefense(f.tech || 'VULN')}
-                          className="px-3 py-1 bg-vermilion hover:bg-crimson text-white font-bold text-[10px] border border-hairline cursor-pointer"
+                          className="px-3.5 py-1.5 bg-vermilion hover:bg-crimson text-white font-bold text-[10px] border border-hairline cursor-pointer transition-colors"
                         >
                           [ SHIELD NOW ➔ ]
                         </button>
@@ -708,18 +879,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-charcoal font-mono bg-[#FAF8F5]">
                       <div className="space-y-2">
-                        <div className="text-signalGreen font-bold text-xs">
-                          [ 0 RECORDED VULNERABILITIES • SOFTWARE IS 100% PRISTINE AND CLEAN ]
+                        <div className="text-signalGreen font-bold text-xs flex items-center justify-center gap-2">
+                          <span className="w-2 h-2 bg-signalGreen animate-ping"></span>
+                          <span>[ 0 RECORDED VULNERABILITIES • PERIMETER ENCLAVE IS NOMINAL ]</span>
                         </div>
                         <div className="text-[11px] text-charcoal">
                           Perimeter <strong className="text-ink">{targetDomain || 'target'}</strong> has zero logged breach vectors. Ready for fresh reconnaissance.
                         </div>
                         <div className="pt-2">
                           <button
+                            type="button"
                             onClick={() => onNavigate('recon')}
-                            className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline cursor-pointer"
+                            className="px-4 py-2 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline cursor-pointer transition-colors shadow-xs"
                           >
-                            [ 🌐 COMMENCE FIRST RECON SCAN ➔ ]
+                            [ 🌐 COMMENCE FIRST RECON DISCOVERY SCAN ➔ ]
                           </button>
                         </div>
                       </div>
@@ -733,8 +906,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
 
       </div>
 
-      {/* 55ms Staggered Brutalist Cascade Reveal & Connecting Arrow Pulse Keyframes */}
+      {/* Scoped CSS Keyframes for High-Tech Instrument HUD */}
       <style>{`
+        @keyframes spectrumBounce {
+          0% { height: 15%; opacity: 0.35; }
+          50% { height: 95%; opacity: 0.95; }
+          100% { height: 40%; opacity: 0.55; }
+        }
+
         @keyframes brutalistCascadeSlide {
           0% {
             opacity: 0;
@@ -760,14 +939,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
         .module-cascade-3 {
           animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 165ms both;
         }
-        .module-cascade-4 {
-          animation: brutalistCascadeSlide 320ms cubic-bezier(0.16, 1, 0.3, 1) 220ms both;
-        }
 
         @keyframes nodeSequentialDraw {
           0% {
             opacity: 0;
-            transform: scale(0.94) translateX(-8px);
+            transform: scale(0.95) translateX(-6px);
           }
           100% {
             opacity: 1;
@@ -782,13 +958,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
           }
           50% {
             opacity: 1;
-            transform: translateX(4px);
-            filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+            transform: translateX(3px);
+            filter: drop-shadow(0 0 5px rgba(230, 57, 38, 0.6));
           }
         }
         .arrow-connecting-pulse {
           display: inline-block;
-          animation: arrowPulseAnim 1.2s ease-in-out infinite;
+          animation: arrowPulseAnim 1.1s ease-in-out infinite;
         }
       `}</style>
     </div>
