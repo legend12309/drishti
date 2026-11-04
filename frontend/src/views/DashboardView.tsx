@@ -333,18 +333,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                   type="text"
                   value={targetDomain}
                   onChange={(e) => handleTargetChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleRunRecon();
+                  }}
                   placeholder="e.g. targetcompany.com or scanme.nmap.org"
                   className="px-3 py-2 bg-transparent text-ink font-bold font-mono text-sm outline-none w-full"
                 />
-                <button
-                  type="button"
-                  onClick={handleRunRecon}
-                  className="px-4 bg-ink hover:bg-vermilion text-white font-black text-xs transition-colors cursor-pointer flex items-center gap-1 shrink-0"
-                  title="Run active perimeter reconnaissance discovery"
-                >
-                  <span>⚡</span>
-                  <span className="hidden sm:inline">DISCOVER</span>
-                </button>
               </div>
 
               {/* Quick Preset Selector Buttons */}
@@ -826,18 +820,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
               <button
                 type="button"
                 onClick={() => onNavigate('intel')}
-                className="px-3 py-1.5 bg-boneLight border border-hairline hover:bg-boneDark text-ink font-bold transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 bg-boneLight border border-hairline hover:bg-boneDark text-ink font-bold transition-colors cursor-pointer shadow-xs"
               >
                 [ 04_ VIEW ALL INTELLIGENCE ➔ ]
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadPdf}
-                disabled={downloadingPdf}
-                className="px-3.5 py-1.5 bg-vermilion hover:bg-crimson disabled:opacity-50 text-white font-bold border border-hairline shadow-xs transition-colors cursor-pointer flex items-center space-x-1.5"
-              >
-                <span>↓</span>
-                <span>{downloadingPdf ? '[ GENERATING... ]' : '[ EXPORT CLIENT PDF REPORT ↓ ]'}</span>
               </button>
             </div>
           </div>
