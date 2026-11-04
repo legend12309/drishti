@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface IntroViewProps {
-  onStartReveal?: () => void;
   onComplete: () => void;
+  onBeginExit?: () => void;
 }
 
-export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete }) => {
+export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -13,65 +13,52 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
   const [hasInteracted, setHasInteracted] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Transition States:
-  // mounted: triggers initial fade-in (opacity 0 -> 1)
-  // isExiting: triggers crossfade out (opacity 1 -> 0 to reveal LoginView underneath)
-  const [isMounted, setIsMounted] = useState<boolean>(false);
+  // isExiting: triggers the fade-out from the last black frame
   const [isExiting, setIsExiting] = useState<boolean>(false);
 
-  // Trigger the smooth cross-fade to reveal LoginView
+  // Trigger smooth fade-out from the last black frame and fade-in of the login screen
   const handleTransitionToLogin = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
-
-    // Awaken and cinematically open the ocular eye in LoginView simultaneously
-    onStartReveal?.();
 
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
 
-    // Smoothly fade out audio
+    // Notify LoginView to begin its smooth fade-in simultaneously
+    onBeginExit?.();
+
+    // Smoothly fade out audio if still playing
     const v = videoRef.current;
     if (v && !v.muted) {
-      const startVol = v.volume;
       const fadeAudioInterval = setInterval(() => {
-        if (v.volume > 0.05) {
-          v.volume = Math.max(0, v.volume - 0.1);
+        if (v.volume > 0.1) {
+          v.volume = Math.max(0, v.volume - 0.2);
         } else {
           v.volume = 0;
           clearInterval(fadeAudioInterval);
         }
-      }, 80);
+      }, 50);
     }
 
-    // Wait for the 1200ms crossfade to complete, then unmount IntroView
+    // Wait for the 850ms fade-out of the last black frame to complete, then unmount IntroView
     setTimeout(() => {
       onComplete();
-    }, 1250);
-  }, [isExiting, onComplete]);
+    }, 850);
+  }, [isExiting, onBeginExit, onComplete]);
 
-  // Step 1: Smooth Fade-In on initial mount
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMounted(true);
-    }, 40);
-    return () => clearTimeout(timer);
-  }, []);
+  // Video time tracker: detect the very last frame (black screen)
+  const handleTimeUpdate = () => {
+    const v = videoRef.current;
+    if (v && !isNaN(v.duration) && v.duration > 0) {
+      // Trigger when reaching the final frame of the video
+      if (v.currentTime >= v.duration - 0.15) {
+        handleTransitionToLogin();
+      }
+    }
+  };
 
-  // Step 2: "do not wait for end of the video just apply the effect and reveal the log in page"
-  // After 3.6 seconds of dramatic cinematic video playback, automatically begin the crossfade!
-  useEffect(() => {
-    if (!isPlaying || isExiting) return;
-
-    const autoRevealTimer = setTimeout(() => {
-      handleTransitionToLogin();
-    }, 3600);
-
-    return () => clearTimeout(autoRevealTimer);
-  }, [isPlaying, isExiting, handleTransitionToLogin]);
-
-  // Video ended fallback (in case video is shorter than auto timer)
+  // Video ended fallback: runs completely to completion
   const handleVideoEnded = () => {
     handleTransitionToLogin();
   };
@@ -120,7 +107,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Keyboard hotkeys: Space to pause, M to mute, F for fullscreen, Enter / Esc to reveal login immediately
+  // Keyboard hotkeys: Space to pause, M to mute, F for fullscreen, Enter / Esc to skip if desired
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'Enter') {
@@ -170,14 +157,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
   return (
     <div
       ref={containerRef}
-      onClick={handleTransitionToLogin}
-      className={`fixed inset-0 w-screen h-screen z-50 select-none overflow-hidden flex items-center justify-center transition-all duration-[1200ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-        isMounted && !isExiting
-          ? 'opacity-100 pointer-events-auto'
-          : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[850ms] ease-out ${
+        isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
       }`}
       style={{
-        backgroundColor: isExiting ? 'transparent' : '#030407',
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
       {/* ======================================================== */}
@@ -190,7 +174,10 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
         playsInline
         autoPlay
         muted={isMuted}
+        onTimeUpdate={handleTimeUpdate}
         onEnded={handleVideoEnded}
+        onClick={togglePlay}
+        onDoubleClick={toggleFullscreen}
       />
 
       {/* Subtle CRT Scanline Overlay */}
@@ -266,12 +253,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
       {/* ======================================================== */}
       {/* 3. MINIMAL BOTTOM SKIP / REVEAL ACTION                   */}
       {/* ======================================================== */}
-      <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-between pointer-events-auto">
-        <div className="text-[9px] text-[#64748B] font-mono tracking-widest hidden sm:flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping"></span>
-          <span>CLICK ANYWHERE TO REVEAL LOGIN GATEWAY</span>
-        </div>
-
+      <footer className="absolute bottom-0 inset-x-0 z-30 px-6 md:px-8 pb-5 flex items-center justify-end pointer-events-auto">
         <button
           type="button"
           onClick={(e) => {
@@ -281,7 +263,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onStartReveal, onComplete 
           className="px-4 py-2 font-mono text-[10px] font-bold tracking-[0.16em] bg-[#E62E25]/20 border border-[#EF4444] text-[#FFFFFF] rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.45)] hover:bg-[#E62E25]/40 hover:border-white transition-all cursor-pointer flex items-center gap-2 group backdrop-blur-sm ml-auto"
           id="skipIntroBtn"
         >
-          <span>[ REVEAL COCKPIT // SKIP ⌘↵ ]</span>
+          <span>[ SKIP INTRO // ENTER GATEWAY ⌘↵ ]</span>
           <span className="group-hover:translate-x-1 transition-transform">→</span>
         </button>
       </footer>

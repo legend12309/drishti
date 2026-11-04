@@ -5,14 +5,14 @@ interface LoginViewProps {
   onLoginSuccess: (operator: OperatorProfile, token: string) => void;
   showToast?: (type: 'success' | 'warning' | 'error' | 'info', title: string, detail?: string) => void;
   onReplayIntro?: () => void;
-  isIntroRevealing?: boolean;
+  startFadeIn?: boolean;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
   onLoginSuccess,
   showToast,
   onReplayIntro,
-  isIntroRevealing = true,
+  startFadeIn = true,
 }) => {
   // Input & Mode States
   const [tokenInput, setTokenInput] = useState('ED25519-948A-AUTH-BIO-09');
@@ -200,15 +200,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
     irisFibersRef.current = fibers;
   }, []);
 
-  // Blinking reflex for circular portal eyelids (active only when eye is fully opened)
+  // Blinking reflex for circular portal eyelids
   const triggerBlink = useCallback((duration = 140) => {
-    if (!isIntroRevealing || isAuthenticating || isEntering) return;
     const top = eyelidTopRef.current;
     const bottom = eyelidBottomRef.current;
     if (!top || !bottom) return;
 
-    top.style.transition = 'transform 0.08s ease-out';
-    bottom.style.transition = 'transform 0.08s ease-out';
     top.style.transform = 'translateY(0%)';
     bottom.style.transform = 'translateY(0%)';
 
@@ -216,44 +213,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
       top.style.transform = 'translateY(-100%)';
       bottom.style.transform = 'translateY(100%)';
     }, duration);
-  }, [isIntroRevealing, isAuthenticating, isEntering]);
-
-  // Cinematic Ocular Awakening: Eyelids glide open in slow-motion when intro reveals login screen
-  const openEyeCinematically = useCallback(() => {
-    const top = eyelidTopRef.current;
-    const bottom = eyelidBottomRef.current;
-    if (top && bottom) {
-      top.style.transition = 'transform 1.35s cubic-bezier(0.16, 1, 0.3, 1)';
-      bottom.style.transition = 'transform 1.35s cubic-bezier(0.16, 1, 0.3, 1)';
-      top.style.transform = 'translateY(-100%)';
-      bottom.style.transform = 'translateY(100%)';
-    }
-    // Pupil gently dilates as light enters
-    physicsRef.current.targetPupilR = 21;
   }, []);
-
-  const closeEye = useCallback(() => {
-    const top = eyelidTopRef.current;
-    const bottom = eyelidBottomRef.current;
-    if (top && bottom) {
-      top.style.transition = 'none';
-      bottom.style.transition = 'none';
-      top.style.transform = 'translateY(0%)';
-      bottom.style.transform = 'translateY(0%)';
-    }
-  }, []);
-
-  // Monitor isIntroRevealing: Awaken and cinematically open eye when intro reveals login screen
-  useEffect(() => {
-    if (isIntroRevealing) {
-      const timer = setTimeout(() => {
-        openEyeCinematically();
-      }, 70);
-      return () => clearTimeout(timer);
-    } else {
-      closeEye();
-    }
-  }, [isIntroRevealing, openEyeCinematically, closeEye]);
 
   // Cinematic biometric laser scan & smooth color morph animation from Red to Blue (or vice-versa)
   const animateEyeColor = useCallback((from: number, to: number, duration = 1800) => {
@@ -975,43 +935,80 @@ export const LoginView: React.FC<LoginViewProps> = ({
   };
 
   // Auth Protocol Execution:
-  // 1. Immediately convert open eye to Electric Blue like Machine Activated (laser scan sweep + cyan ignition)
-  // 2. Exactly 1.0s (1000ms) later: Trigger blinding lighting flash
-  // 3. Complete transition into software cockpit
+  // 1. Slow-motion cinematic eyelid closure (0.95s)
+  // 2. While shut, morph to glowing Blue Eye (1000ms)
+  // 3. Slow-motion cinematic eyelid opening (1.30s) revealing the Blue Eye looking here and there
+  // 4. White optical flash transition blooming into main software cockpit
   const simulateAuth = useCallback(() => {
     if (isAuthenticating || isEntering) return;
     setIsAuthenticating(true);
 
-    // 1. MACHINE ACTIVATED: Eye converts to Electric Blue (eye remains wide open, no closure)
-    setButtonText('[ MACHINE ACTIVATED // COCKPIT LINK ✓ ]');
+    // 1. Immediately update button text & status
+    setButtonText('[ INGESTING BIOMETRIC KEY... ]');
     setAuthStatus({
       custom: true,
-      text: 'MACHINE ACTIVATED // COBALT CORE ENGAGED // BIOMETRIC LOCK CONFIRMED',
-      className: 'text-center text-[9px] tracking-[0.16em] text-[#00E5FF] bg-[#00E5FF]/15 py-0.5 border border-[#00E5FF]/50 font-bold min-h-[14px] rounded-sm animate-pulse',
+      text: 'AUTHENTICATING OPERATOR IDENTITY // COMMENCING SLOW-MOTION OCULAR CONVERGENCE...',
+      className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
-    setEngineBadge({
-      text: 'ACTIVATED: [ROOT_OVERRIDE]',
-      className: 'text-[9px] px-1.5 py-0.5 bg-[#00E5FF]/20 text-[#00E5FF] border border-[#00E5FF]/60 font-bold rounded-sm animate-pulse',
-    });
-    setBootProgress(100);
-    setStages({ step1: true, step2: true, step3: true, step4: true });
-    setIsSuccess(true);
+    setBootProgress(50);
 
-    // Trigger instant machine ignition: laser scan sweep & rapid color morph to Electric Blue
-    animateEyeColor(0, 1.0, 320);
+    // 2. Slow-motion cinematic eyelid closure (0.95s duration)
+    const top = eyelidTopRef.current;
+    const bottom = eyelidBottomRef.current;
+    if (top && bottom) {
+      top.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      bottom.style.transition = 'transform 0.95s cubic-bezier(0.4, 0.0, 0.2, 1)';
+      top.style.transform = 'translateY(0%)';
+      bottom.style.transform = 'translateY(0%)';
+    }
 
-    // 2. Exactly 1 second (1000ms) later: Trigger Blinding Lighting Flash
-    const tFlash = setTimeout(() => {
-      setIsEntering(true);
-      setFlashOpacity(1); // Blinding Lighting Flash (#FFFFFF with cyan aura)
+    // Pupil gently constricts in anticipation
+    physicsRef.current.targetPupilR = 16;
+
+    // 3. While the eye is fully closed (at 1000ms), transform to glowing BLUE EYE
+    const tClose = setTimeout(() => {
+      physicsRef.current.colorMorph = 1.0;
+      setEyeColorProgress(1.0);
+      physicsRef.current.targetPupilR = 23;
+
+      setBootProgress(100);
+      setStages({ step1: true, step2: true, step3: true, step4: true });
+      setEngineBadge({
+        text: 'DEFCON-5: [ONLINE_ROOT]',
+        className: 'text-[9px] px-1.5 py-0.5 bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50 font-bold rounded-sm animate-pulse',
+      });
+      setButtonText('[ BIOMETRICS CONFIRMED // REVEALING BLUE EYE... ]');
       setAuthStatus({
         custom: true,
-        text: 'LIGHTING FLASH DETONATION // COMMENCING DRISHTI SOVEREIGN COCKPIT',
-        className: 'text-center text-[9px] tracking-[0.18em] text-white font-bold min-h-[14px] rounded-sm',
+        text: 'ACCESS GRANTED // BIOMETRIC SIGNATURE VERIFIED // UNVEILING COBALT CORE',
+        className: 'text-center text-[9px] tracking-[0.15em] text-[#00E5FF] bg-[#00E5FF]/10 py-0.5 border border-[#00E5FF]/40 font-bold min-h-[14px] rounded-sm',
       });
+      setIsSuccess(true);
     }, 1000);
 
-    // 3. Enter main software workspace as the lighting flash reaches full bloom (1280ms)
+    // 4. Slow-motion cinematic eyelid opening (1.30s duration) revealing the Blue Eye looking around
+    const tOpen = setTimeout(() => {
+      if (top && bottom) {
+        top.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
+        bottom.style.transition = 'transform 1.30s cubic-bezier(0.16, 1, 0.3, 1)';
+        top.style.transform = 'translateY(-100%)';
+        bottom.style.transform = 'translateY(100%)';
+      }
+      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
+      setAuthStatus({
+        custom: true,
+        text: 'SESSION ACTIVE // COBALT OCULAR LINK ESTABLISHED // COMMENCING LAB LAUNCH',
+        className: 'text-center text-[9px] tracking-[0.15em] text-[#10B981] bg-[#10B981]/15 py-0.5 border border-[#10B981]/40 font-bold min-h-[14px] rounded-sm animate-pulse',
+      });
+    }, 1180);
+
+    // 5. Operator sees the Blue Eye in full motion looking here and there, then blinding white flash initiates
+    const tFlash = setTimeout(() => {
+      setIsEntering(true);
+      setFlashOpacity(1); // Blinding Optic White (#F8FAFC)
+    }, 3650);
+
+    // 6. Complete transition into the main cockpit software as the flash blooms
     const tComplete = setTimeout(() => {
       const op: OperatorProfile = {
         id: 'local-operator-dev',
@@ -1045,10 +1042,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
       setIsAuthenticating(false);
       onLoginSuccess(op, tokenInput.trim());
-    }, 1280);
+    }, 4150);
 
-    authTimersRef.current.push(tFlash, tComplete);
-  }, [isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput, animateEyeColor]);
+    authTimersRef.current.push(tClose, tOpen, tFlash, tComplete);
+  }, [isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput]);
 
   // Keyboard shortcut Ctrl+Enter or Cmd+Enter
   useEffect(() => {
@@ -1068,17 +1065,23 @@ export const LoginView: React.FC<LoginViewProps> = ({
     : 'shadow-[0_0_40px_rgba(230,46,37,0.45),inset_0_0_45px_rgba(0,0,0,0.95)] border-rose-500/60';
 
   return (
-    <div className="relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono">
+    <div
+      className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-opacity duration-[900ms] ease-out ${
+        startFadeIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      style={{
+        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+    >
       {/* CRT Scanlines, Analog Noise, Vignette Screen Layer */}
       <div className="crt-overlay"></div>
 
-      {/* Fullscreen blinding electric lighting flash overlay that triggers 1s after machine activation */}
+      {/* Fullscreen blinding white optic flash overlay that smoothly saturates the viewport before entering the app */}
       <div
-        className="pointer-events-none fixed inset-0 z-[60] bg-[#FFFFFF] transition-opacity duration-300 ease-out"
+        className="pointer-events-none fixed inset-0 z-[60] bg-[#F8FAFC] transition-opacity duration-500 ease-in-out"
         id="flashOverlay"
         style={{
           opacity: flashOpacity,
-          boxShadow: flashOpacity > 0 ? 'inset 0 0 140px rgba(0, 229, 255, 0.5)' : 'none',
         }}
       ></div>
 
@@ -1549,13 +1552,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
               {/* Optical Glass Antireflective Depth Layer */}
               <div className="absolute inset-0 rounded-full shadow-[inset_0_0_50px_rgba(0,0,0,0.9),inset_0_15px_30px_rgba(0,0,0,0.7),inset_0_-15px_30px_rgba(0,0,0,0.7)] pointer-events-none z-25"></div>
 
-              {/* Organic Circular Eyelids for natural physiological blinking & cinematic awakening */}
+              {/* Organic Circular Eyelids for natural physiological blinking */}
               <div
                 className="eyelid eyelid-top"
                 id="eyelidTop"
                 ref={eyelidTopRef}
                 style={{
-                  transform: isIntroRevealing ? 'translateY(-100%)' : 'translateY(0%)',
+                  transform: 'translateY(-100%)',
                   borderBottomColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
                 }}
               ></div>
@@ -1564,7 +1567,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="eyelidBottom"
                 ref={eyelidBottomRef}
                 style={{
-                  transform: isIntroRevealing ? 'translateY(100%)' : 'translateY(0%)',
+                  transform: 'translateY(100%)',
                   borderTopColor: t > 0.5 ? 'rgba(0, 229, 255, 0.6)' : 'rgba(230, 46, 37, 0.45)',
                 }}
               ></div>
