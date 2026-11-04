@@ -279,9 +279,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setCorneaRefract('ACQUIRING_OPTICS...');
     setBiolockStatus('INITIALIZING...');
 
-    // Wait 700ms into the login page fade-in (as the UI emerges), then slowly open eyelids over 2100ms
-    const openDelay = 700;
-    const openDuration = 2100;
+    // Wait 900ms into the login page fade-in (as the UI emerges), then slowly open eyelids over 2200ms
+    const openDelay = 900;
+    const openDuration = 2200;
 
     const tOpen = setTimeout(() => {
       const top = eyelidTopRef.current;
@@ -1233,10 +1233,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
   return (
     <div
-      className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-all duration-[1400ms] ease-out ${
+      className={`relative flex flex-col justify-between w-screen h-screen bg-[#030407] text-[#E5E7EB] select-none overflow-hidden p-3 md:p-4 font-mono transition-all duration-[2000ms] ease-in-out ${
         startFadeIn
           ? 'opacity-100 filter brightness-100 scale-100 pointer-events-auto'
-          : 'opacity-0 filter brightness-50 scale-[0.99] pointer-events-none'
+          : 'opacity-0 filter brightness-50 scale-[0.98] pointer-events-none'
       }`}
       style={{
         transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',

@@ -16,6 +16,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
 
   // isVideoFadingOut: triggers the cinematic fade-out of the video to pitch black in its final seconds
   const [isVideoFadingOut, setIsVideoFadingOut] = useState<boolean>(false);
+  // isContainerExiting: triggers the slow, majestic dissolve from pitch black into LoginView
+  const [isContainerExiting, setIsContainerExiting] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
   const transitionStartedRef = useRef<boolean>(false);
 
@@ -44,14 +46,15 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
 
   // Cinematic two-step transition:
   // Step 1: Fade out the video completely into pure black (#030407)
-  // Step 2: Signal the login page to fade in from black, then unmount video
+  // Step 2: Slowly dissolve out IntroView while LoginView slowly fades in from pure black
+  // Step 3: Complete handoff to LoginView once fade-in has fully engaged
   const startVideoFadeOut = useCallback((quick = false) => {
     if (transitionStartedRef.current) return;
     transitionStartedRef.current = true;
     setIsVideoFadingOut(true);
 
-    const fadeDuration = quick ? 350 : 1200;
-    fadeOutAudio(fadeDuration);
+    const videoFadeDuration = quick ? 350 : 1000;
+    fadeOutAudio(videoFadeDuration);
 
     setTimeout(() => {
       const v = videoRef.current;
@@ -64,14 +67,16 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
         document.exitFullscreen().catch(() => {});
       }
 
-      // Step 2: Now that screen is 100% pitch black, trigger the login page fade-in
+      // Step 2: Now that screen is 100% pitch black, begin slow reveal of LoginView
       onBeginExit?.();
+      setIsContainerExiting(true);
 
-      // Step 3: Complete handoff to LoginView after 400ms once login fade-in has engaged
+      // Step 3: Complete handoff to LoginView after the slow 2000ms dissolve finishes
+      const revealDuration = quick ? 1600 : 2000;
       setTimeout(() => {
         onComplete();
-      }, 400);
-    }, fadeDuration);
+      }, revealDuration);
+    }, videoFadeDuration);
   }, [fadeOutAudio, onBeginExit, onComplete]);
 
   // Video time tracker: detect when video reaches final action climax (12.60s) to begin fade-out to black
@@ -203,8 +208,12 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-all duration-[400ms] ease-out ${
-        isReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 w-screen h-screen z-50 bg-[#030407] select-none overflow-hidden flex items-center justify-center transition-opacity duration-[2000ms] ease-in-out ${
+        isContainerExiting
+          ? 'opacity-0 pointer-events-none'
+          : isReady
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
       }`}
     >
       {/* ======================================================== */}
