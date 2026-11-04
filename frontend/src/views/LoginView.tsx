@@ -13,6 +13,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
+  const [isScanningActive, setIsScanningActive] = useState(false);
   const [flashOpacity, setFlashOpacity] = useState(0);
 
   // Live Telemetry States
@@ -79,6 +80,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     currentPupilR: 21,
     targetPupilR: 21,
     colorMorph: 0, // 0 = Red Eye, 1 = Blue Eye
+    scanBeamProgress: -1, // -1 = inactive, 0.0 -> 1.0 active vertical laser scan sweep
+    scanBeamActive: false,
+    lockGazeToCenter: false,
   });
 
   // Vascular Seeds for Sclera
@@ -197,10 +201,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     }, duration);
   }, []);
 
-  // Smooth color morph animation from Red to Blue (or vice-versa)
-  const animateEyeColor = useCallback((from: number, to: number, duration = 1400) => {
+  // Cinematic biometric laser scan & smooth color morph animation from Red to Blue (or vice-versa)
+  const animateEyeColor = useCallback((from: number, to: number, duration = 1800) => {
     if (morphAnimRef.current) cancelAnimationFrame(morphAnimRef.current);
     const startTime = performance.now();
+    const isAuthenticatingScan = to > from;
+
+    if (isAuthenticatingScan) {
+      physicsRef.current.scanBeamActive = true;
+      physicsRef.current.scanBeamProgress = 0;
+      setIsScanningActive(true);
+    } else {
+      physicsRef.current.scanBeamActive = false;
+      physicsRef.current.scanBeamProgress = -1;
+      setIsScanningActive(false);
+    }
 
     const step = (now: number) => {
       const elapsed = now - startTime;
@@ -214,8 +229,27 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       physicsRef.current.colorMorph = current;
       setEyeColorProgress(current);
 
+      if (isAuthenticatingScan) {
+        physicsRef.current.scanBeamProgress = eased;
+        // Natural Pupillary Light Reflex: constrict sharply as laser sweeps through center, then relax to normal
+        if (progress < 0.25) {
+          physicsRef.current.targetPupilR = 21 - progress * 40; // down to ~11px
+        } else if (progress < 0.7) {
+          physicsRef.current.targetPupilR = 11 + Math.sin(progress * Math.PI * 4) * 0.8; // subtle micro-flutter
+        } else {
+          physicsRef.current.targetPupilR = 11 + (progress - 0.7) * (1 / 0.3) * 10; // back up to ~21px
+        }
+      }
+
       if (progress < 1) {
         morphAnimRef.current = requestAnimationFrame(step);
+      } else {
+        if (isAuthenticatingScan) {
+          physicsRef.current.scanBeamActive = false;
+          physicsRef.current.scanBeamProgress = -1;
+          physicsRef.current.targetPupilR = 21;
+          setIsScanningActive(false);
+        }
       }
     };
 
@@ -284,7 +318,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
 
       // 1. Calculate gaze offset relative to center viewport
       const arena = arenaRef.current;
-      if (arena) {
+      if (arena && !p.lockGazeToCenter) {
         const rect = arena.getBoundingClientRect();
         const ax = rect.left + rect.width / 2;
         const ay = rect.top + rect.height / 2;
@@ -301,6 +335,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           p.targetEyeX = (p.targetEyeX / dist) * maxDisplacement;
           p.targetEyeY = (p.targetEyeY / dist) * maxDisplacement;
         }
+      } else if (p.lockGazeToCenter) {
+        p.targetEyeX = 0;
+        p.targetEyeY = 0;
       }
 
       p.currentEyeX += (p.targetEyeX + p.saccadeX - p.currentEyeX) * 0.12;
@@ -525,6 +562,65 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       ctx.fill();
       ctx.restore();
 
+      // --- STEP 5: CINEMATIC BIOMETRIC LASER SCAN SWEEP & RETINAL MAPPING ---
+      if (p.scanBeamActive && p.scanBeamProgress >= 0 && p.scanBeamProgress <= 1.05) {
+        const beamY = (irisY - IRIS_RADIUS - 16) + p.scanBeamProgress * (2 * IRIS_RADIUS + 32);
+
+        // 1. Broad Cyan Photometric Energy Wash across the scanned iris
+        const beamGlow = ctx.createLinearGradient(0, beamY - 26, 0, beamY + 26);
+        beamGlow.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        beamGlow.addColorStop(0.35, 'rgba(56, 189, 248, 0.42)');
+        beamGlow.addColorStop(0.5, 'rgba(255, 255, 255, 0.96)');
+        beamGlow.addColorStop(0.65, 'rgba(56, 189, 248, 0.42)');
+        beamGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+
+        ctx.save();
+        ctx.fillStyle = beamGlow;
+        ctx.fillRect(CENTER - CENTER + 4, beamY - 26, SIZE - 8, 52);
+
+        // 2. High-Energy Laser Beam Line across the eye diameter
+        ctx.beginPath();
+        ctx.moveTo(CENTER - CENTER + 10, beamY);
+        ctx.lineTo(CENTER + CENTER - 10, beamY);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.shadowColor = '#38BDF8';
+        ctx.shadowBlur = 20;
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+
+        // 3. Secondary Cyan Optical Flare Halo
+        ctx.beginPath();
+        ctx.moveTo(CENTER - CENTER + 6, beamY);
+        ctx.lineTo(CENTER + CENTER - 6, beamY);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.shadowColor = '#0284C7';
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 5.0;
+        ctx.stroke();
+
+        // 4. Precision Biometric Micro-Tick Alignment Grid along the Laser Beam
+        for (let gx = irisX - IRIS_RADIUS - 10; gx <= irisX + IRIS_RADIUS + 10; gx += 12) {
+          ctx.beginPath();
+          ctx.moveTo(gx, beamY - 3.5);
+          ctx.lineTo(gx, beamY + 3.5);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.shadowColor = '#38BDF8';
+          ctx.shadowBlur = 6;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+
+        // 5. Digital Tomography Coordinate Badge floating next to the beam
+        const badgeY = Math.max(30, Math.min(SIZE - 30, beamY - 8));
+        ctx.font = 'bold 7.5px monospace';
+        ctx.fillStyle = '#38BDF8';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`TOMOGRAPHY: [Y: ${(p.scanBeamProgress * 100).toFixed(0)}%]`, CENTER + 38, badgeY);
+
+        ctx.restore();
+      }
+
       ctx.restore(); // end clip
 
       // Update Gaze Vector readout smoothly
@@ -607,6 +703,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     rebootTimersRef.current = [];
 
     // Smoothly transition back to Red Eye (0.0)
+    physicsRef.current.lockGazeToCenter = false;
+    physicsRef.current.scanBeamActive = false;
+    physicsRef.current.scanBeamProgress = -1;
+    setIsScanningActive(false);
     animateEyeColor(physicsRef.current.colorMorph, 0.0, 800);
     setIsSuccess(false);
     setIsEntering(false);
@@ -667,7 +767,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
     setIsAuthenticating(true);
 
     setButtonText('[ LOCKING IRIS & DERIVING ENCLAVE KEY... ]');
-    physicsRef.current.targetPupilR = 14;
     triggerBlink(110);
 
     setAuthStatus({
@@ -675,10 +774,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       text: 'ACTIVE_PERSON_SCAN: PHOTOMETRIC STEREO MATCHING // EXTRACTING 4096-BIT RETINA HASH...',
       className: 'text-center text-[9px] tracking-[0.14em] text-[#EF4444] font-bold min-h-[14px] rounded-sm',
     });
-    setBootProgress(70);
+    setBootProgress(65);
 
-    // 1. Smoothly morph from Red Eye (0.0) -> Sapphire Blue Eye (1.0)
-    animateEyeColor(0.0, 1.0, 1300);
+    // Lock gaze to dead center for the calibration scan
+    physicsRef.current.lockGazeToCenter = true;
+
+    // 1. Cinematic biometric laser scan & smooth color morph from Red (0.0) -> Sapphire Blue (1.0)
+    animateEyeColor(0.0, 1.0, 1800);
 
     const t1 = setTimeout(() => {
       setAuthStatus({
@@ -687,8 +789,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         className: 'text-center text-[9px] tracking-[0.14em] text-[#60A5FA] font-mono min-h-[14px] rounded-sm',
       });
       setBootProgress(88);
-      physicsRef.current.targetPupilR = 19;
-    }, 700);
+    }, 900);
 
     const t2 = setTimeout(() => {
       setBootProgress(100);
@@ -704,14 +805,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
       });
       setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ✓ ]');
       setIsSuccess(true);
-      physicsRef.current.targetPupilR = 22;
+      physicsRef.current.targetPupilR = 21;
       triggerBlink(140);
 
-      // 2. The Blue Eye is now prominently displayed. Give operator clear visual confirmation (~900ms),
+      // 2. The Blue Eye is now prominently displayed. Give operator clear visual confirmation (~1100ms),
       // then trigger the cinematic Ocular Flash Warp transition into the software cockpit!
       const t3 = setTimeout(() => {
         setIsEntering(true);
-        physicsRef.current.targetPupilR = 85; // Dilate pupil to engulf center in optical singularity
+        physicsRef.current.lockGazeToCenter = true;
+        physicsRef.current.targetPupilR = 120; // Dilate pupil to engulf center in optical event horizon
         setFlashOpacity(1); // Saturate viewport with blinding optic flash
 
         const op: OperatorProfile = {
@@ -748,13 +850,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         const t4 = setTimeout(() => {
           setIsAuthenticating(false);
           onLoginSuccess(op, tokenInput.trim());
-        }, 750);
+        }, 1100);
 
         authTimersRef.current.push(t4);
-      }, 950);
+      }, 1100);
 
       authTimersRef.current.push(t3);
-    }, 1400);
+    }, 1850);
 
     authTimersRef.current.push(t1, t2);
   }, [animateEyeColor, isAuthenticating, isEntering, mode, onLoginSuccess, showToast, tokenInput, triggerBlink]);
@@ -789,26 +891,35 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           className="pointer-events-none fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
           id="enteringWarpOverlay"
         >
-          {/* Expanding Ocular Shockwave Rings from the Center of the Eye */}
+          {/* Radial Hyperspace Warp Rays */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[180vw] h-[180vw] rounded-full bg-[radial-gradient(circle,transparent_25%,rgba(56,189,248,0.2)_55%,transparent_80%)] animate-pulse"></div>
+          </div>
+
+          {/* Staggered Multi-Ring Ocular Shockwaves */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cyan-300/90 shadow-[0_0_60px_#38BDF8] shockwave-entering"></div>
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/90 shadow-[0_0_50px_#0284C7] shockwave-entering"
-            style={{ animationDelay: '140ms' }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/95 shadow-[0_0_55px_#0284C7] shockwave-entering"
+            style={{ animationDelay: '160ms' }}
+          ></div>
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-400/80 shadow-[0_0_40px_#38BDF8] shockwave-entering"
+            style={{ animationDelay: '320ms' }}
           ></div>
 
           {/* Anamorphic Horizontal Sci-Fi Optic Streak Beam */}
-          <div className="absolute h-[3px] w-full bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_40px_#38BDF8] anamorphic-beam"></div>
+          <div className="absolute h-[3px] w-full bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_45px_#38BDF8] anamorphic-beam"></div>
 
           {/* High-Impact Tactical Entrance HUD Text */}
           <div className="relative z-10 flex flex-col items-center gap-2 text-center entrance-text-fade">
             <div className="text-[10px] md:text-[11px] font-mono tracking-[0.35em] text-[#030407] font-black bg-cyan-200/95 px-3 py-1 rounded-sm shadow-[0_0_24px_rgba(56,189,248,0.9)]">
-              // BIOMETRIC_HANDSHAKE: CONFIRMED
+              // BIOMETRIC_HANDSHAKE: LEVEL 5 ATTESTED
             </div>
             <div className="text-[19px] md:text-[26px] font-mono font-black tracking-[0.28em] text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.95)]">
-              ENTERING DRISHTI COCKPIT
+              ENTERING DRISHTI SOVEREIGN COCKPIT
             </div>
             <div className="text-[9px] md:text-[10px] font-mono tracking-[0.2em] text-[#0284C7] font-bold bg-white/90 px-2.5 py-0.5 rounded-sm">
-              AIR-GAP ENCLAVE GRANTED // LEVEL 5 ACCESS
+              AIR-GAP ENCLAVE GRANTED // DECRYPTING ANALYST WORKSPACE
             </div>
           </div>
         </div>
@@ -820,7 +931,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
         id="flashOverlay"
         style={{
           opacity: flashOpacity,
-          transitionDuration: isEntering ? '600ms' : '200ms',
+          transitionDuration: isEntering ? '850ms' : '200ms',
         }}
       ></div>
 
@@ -958,23 +1069,36 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           --tw-ring-color: transparent !important;
         }
 
-        /* Entering Software Flash Warp Animation */
-        @keyframes portalWarp {
+        /* High-speed HUD Ring acceleration during scan and entrance */
+        .hud-dial-fast {
+          animation: ringPulse 8s linear infinite !important;
+        }
+        .hud-dial-fast-counter {
+          animation: ringCounterSpin 6s linear infinite !important;
+        }
+
+        /* Cinematic Filmic Dolly Zoom / Warp Animation */
+        @keyframes cinematicDollyWarp {
           0% {
             transform: scale(1);
-            filter: brightness(1) drop-shadow(0 0 20px rgba(56, 189, 248, 0.4));
+            filter: brightness(1) drop-shadow(0 0 24px rgba(56, 189, 248, 0.4));
           }
-          30% {
-            transform: scale(1.35);
-            filter: brightness(1.8) drop-shadow(0 0 50px rgba(56, 189, 248, 0.9));
+          28% {
+            transform: scale(1.45);
+            filter: brightness(1.7) contrast(1.2) drop-shadow(0 0 55px rgba(56, 189, 248, 0.85));
+          }
+          65% {
+            transform: scale(3.8);
+            filter: brightness(2.9) contrast(1.4) drop-shadow(0 0 95px #38bdf8);
           }
           100% {
-            transform: scale(6.2);
-            filter: brightness(4) contrast(1.5) drop-shadow(0 0 100px #38bdf8);
+            transform: scale(10.5);
+            filter: brightness(5) contrast(1.6) drop-shadow(0 0 160px #ffffff);
           }
         }
         .portal-entering-warp {
-          animation: portalWarp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: cinematicDollyWarp 1150ms cubic-bezier(0.12, 0.8, 0.32, 1) forwards;
+          will-change: transform, filter;
         }
 
         @keyframes shockwaveExpand {
@@ -983,34 +1107,40 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             height: 140px;
             opacity: 1;
             border-width: 4px;
+            transform: translate(-50%, -50%) scale(0.6);
           }
           100% {
-            width: 220vw;
-            height: 220vw;
+            width: 240vw;
+            height: 240vw;
             opacity: 0;
             border-width: 1px;
+            transform: translate(-50%, -50%) scale(1.6);
           }
         }
         .shockwave-entering {
-          animation: shockwaveExpand 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: shockwaveExpand 1050ms cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
         }
 
         @keyframes beamExpand {
           0% {
             transform: scaleX(0.01) scaleY(0.4);
-            opacity: 0.2;
+            opacity: 0.1;
           }
-          45% {
-            transform: scaleX(1) scaleY(2);
+          35% {
+            transform: scaleX(0.8) scaleY(1.5);
+            opacity: 0.95;
+          }
+          70% {
+            transform: scaleX(1.8) scaleY(3.5);
             opacity: 1;
           }
           100% {
-            transform: scaleX(2) scaleY(5);
+            transform: scaleX(3.2) scaleY(8);
             opacity: 0;
           }
         }
         .anamorphic-beam {
-          animation: beamExpand 750ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+          animation: beamExpand 1100ms cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
         }
 
         @keyframes entranceTextAnim {
@@ -1018,11 +1148,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
             opacity: 0;
             transform: scale(0.92);
           }
-          35% {
+          30% {
             opacity: 1;
             transform: scale(1);
           }
-          80% {
+          75% {
             opacity: 1;
             transform: scale(1.03);
           }
@@ -1032,7 +1162,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
           }
         }
         .entrance-text-fade {
-          animation: entranceTextAnim 750ms ease-out forwards;
+          animation: entranceTextAnim 1100ms ease-out forwards;
         }
       `}</style>
 
@@ -1287,10 +1417,28 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, showToast 
               AZM 180° // APERTURE_SOUTH
             </div>
 
-            {/* Pure Circular Concentric HUD Rings */}
-            <div className="absolute w-[330px] h-[330px] rounded-full border border-dashed border-[#2563EB]/40 pointer-events-none hud-dial-spin"></div>
-            <div className="absolute w-[310px] h-[310px] rounded-full border border-[#E62E25]/30 pointer-events-none hud-dial-counter"></div>
-            <div className="absolute w-[292px] h-[292px] rounded-full border border-[#10B981]/25 pointer-events-none shadow-[0_0_25px_rgba(16,185,129,0.15)]"></div>
+            {/* Pure Circular Concentric HUD Rings with Cinematic Acceleration */}
+            <div
+              className={`absolute w-[330px] h-[330px] rounded-full border border-dashed pointer-events-none transition-all duration-700 ${
+                isScanningActive || isEntering
+                  ? 'border-cyan-400 hud-dial-fast shadow-[0_0_24px_rgba(56,189,248,0.5)]'
+                  : 'border-[#2563EB]/40 hud-dial-spin'
+              }`}
+            ></div>
+            <div
+              className={`absolute w-[310px] h-[310px] rounded-full border pointer-events-none transition-all duration-700 ${
+                isScanningActive || isEntering
+                  ? 'border-sky-300 hud-dial-fast-counter shadow-[0_0_18px_rgba(56,189,248,0.4)]'
+                  : 'border-[#E62E25]/30 hud-dial-counter'
+              }`}
+            ></div>
+            <div
+              className={`absolute w-[292px] h-[292px] rounded-full border pointer-events-none transition-all duration-700 ${
+                isScanningActive || isEntering
+                  ? 'border-cyan-200/60 shadow-[0_0_30px_rgba(56,189,248,0.3)]'
+                  : 'border-[#10B981]/25 shadow-[0_0_25px_rgba(16,185,129,0.15)]'
+              }`}
+            ></div>
 
             {/* PURE CIRCULAR BIOMETRIC LENS / IRIS PORTAL VIEWPORT */}
             <div

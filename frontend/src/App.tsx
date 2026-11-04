@@ -64,7 +64,7 @@ export default function App() {
     if (entranceFlash) {
       const timer = setTimeout(() => {
         setEntranceFlash(false);
-      }, 700);
+      }, 850);
       return () => clearTimeout(timer);
     }
   }, [entranceFlash]);
@@ -170,14 +170,15 @@ export default function App() {
         <div
           className="pointer-events-none fixed inset-0 z-[9999] bg-white"
           style={{
-            animation: 'flashExit 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            animation: 'flashExit 850ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
           }}
         >
           <style>{`
             @keyframes flashExit {
-              0% { opacity: 1; }
-              35% { opacity: 0.85; filter: blur(3px); }
-              100% { opacity: 0; filter: blur(10px); visibility: hidden; }
+              0% { opacity: 1; filter: blur(0px); }
+              30% { opacity: 0.9; filter: blur(4px); }
+              70% { opacity: 0.35; filter: blur(10px); }
+              100% { opacity: 0; filter: blur(18px); visibility: hidden; }
             }
           `}</style>
         </div>
