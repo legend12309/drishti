@@ -590,13 +590,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                     {/* Animated Conduit Pulse Arrow between nodes */}
                     {idx < totalNodes - 1 && (
                       <div
-                        className="flex items-center justify-center text-vermilion font-black px-0.5 select-none shrink-0"
+                        className="flex items-center justify-center text-vermilion select-none shrink-0 px-1 py-1 lg:py-0 rotate-90 lg:rotate-0 transition-transform"
                         style={{
                           animation: `nodeSequentialDraw 340ms cubic-bezier(0.16, 1, 0.3, 1) ${105 + idx * 45}ms both`,
                         }}
                       >
-                        <span className="arrow-connecting-pulse text-lg hidden lg:inline">➔</span>
-                        <span className="arrow-connecting-pulse text-lg lg:hidden">⬇</span>
+                        <svg
+                          className="w-5 h-5 arrow-connecting-pulse text-vermilion"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="square"
+                          strokeLinejoin="miter"
+                        >
+                          <path d="M4 12h14M12 5l7 7-7 7" />
+                        </svg>
                       </div>
                     )}
                   </React.Fragment>
@@ -963,7 +972,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
           }
         }
         .arrow-connecting-pulse {
-          display: inline-block;
           animation: arrowPulseAnim 1.1s ease-in-out infinite;
         }
       `}</style>
