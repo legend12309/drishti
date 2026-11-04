@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface IntroViewProps {
   onComplete: () => void;
@@ -221,7 +222,7 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
           className="absolute top-16 right-6 md:right-8 z-35 px-3 py-1.5 bg-[#0B101D]/90 border border-[#38BDF8] text-[#38BDF8] text-[9.5px] font-bold tracking-wider rounded-sm shadow-[0_0_20px_rgba(56,189,248,0.4)] animate-bounce cursor-pointer hover:bg-[#38BDF8]/20 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
           onClick={toggleMute}
         >
-          <span>🔊</span>
+          <DoodleIcon name="audio" className="w-3.5 h-3.5 text-[#38BDF8]" />
           <span>CLICK TO UNMUTE AUDIO [M]</span>
         </div>
       )}
@@ -249,7 +250,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
                 : 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.4)]'
             }`}
           >
-            <span>{isMuted ? '🔇 AUDIO: MUTED' : '🔊 AUDIO: LIVE'}</span>
+            <DoodleIcon name={isMuted ? 'muted' : 'audio'} className="w-3.5 h-3.5" />
+            <span>{isMuted ? 'AUDIO: MUTED' : 'AUDIO: LIVE'}</span>
           </button>
 
           <button
@@ -258,7 +260,8 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
             className="px-2.5 py-1 border border-[#475569] bg-black/60 hover:border-white hover:text-white text-[#94A3B8] text-[9px] font-bold tracking-wider rounded-sm cursor-pointer backdrop-blur-sm flex items-center gap-1.5 active:scale-95 transition-all duration-150"
             title="Toggle Fullscreen (F)"
           >
-            <span>{isFullscreen ? '⤦ WINDOW' : '⛶ FULL'}</span>
+            <DoodleIcon name={isFullscreen ? 'window' : 'fullscreen'} className="w-3.5 h-3.5" />
+            <span>{isFullscreen ? 'WINDOW' : 'FULL'}</span>
           </button>
         </div>
       </header>

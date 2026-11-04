@@ -1,4 +1,5 @@
 import React from 'react';
+import { DoodleIcon } from './DoodleIcon';
 
 interface MetricCardProps {
   label: string;
@@ -50,7 +51,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           <div className="flex items-center gap-1.5 mt-2.5 text-[12px] font-medium text-[#77758E]">
             {badge && (
               <span
-                className={`font-semibold inline-flex items-center gap-0.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono ${
+                className={`font-semibold inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono ${
                   badge.type === 'critical'
                     ? 'bg-[#FFF0F1] text-[#DC4655] border border-[#DC4655]/20'
                     : badge.type === 'positive'
@@ -60,7 +61,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                     : 'bg-[#EAE4FF] text-[#6C4CF1] border border-[#E8E4F2]'
                 }`}
               >
-                {badge.type === 'positive' ? '▲' : badge.type === 'critical' ? '⚡' : '•'} {badge.text}
+                {badge.type === 'positive' ? (
+                  <span>▲</span>
+                ) : badge.type === 'critical' ? (
+                  <DoodleIcon name="spark" className="w-2.5 h-2.5" />
+                ) : (
+                  <span>•</span>
+                )}
+                <span>{badge.text}</span>
               </span>
             )}
             <span className="truncate">{subtitle}</span>

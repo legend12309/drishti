@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface GuardViewProps {
   onNavigate?: (tab: TabId) => void;
@@ -212,8 +213,12 @@ export const GuardView: React.FC<GuardViewProps> = ({ onNavigate, showToast }) =
             }`}>
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <span className="font-bold text-sm">
-                    {guardResult.verdict === 'BLOCKED' ? '🛑 [ INTERCEPTED / BLOCKED ]' : '✓ [ CLEARED / AUTHORIZED ]'}
+                  <span className="font-bold text-sm flex items-center gap-1.5">
+                    <DoodleIcon
+                      name={guardResult.verdict === 'BLOCKED' ? 'warning' : 'check'}
+                      className="w-4 h-4"
+                    />
+                    <span>{guardResult.verdict === 'BLOCKED' ? '[ INTERCEPTED / BLOCKED ]' : '[ CLEARED / AUTHORIZED ]'}</span>
                   </span>
                   <span className="text-[10px] text-charcoal font-bold">
                     ({guardResult.layer})

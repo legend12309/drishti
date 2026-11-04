@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OperatorProfile } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface LoginViewProps {
   onLoginSuccess: (operator: OperatorProfile, token: string) => void;
@@ -1130,7 +1131,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         top.style.transform = 'translateY(-100%)';
         bottom.style.transform = 'translateY(100%)';
       }
-      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ⚡ ]');
+      setButtonText('[ COCKPIT RUNNING // SESSION ESTABLISHED ]');
       setAuthStatus({
         custom: true,
         text: 'SESSION ACTIVE // COBALT OCULAR LINK ESTABLISHED // COMMENCING COCKPIT LAUNCH',
@@ -1568,7 +1569,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 onClick={rebootSequence}
                 title="Re-run engine self-test and camera sweep"
               >
-                <span className="text-[#EF4444]">⚡</span>
+                <DoodleIcon name="spark" className="w-3 h-3 text-[#EF4444]" />
                 <span>REBOOT_OPTO_MATRIX</span>
               </button>
             </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface SettingsViewProps {
   onNavigate?: (tab: TabId) => void;
@@ -109,8 +110,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigate, showToas
         {/* Active Engine Telemetry Card */}
         <div className="bg-pureWhite border border-hairline p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-boneDark border border-hairline text-ink flex items-center justify-center shrink-0 font-bold text-base">
-              ⚙
+            <div className="w-12 h-12 bg-boneDark border border-hairline text-ink flex items-center justify-center shrink-0">
+              <DoodleIcon name="gear" className="w-6 h-6 text-ink" />
             </div>
             <div>
               <div className="flex items-center gap-2">

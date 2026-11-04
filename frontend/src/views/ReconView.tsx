@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 const TERMINAL_WORKFLOW_STATES = ['completed', 'partially_completed', 'failed', 'cancelled'] as const;
 
@@ -711,7 +712,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   : 'bg-vermilion hover:bg-crimson text-white'
               }`}
             >
-              <span>{reconMode === 'PASSIVE' ? '🌐' : '⚡'}</span>
+              <DoodleIcon name={reconMode === 'PASSIVE' ? 'globe' : 'spark'} className="w-4 h-4 text-white" />
               <span>
                 {scanning
                   ? reconMode === 'PASSIVE'
@@ -740,13 +741,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     setAuthStatus(null);
                     checkAuthorization(target, 'PASSIVE_OSINT');
                   }}
-                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
+                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors flex items-center gap-1.5 ${
                     reconMode === 'PASSIVE'
                       ? 'border-signalGreen bg-signalGreenBg text-signalGreen font-bold shadow-xs'
                       : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
                   }`}
                 >
-                  [ 🌐 PASSIVE OSINT ONLY (FRICTIONLESS) ]
+                  <DoodleIcon name="globe" className="w-3.5 h-3.5" />
+                  <span>[ PASSIVE OSINT ONLY (FRICTIONLESS) ]</span>
                 </button>
                 <button
                   type="button"
@@ -755,13 +757,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     setAuthStatus(null);
                     checkAuthorization(target, 'FULL_ACTIVE');
                   }}
-                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors ${
+                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors flex items-center gap-1.5 ${
                     reconMode === 'ACTIVE'
                       ? 'border-vermilion bg-red-50 text-vermilion font-bold shadow-xs'
                       : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
                   }`}
                 >
-                  [ ⚡ ACTIVE RECON (FULL PIPELINE) ]
+                  <DoodleIcon name="spark" className="w-3.5 h-3.5" />
+                  <span>[ ACTIVE RECON (FULL PIPELINE) ]</span>
                 </button>
               </div>
             </div>
@@ -840,8 +843,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
               : 'bg-red-50 border-vermilion text-vermilion'
           }`}>
             <div className="flex items-start gap-3">
-              <div className="font-bold text-sm">
-                {!target.trim() ? 'ℹ️' : isCurrentScopeAuthorized ? '✓' : '⚠️'}
+              <div className="pt-0.5">
+                {!target.trim() ? (
+                  <DoodleIcon name="osint" className="w-4 h-4 text-charcoal" />
+                ) : isCurrentScopeAuthorized ? (
+                  <DoodleIcon name="check" className="w-4 h-4 text-signalGreen" />
+                ) : (
+                  <DoodleIcon name="warning" className="w-4 h-4 text-vermilion" />
+                )}
               </div>
               <div>
                 <div className="font-bold text-ink flex items-center gap-2 text-[11px]">
@@ -882,7 +891,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   onClick={initiateDNSChallenge}
                   className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  <span>⚡</span>
+                  <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
                   <span>[ PROMPT DNS TXT CHALLENGE ➔ ]</span>
                 </button>
               )}

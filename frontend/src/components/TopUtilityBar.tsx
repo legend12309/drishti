@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { OperatorProfile } from '../types';
+import { DoodleIcon } from './DoodleIcon';
 
 interface TopUtilityBarProps {
   operator?: OperatorProfile | null;
@@ -96,10 +97,10 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
         <button
           onClick={onCreateScan}
-          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider active:scale-95 transition-all duration-150 border border-hairline shadow-xs flex items-center space-x-1 cursor-pointer shrink-0"
+          className="bg-vermilion hover:bg-crimson text-white font-mono font-bold px-3 py-1 text-xs uppercase tracking-wider active:scale-95 transition-all duration-150 border border-hairline shadow-xs flex items-center space-x-1.5 cursor-pointer shrink-0"
           title="Launch Autonomous Recon Pipeline"
         >
-          <span>⚡</span>
+          <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
           <span className="hidden sm:inline">[ RUN AUDIT ]</span>
         </button>
       </div>

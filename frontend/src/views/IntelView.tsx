@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface IntelViewProps {
   onNavigate?: (tab: TabId) => void;
@@ -337,7 +338,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     : 'text-charcoal hover:text-ink'
                 }`}
               >
-                [ 🎯 TARGET SCAN INTEL (ALONE) ]
+                <span className="flex items-center gap-1.5">
+                  <DoodleIcon name="target" className="w-3.5 h-3.5 inline" />
+                  <span>[ TARGET SCAN INTEL (ALONE) ]</span>
+                </span>
               </button>
               <button
                 onClick={() => setIntelMode('GLOBAL_CATALOG')}
@@ -347,7 +351,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     : 'text-charcoal hover:text-ink'
                 }`}
               >
-                [ 🌐 GLOBAL NIST CVE CATALOG ]
+                <span className="flex items-center gap-1.5">
+                  <DoodleIcon name="globe" className="w-3.5 h-3.5 inline" />
+                  <span>[ GLOBAL NIST CVE CATALOG ]</span>
+                </span>
               </button>
             </div>
 
@@ -361,7 +368,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 >
                   {scans.map((s, idx) => (
                     <option key={s.id} value={s.id}>
-                      {idx === 0 ? '🎯 [LATEST] ' : '🎯 '} {s.target} ({s.id.slice(0, 16)})
+                      {idx === 0 ? '◎ [LATEST] ' : '○ '} {s.target} ({s.id.slice(0, 16)})
                     </option>
                   ))}
                   {scans.length === 0 && <option value="">[ NO ACTIVE SCANS RECORDED ]</option>}
@@ -618,8 +625,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                             )}
 
                             {(cve.isWeaponized || cve.metasploitModule) && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-white text-vermilion border border-vermilion">
-                                [⚡ MSF WEAPONIZED]
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-white text-vermilion border border-vermilion inline-flex items-center gap-1">
+                                <DoodleIcon name="spark" className="w-2.5 h-2.5 text-vermilion" />
+                                <span>[MSF WEAPONIZED]</span>
                               </span>
                             )}
 
@@ -845,8 +853,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 {(selectedCve.isWeaponized || selectedCve.metasploitModule) && (
                   <div className="p-3 bg-pureWhite border border-vermilion space-y-1.5 shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-vermilion uppercase tracking-wider">
-                        ⚡ CONFIRMED METASPLOIT WEAPONIZATION
+                      <span className="text-[10px] font-bold text-vermilion uppercase tracking-wider flex items-center gap-1.5">
+                        <DoodleIcon name="spark" className="w-3.5 h-3.5 text-vermilion" />
+                        <span>CONFIRMED METASPLOIT WEAPONIZATION</span>
                       </span>
                       <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-vermilion text-white">
                         RED TEAM READY

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon, DoodleGroup, DoodleName, resolveStageDoodle } from '../components/DoodleIcon';
 
 interface GraphViewProps {
   onNavigate?: (tab: TabId) => void;
@@ -34,7 +35,7 @@ interface AttackRouteStep {
   nodeId: string;
   mitreTechnique?: string;
   badgeColor: string;
-  icon: string;
+  doodle?: DoodleName;
 }
 
 interface AttackRoute {
@@ -56,12 +57,12 @@ interface AttackRoute {
 
 // 6 Canonical Topological Stages
 const STAGES_DEF = [
-  { index: 0, id: 'osint', label: 'STAGE 01 // PASSIVE OSINT', color: '#8B5CF6', bg: '#F5F3FF', icon: '🔍', desc: 'Zero-touch external reconnaissance (crt.sh, DoH, RDAP)' },
-  { index: 1, id: 'ingress', label: 'STAGE 02 // INGRESS APEX', color: '#0D0E11', bg: '#F8FAFC', icon: '🌐', desc: 'Public attack surface perimeter & DNS endpoints' },
-  { index: 2, id: 'service', label: 'STAGE 03 // SERVICE PORT', color: '#0284C7', bg: '#F0F9FF', icon: '🔌', desc: 'Exposed TCP/UDP daemon listeners & protocols' },
-  { index: 3, id: 'exploit', label: 'STAGE 04 // VULNERABILITY', color: '#E63926', bg: '#FEF2F2', icon: '⚡', desc: 'Weaponized CVEs & configuration flaws' },
-  { index: 4, id: 'pivot', label: 'STAGE 05 // LATERAL PIVOT', color: '#4F46E5', bg: '#EEF2FF', icon: '🔑', desc: 'Internal token forging, proxy traversal & SSH jumps' },
-  { index: 5, id: 'crown', label: 'STAGE 06 // CROWN JEWEL', color: '#0D7B38', bg: '#F0FDF4', icon: '💎', desc: 'Mission-critical database datastores & vault secrets' },
+  { index: 0, id: 'osint', label: 'STAGE 01 // PASSIVE OSINT', color: '#8B5CF6', bg: '#F5F3FF', doodle: 'osint', desc: 'Zero-touch external reconnaissance (crt.sh, DoH, RDAP)' },
+  { index: 1, id: 'ingress', label: 'STAGE 02 // INGRESS APEX', color: '#0D0E11', bg: '#F8FAFC', doodle: 'ingress', desc: 'Public attack surface perimeter & DNS endpoints' },
+  { index: 2, id: 'service', label: 'STAGE 03 // SERVICE PORT', color: '#0284C7', bg: '#F0F9FF', doodle: 'service', desc: 'Exposed TCP/UDP daemon listeners & protocols' },
+  { index: 3, id: 'exploit', label: 'STAGE 04 // VULNERABILITY', color: '#E63926', bg: '#FEF2F2', doodle: 'exploit', desc: 'Weaponized CVEs & configuration flaws' },
+  { index: 4, id: 'pivot', label: 'STAGE 05 // LATERAL PIVOT', color: '#4F46E5', bg: '#EEF2FF', doodle: 'pivot', desc: 'Internal token forging, proxy traversal & SSH jumps' },
+  { index: 5, id: 'crown', label: 'STAGE 06 // CROWN JEWEL', color: '#0D7B38', bg: '#F0FDF4', doodle: 'crown', desc: 'Mission-critical database datastores & vault secrets' },
 ];
 
 export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) => {
@@ -181,7 +182,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             nodeId: nid,
             mitreTechnique: osint.mitre,
             badgeColor: '#8B5CF6',
-            icon: '🔍',
+            doodle: 'osint',
           };
         }
         if (nid === crownNode || k === fullPathNodes.length - 1) {
@@ -194,7 +195,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             nodeId: nid,
             mitreTechnique: 'T1530',
             badgeColor: '#0D7B38',
-            icon: '💎',
+            doodle: 'crown',
           };
         }
         if (nid.toUpperCase().includes('CVE-') || nid.toUpperCase().includes('CWE-') || nid.toUpperCase().includes('ALERT')) {
@@ -207,7 +208,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             nodeId: nid,
             mitreTechnique: 'T1203',
             badgeColor: '#E63926',
-            icon: '⚡',
+            doodle: 'exploit',
           };
         }
         if (nid.includes(':')) {
@@ -220,7 +221,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             nodeId: nid,
             mitreTechnique: 'T1046',
             badgeColor: '#0284C7',
-            icon: '🔌',
+            doodle: 'service',
           };
         }
         if (nid.toLowerCase().includes('auth') || nid.toLowerCase().includes('proxy') || nid.toLowerCase().includes('ssh')) {
@@ -233,7 +234,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             nodeId: nid,
             mitreTechnique: 'T1078',
             badgeColor: '#4F46E5',
-            icon: '🔑',
+            doodle: 'pivot',
           };
         }
         return {
@@ -245,7 +246,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           nodeId: nid,
           mitreTechnique: 'T1190',
           badgeColor: '#0D0E11',
-          icon: '🌐',
+          doodle: 'ingress',
         };
       });
 
@@ -293,12 +294,12 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       exploitCve: 'CVE-2024-4577',
       summary: `Adversary passively maps ${domain} via public crt.sh Certificate Transparency logs, probes HTTPS port 443, weaponizes CVE-2024-4577 for arbitrary remote code execution, steals internal JWT tokens, and compromises CoreDB.`,
       steps: [
-        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'crt.sh CT Logs', desc: 'Zero-touch SSL log intelligence', nodeId: 'crt.sh (CT Log Discovery)', mitreTechnique: 'T1596.002', badgeColor: '#8B5CF6', icon: '🔍' },
-        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Perimeter apex target entry', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', icon: '🌐' },
-        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:443`, desc: 'Exposed HTTPS listener', nodeId: `${domain}:443`, mitreTechnique: 'T1046', badgeColor: '#0284C7', icon: '🔌' },
-        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'CVE-2024-4577', desc: 'Weaponized PHP CGI RCE', nodeId: 'CVE-2024-4577 (PHP CGI RCE)', mitreTechnique: 'T1203', badgeColor: '#E63926', icon: '⚡' },
-        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'InternalAuth', desc: 'Compromised Token / Session', nodeId: 'InternalAuth', mitreTechnique: 'T1078', badgeColor: '#4F46E5', icon: '🔑' },
-        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'CoreDB', desc: 'Crown Jewel Database', nodeId: 'CoreDB', mitreTechnique: 'T1530', badgeColor: '#0D7B38', icon: '💎' },
+        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'crt.sh CT Logs', desc: 'Zero-touch SSL log intelligence', nodeId: 'crt.sh (CT Log Discovery)', mitreTechnique: 'T1596.002', badgeColor: '#8B5CF6', doodle: 'osint' },
+        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Perimeter apex target entry', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', doodle: 'ingress' },
+        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:443`, desc: 'Exposed HTTPS listener', nodeId: `${domain}:443`, mitreTechnique: 'T1046', badgeColor: '#0284C7', doodle: 'service' },
+        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'CVE-2024-4577', desc: 'Weaponized PHP CGI RCE', nodeId: 'CVE-2024-4577 (PHP CGI RCE)', mitreTechnique: 'T1203', badgeColor: '#E63926', doodle: 'exploit' },
+        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'InternalAuth', desc: 'Compromised Token / Session', nodeId: 'InternalAuth', mitreTechnique: 'T1078', badgeColor: '#4F46E5', doodle: 'pivot' },
+        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'CoreDB', desc: 'Crown Jewel Database', nodeId: 'CoreDB', mitreTechnique: 'T1530', badgeColor: '#0D7B38', doodle: 'crown' },
       ],
       preconditions: [
         'Web server allows pass-through of query string arguments to cgi-bin runtime.',
@@ -323,12 +324,12 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       exploitCve: 'CVE-2021-41773',
       summary: `Adversary maps ${domain} IP infrastructure via passive DNS-over-HTTPS queries, detects unencrypted port 80, exploits Apache path traversal to dump .env secrets, and hops through Nginx proxy to breach PaymentGateway.`,
       steps: [
-        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'DNS DoH Query', desc: 'RFC 8484 DoH records', nodeId: 'Cloudflare DoH (DNS Enumeration)', mitreTechnique: 'T1596.001', badgeColor: '#8B5CF6', icon: '🔍' },
-        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Perimeter entry point', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', icon: '🌐' },
-        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:80`, desc: 'Cleartext HTTP port', nodeId: `${domain}:80`, mitreTechnique: 'T1046', badgeColor: '#0284C7', icon: '🔌' },
-        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'CVE-2021-41773', desc: 'Directory traversal exploit', nodeId: 'CVE-2021-41773 (Path Traversal)', mitreTechnique: 'T1203', badgeColor: '#E63926', icon: '⚡' },
-        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'NginxReverseProxy', desc: 'Internal proxy jump', nodeId: 'NginxReverseProxy', mitreTechnique: 'T1090', badgeColor: '#4F46E5', icon: '🔑' },
-        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'PaymentGateway', desc: 'Cardholder transaction ledger', nodeId: 'PaymentGateway', mitreTechnique: 'T1530', badgeColor: '#0D7B38', icon: '💎' },
+        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'DNS DoH Query', desc: 'RFC 8484 DoH records', nodeId: 'Cloudflare DoH (DNS Enumeration)', mitreTechnique: 'T1596.001', badgeColor: '#8B5CF6', doodle: 'osint' },
+        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Perimeter entry point', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', doodle: 'ingress' },
+        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:80`, desc: 'Cleartext HTTP port', nodeId: `${domain}:80`, mitreTechnique: 'T1046', badgeColor: '#0284C7', doodle: 'service' },
+        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'CVE-2021-41773', desc: 'Directory traversal exploit', nodeId: 'CVE-2021-41773 (Path Traversal)', mitreTechnique: 'T1203', badgeColor: '#E63926', doodle: 'exploit' },
+        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'NginxReverseProxy', desc: 'Internal proxy jump', nodeId: 'NginxReverseProxy', mitreTechnique: 'T1090', badgeColor: '#4F46E5', doodle: 'pivot' },
+        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'PaymentGateway', desc: 'Cardholder transaction ledger', nodeId: 'PaymentGateway', mitreTechnique: 'T1530', badgeColor: '#0D7B38', doodle: 'crown' },
       ],
       preconditions: [
         'Port 80 serves files without canonical path resolution.',
@@ -353,12 +354,12 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       exploitCve: 'CWE-306',
       summary: `Adversary traces ${domain} ASN allocation via public RDAP registries, locates open cache port 6379, writes root authorized_keys to disk, establishes SSH shell on DevOps Bastion, and pivots into CrownVault.`,
       steps: [
-        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'RDAP Netblock', desc: 'Public IP allocation registry', nodeId: 'ARIN / RDAP (ASN Netblock)', mitreTechnique: 'T1596.005', badgeColor: '#8B5CF6', icon: '🔍' },
-        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Target host', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', icon: '🌐' },
-        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:6379`, desc: 'Redis memory store', nodeId: `${domain}:6379`, mitreTechnique: 'T1046', badgeColor: '#0284C7', icon: '🔌' },
-        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'Redis CWE-306', desc: 'Missing authentication', nodeId: 'Unauthenticated Redis Cache (CWE-306)', mitreTechnique: 'T1190', badgeColor: '#E63926', icon: '⚡' },
-        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'DevOpsBastionSSH', desc: 'Root SSH session access', nodeId: 'DevOpsBastionSSH', mitreTechnique: 'T1021.004', badgeColor: '#4F46E5', icon: '🔑' },
-        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'CrownVault', desc: 'Master secrets & PKI keys', nodeId: 'CrownVault', mitreTechnique: 'T1552', badgeColor: '#0D7B38', icon: '💎' },
+        { stage: '1. Passive OSINT', stageIndex: 0, stageName: 'PASSIVE RECON', label: 'RDAP Netblock', desc: 'Public IP allocation registry', nodeId: 'ARIN / RDAP (ASN Netblock)', mitreTechnique: 'T1596.005', badgeColor: '#8B5CF6', doodle: 'osint' },
+        { stage: '2. Ingress', stageIndex: 1, stageName: 'INGRESS APEX', label: domain, desc: 'Target host', nodeId: domain, mitreTechnique: 'T1190', badgeColor: '#0D0E11', doodle: 'ingress' },
+        { stage: '3. Service', stageIndex: 2, stageName: 'SERVICE LISTENER', label: `${domain}:6379`, desc: 'Redis memory store', nodeId: `${domain}:6379`, mitreTechnique: 'T1046', badgeColor: '#0284C7', doodle: 'service' },
+        { stage: '4. Exploit', stageIndex: 3, stageName: 'EXPLOIT', label: 'Redis CWE-306', desc: 'Missing authentication', nodeId: 'Unauthenticated Redis Cache (CWE-306)', mitreTechnique: 'T1190', badgeColor: '#E63926', doodle: 'exploit' },
+        { stage: '5. Pivot', stageIndex: 4, stageName: 'LATERAL PIVOT', label: 'DevOpsBastionSSH', desc: 'Root SSH session access', nodeId: 'DevOpsBastionSSH', mitreTechnique: 'T1021.004', badgeColor: '#4F46E5', doodle: 'pivot' },
+        { stage: '6. Objective', stageIndex: 5, stageName: 'CROWN JEWEL', label: 'CrownVault', desc: 'Master secrets & PKI keys', nodeId: 'CrownVault', mitreTechnique: 'T1552', badgeColor: '#0D7B38', doodle: 'crown' },
       ],
       preconditions: [
         'Redis server bound to 0.0.0.0 without requirepass configured.',
@@ -444,17 +445,17 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       const typeLower = (node.node_type || node.type || '').toLowerCase();
 
       if (idLower === 'coredb' || idLower === 'paymentgateway' || idLower === 'crownvault' || typeLower === 'target' || typeLower === 'critical_target' || idLower.includes('db') || idLower.includes('vault')) {
-        col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#0D7B38', icon: '💎' });
+        col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#0D7B38', doodle: 'crown' });
       } else if (idLower === 'internalauth' || idLower === 'nginxreverseproxy' || idLower === 'devopsbastionssh' || typeLower === 'pivot' || idLower.includes('auth') || idLower.includes('proxy') || idLower.includes('ssh')) {
-        col4.push({ ...node, stageIndex: 4, stageLabel: 'LATERAL PIVOT', badgeColor: '#4F46E5', icon: '🔑' });
+        col4.push({ ...node, stageIndex: 4, stageLabel: 'LATERAL PIVOT', badgeColor: '#4F46E5', doodle: 'pivot' });
       } else if (typeLower === 'vulnerability' || idLower.includes('cve') || idLower.includes('cwe') || idLower.includes('vuln') || idLower.includes('exploit') || idLower.includes('alert')) {
-        col3.push({ ...node, stageIndex: 3, stageLabel: 'EXPLOIT', badgeColor: '#E63926', icon: '⚡' });
+        col3.push({ ...node, stageIndex: 3, stageLabel: 'EXPLOIT', badgeColor: '#E63926', doodle: 'exploit' });
       } else if (typeLower === 'service' || node.id.includes(':') || typeLower.includes('port')) {
-        col2.push({ ...node, stageIndex: 2, stageLabel: 'SERVICE PORT', badgeColor: '#0284C7', icon: '🔌' });
+        col2.push({ ...node, stageIndex: 2, stageLabel: 'SERVICE PORT', badgeColor: '#0284C7', doodle: 'service' });
       } else if (idLower.includes('crt.sh') || idLower.includes('doh') || idLower.includes('rdap') || idLower.includes('osint') || typeLower === 'osint' || typeLower === 'passive') {
-        col0.push({ ...node, stageIndex: 0, stageLabel: 'PASSIVE OSINT', badgeColor: '#8B5CF6', icon: '🔍' });
+        col0.push({ ...node, stageIndex: 0, stageLabel: 'PASSIVE OSINT', badgeColor: '#8B5CF6', doodle: 'osint' });
       } else {
-        col1.push({ ...node, stageIndex: 1, stageLabel: 'INGRESS APEX', badgeColor: '#0D0E11', icon: '🌐' });
+        col1.push({ ...node, stageIndex: 1, stageLabel: 'INGRESS APEX', badgeColor: '#0D0E11', doodle: 'ingress' });
       }
     });
 
@@ -684,10 +685,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               <button
                 type="button"
                 onClick={() => setCrownJewelModalOpen(true)}
-                className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 border border-signalGreen text-signalGreen text-[10px] font-bold cursor-pointer transition-colors flex items-center gap-1"
+                className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 border border-signalGreen text-signalGreen text-[10px] font-bold cursor-pointer transition-colors flex items-center gap-1.5"
                 title="Learn how DRISHTI detects Crown Jewels dynamically"
               >
-                <span>💎</span>
+                <DoodleIcon name="crown" className="w-3.5 h-3.5 text-signalGreen" />
                 <span>AI CROWN JEWELS: DYNAMIC [INFO]</span>
               </button>
             </div>
@@ -706,10 +707,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               }}
               className="bg-pureWhite text-xs font-mono font-bold text-ink border border-hairline px-3 py-1.5 shadow-xs hover:border-ink transition-colors outline-none cursor-pointer"
             >
-              <option value="latest">🎯 [ LATEST SCAN TOPOLOGY ]</option>
+              <option value="latest">[ LATEST SCAN TOPOLOGY ]</option>
               {scans.map((s) => (
                 <option key={s.id} value={s.id}>
-                  🎯 {s.target} ({s.id.slice(0, 16)})
+                  {s.target} ({s.id.slice(0, 16)})
                 </option>
               ))}
             </select>
@@ -719,7 +720,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               disabled={explainingPath}
               className="bg-pureWhite border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-bold transition-colors shadow-xs cursor-pointer disabled:opacity-40 flex items-center gap-1.5"
             >
-              <span>⚡</span>
+              <DoodleIcon name="spark" className="w-3.5 h-3.5" />
               <span>{explainingPath ? '[ SYNTHESIZING... ]' : '[ AI ATTACK NARRATIVE ]'}</span>
             </button>
 
@@ -773,8 +774,9 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-ink uppercase tracking-wide">
-                      {idx === 0 ? '⚡ ROUTE #1 (CRITICAL)' : idx === 1 ? '⚠️ ROUTE #2 (SECONDARY)' : '🛡️ ROUTE #3 (LATERAL)'}
+                    <span className="text-[11px] font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
+                      <DoodleIcon name={idx === 0 ? 'spark' : idx === 1 ? 'warning' : 'shield'} className="w-3.5 h-3.5 shrink-0" />
+                      <span>{idx === 0 ? 'ROUTE #1 (CRITICAL)' : idx === 1 ? 'ROUTE #2 (SECONDARY)' : 'ROUTE #3 (LATERAL)'}</span>
                     </span>
                     <span className={`px-2 py-0.5 text-[9.5px] font-black border uppercase ${badgeStyle}`}>
                       {route.badge} // {route.timeEstimate}
@@ -834,7 +836,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                   title="Click to locate on canvas and inspect technical telemetry"
                 >
                   <div className="flex items-center justify-between text-[9.5px] text-charcoal font-bold">
-                    <span>{step.stage}</span>
+                    <span className="flex items-center gap-1.5">
+                      <DoodleIcon name={step.doodle || (resolveStageDoodle(step.stageIndex) as any)} className="w-3.5 h-3.5 text-ink shrink-0" />
+                      <span>{step.stage}</span>
+                    </span>
                     {idx < activeRoute.steps.length - 1 && <span className="hidden lg:inline text-pencil font-black">➔</span>}
                   </div>
                   <div className="text-[11px] font-bold text-ink truncate" title={step.label}>
@@ -849,14 +854,16 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           </div>
 
           <div className="p-2.5 bg-boneDark/60 border border-hairline text-[10px] text-charcoal flex items-center justify-between flex-wrap gap-2">
-            <span>
-              🔍 <strong>STAGE 1 PASSIVE RECONNAISSANCE INTEL:</strong> Adversary gathers external intelligence via public Certificate Transparency logs (crt.sh), DNS DoH queries, and RDAP without triggering target firewalls.
+            <span className="flex items-center gap-1.5">
+              <DoodleIcon name="osint" className="w-3.5 h-3.5 text-vermilion shrink-0" />
+              <span><strong>STAGE 1 PASSIVE RECONNAISSANCE INTEL:</strong> Adversary gathers external intelligence via public Certificate Transparency logs (crt.sh), DNS DoH queries, and RDAP without triggering target firewalls.</span>
             </span>
             <button
               onClick={() => onNavigate?.('guard')}
-              className="text-vermilion font-black hover:underline shrink-0 cursor-pointer"
+              className="text-vermilion font-black hover:underline shrink-0 cursor-pointer flex items-center gap-1"
             >
-              [ 🛡️ DEPLOY SHIELD FOR THIS ROUTE ➔ ]
+              <DoodleIcon name="shield" className="w-3.5 h-3.5 text-vermilion shrink-0" />
+              <span>[ DEPLOY SHIELD FOR THIS ROUTE ➔ ]</span>
             </button>
           </div>
         </div>
@@ -903,7 +910,8 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
 
           {/* Canvas Interactive Helper Badge */}
           <div className="absolute bottom-3 left-4 z-20 pointer-events-none bg-pureWhite/95 border border-hairline px-3 py-1 text-[9.5px] font-mono text-charcoal shadow-xs flex items-center gap-2">
-            <span>🖱️ <strong>CANVAS CONTROLS:</strong> Click & Drag to Pan • Scroll to Zoom • Click Node to Inspect Telemetry</span>
+            <DoodleIcon name="radar" className="w-3.5 h-3.5 text-charcoal" />
+            <span><strong>CANVAS CONTROLS:</strong> Click & Drag to Pan • Scroll to Zoom • Click Node to Inspect Telemetry</span>
           </div>
 
           {/* Interactive Draggable Canvas Area */}
@@ -1025,16 +1033,24 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                           height="36"
                           fill={stage.color}
                         />
+                        <DoodleGroup
+                          name={stage.id}
+                          x={laneLeft + 18}
+                          y={23}
+                          size={14}
+                          color={stage.color}
+                          strokeWidth={1.9}
+                        />
                         <text
-                          x={laneLeft + 20}
+                          x={laneLeft + 38}
                           y={34}
                           fill="#0D0E11"
-                          fontSize="10"
+                          fontSize="9.5"
                           fontFamily="monospace"
                           fontWeight="bold"
                           letterSpacing="0.06em"
                         >
-                          {stage.icon} {stage.label}
+                          {stage.label}
                         </text>
                         <text
                           x={laneLeft + 20}
@@ -1206,9 +1222,17 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                           fill={headerColor}
                         />
 
-                        {/* Header Title */}
+                        {/* Header Title & Doodle Icon */}
+                        <DoodleGroup
+                          name={resolveStageDoodle(node.stageIndex ?? 1)}
+                          x={8}
+                          y={5}
+                          size={12}
+                          color="#FFFFFF"
+                          strokeWidth={1.8}
+                        />
                         <text
-                          x="8"
+                          x="24"
                           y="15"
                           fill="#FFFFFF"
                           fontSize="9.5"
@@ -1216,7 +1240,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                           fontWeight="bold"
                           letterSpacing="0.05em"
                         >
-                          {node.icon} [ {node.stageLabel} ]
+                          [ {node.stageLabel} ]
                         </text>
 
                         {/* Pulsing indicator if on active vector */}
@@ -1334,15 +1358,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               </div>
               <button
                 onClick={() => onNavigate?.('guard')}
-                className="px-3.5 py-1.5 bg-ink hover:bg-vermilion text-white font-mono font-bold text-xs transition-colors cursor-pointer shadow-xs"
+                className="px-3.5 py-1.5 bg-ink hover:bg-vermilion text-white font-mono font-bold text-xs transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                [ 🛡️ DEPLOY 1-CLICK DEFENSIVE SHIELD ON GUARD ]
+                <DoodleIcon name="shield" className="w-3.5 h-3.5 text-white" />
+                <span>[ DEPLOY 1-CLICK DEFENSIVE SHIELD ON GUARD ]</span>
               </button>
             </div>
           </div>
         ) : (
           <div className="p-3 bg-pureWhite border border-hairline text-charcoal text-[10.5px] font-mono flex items-center justify-between flex-wrap gap-2">
-            <span>💡 <strong>OPERATOR GUIDE:</strong> The attack graph begins at <strong>Stage 01: Passive OSINT</strong> showing how the attacker discovers your perimeter without touching your servers. Click on <strong>Route #1</strong>, <strong>Route #2</strong>, or <strong>Route #3</strong> to switch vectors.</span>
+            <span className="flex items-center gap-1.5">
+              <DoodleIcon name="target" className="w-3.5 h-3.5 text-charcoal shrink-0" />
+              <span><strong>OPERATOR GUIDE:</strong> The attack graph begins at <strong>Stage 01: Passive OSINT</strong> showing how the attacker discovers your perimeter without touching your servers. Click on <strong>Route #1</strong>, <strong>Route #2</strong>, or <strong>Route #3</strong> to switch vectors.</span>
+            </span>
             <span className="text-pencil font-bold">6 Stages Active</span>
           </div>
         )}
@@ -1404,9 +1432,9 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
           <div className="bg-pureWhite border-2 border-ink shadow-2xl max-w-xl w-full p-5 space-y-3 font-mono text-xs animate-fadeIn">
             <div className="flex items-center justify-between pb-2 border-b border-hairline">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-signalGreen"></span>
+                <DoodleIcon name="crown" className="w-4 h-4 text-signalGreen" />
                 <h3 className="text-xs font-black text-ink uppercase tracking-wider font-grotesk">
-                  💎 DYNAMIC CROWN JEWEL DETECTION INTELLIGENCE
+                  DYNAMIC CROWN JEWEL DETECTION INTELLIGENCE
                 </h3>
               </div>
               <button

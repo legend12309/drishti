@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SystemHealth, TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface DashboardViewProps {
   health: SystemHealth | null;
@@ -319,7 +320,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             <div className="lg:col-span-5 space-y-2">
               <div className="flex items-center justify-between text-[10px] text-charcoal font-bold">
                 <span className="flex items-center gap-1.5 text-ink font-grotesk font-black uppercase tracking-wider">
-                  <span>🎯</span>
+                  <DoodleIcon name="target" className="w-3.5 h-3.5 text-vermilion" />
                   <span>ACTIVE PERIMETER TARGET SURFACE</span>
                 </span>
                 <span className="text-pencil">[ AUTO-SYNC RECON ]</span>
@@ -439,7 +440,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                 onClick={handleRunRecon}
                 className="w-full py-3.5 px-4 bg-vermilion hover:bg-crimson text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-hairline shadow-md active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 group text-center"
               >
-                <span>⚡</span>
+                <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
                 <span>RUN RECON</span>
                 <span className="group-hover:translate-x-1 transition-transform">➔</span>
               </button>
@@ -515,17 +516,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                   ? '05_ LATERAL PIVOT'
                   : `02_ INGRESS APEX`;
 
-                const stageIcon = isFirst
-                  ? '🔍'
+                const stageDoodle = isFirst
+                  ? 'osint'
                   : isLast
-                  ? '💎'
+                  ? 'crown'
                   : isVuln
-                  ? '⚡'
+                  ? 'exploit'
                   : isService
-                  ? '🔌'
+                  ? 'service'
                   : isPivot
-                  ? '🔑'
-                  : '🌐';
+                  ? 'pivot'
+                  : 'ingress';
 
                 const cardBorder = isVuln
                   ? 'border-vermilion/80 bg-[#FEF2F2]'
@@ -560,8 +561,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                       <span className="w-2 h-2 rounded-full bg-ink absolute -right-1.5 top-1/2 -translate-y-1/2 border border-white"></span>
 
                       <div className="flex items-center justify-between text-[9px] font-black pb-1.5 border-b border-hairlineLight">
-                        <span className={`flex items-center gap-1 ${headerColor}`}>
-                          <span>{stageIcon}</span>
+                        <span className={`flex items-center gap-1.5 ${headerColor}`}>
+                          <DoodleIcon name={stageDoodle} className="w-3.5 h-3.5 shrink-0" />
                           <span>{stageTag}</span>
                         </span>
                         <span className="text-[8.5px] px-1 py-0.2 bg-white border border-hairlineLight text-charcoal font-mono">
@@ -611,7 +612,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
           {/* Action Trigger Banner */}
           <div className="p-3 bg-boneDark/60 border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
             <div className="flex items-center space-x-2">
-              <span className="text-vermilion font-bold">⚡ METASPLOIT WEAPONIZATION INTELLIGENCE:</span>
+              <span className="text-vermilion font-bold flex items-center gap-1.5">
+                <DoodleIcon name="spark" className="w-4 h-4 text-vermilion" />
+                <span>METASPLOIT WEAPONIZATION INTELLIGENCE:</span>
+              </span>
               <span className="text-charcoal">
                 Active exploits reduce Dijkstra traversal friction down to 0.40x, prioritizing weaponized kill chains for immediate mitigation.
               </span>
@@ -619,9 +623,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
             <button
               type="button"
               onClick={() => onNavigate('guard')}
-              className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold border border-signalGreen shadow-xs cursor-pointer shrink-0 transition-colors"
+              className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold border border-signalGreen shadow-xs cursor-pointer shrink-0 transition-colors flex items-center gap-1.5"
             >
-              [ 🛡️ EXECUTE SHIELD PROTOCOL ➔ ]
+              <DoodleIcon name="shield" className="w-3.5 h-3.5 text-white" />
+              <span>[ EXECUTE SHIELD PROTOCOL ➔ ]</span>
             </button>
           </div>
         </section>
@@ -725,9 +730,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                   type="button"
                   onClick={handleExecuteProbe}
                   disabled={probing}
-                  className="px-4 py-1.5 bg-ink hover:bg-vermilion text-white font-black text-xs border border-ink shadow-sm cursor-pointer disabled:opacity-50 transition-colors"
+                  className="px-4 py-1.5 bg-ink hover:bg-vermilion text-white font-black text-xs border border-ink shadow-sm cursor-pointer disabled:opacity-50 transition-colors flex items-center gap-1.5"
                 >
-                  {probing ? '[ PROBING... ]' : '[ 🚀 FIRE PROBE ]'}
+                  <DoodleIcon name="probe" className="w-3.5 h-3.5 text-white" />
+                  <span>{probing ? '[ PROBING... ]' : '[ FIRE PROBE ]'}</span>
                 </button>
               </div>
             </div>
@@ -854,8 +860,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                         {f.risk} // Score: {f.score || '3.5'}
                       </td>
                       <td className="py-3.5 px-4 border-r border-hairlineLight">
-                        <span className="px-2 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen font-bold text-[10px]">
-                          ⚡ PASSIVE VERIFIED
+                        <span className="px-2 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen font-bold text-[10px] inline-flex items-center gap-1">
+                          <DoodleIcon name="spark" className="w-3 h-3 text-signalGreen" />
+                          <span>PASSIVE VERIFIED</span>
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right pr-4">
@@ -884,9 +891,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate, showTo
                           <button
                             type="button"
                             onClick={() => onNavigate('recon')}
-                            className="px-4 py-2 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline cursor-pointer transition-colors shadow-xs"
+                            className="px-4 py-2 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline cursor-pointer transition-colors shadow-xs inline-flex items-center gap-2"
                           >
-                            [ 🌐 COMMENCE FIRST RECON DISCOVERY SCAN ➔ ]
+                            <DoodleIcon name="globe" className="w-3.5 h-3.5 text-white" />
+                            <span>[ COMMENCE FIRST RECON DISCOVERY SCAN ➔ ]</span>
                           </button>
                         </div>
                       </div>

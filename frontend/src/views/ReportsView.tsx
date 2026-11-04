@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { TabId } from '../types';
+import { DoodleIcon } from '../components/DoodleIcon';
 
 interface ReportsViewProps {
   onNavigate?: (tab: TabId) => void;
@@ -265,15 +266,17 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
                           <button
                             onClick={downloadLatestPdfReport}
                             disabled={downloadingLatest}
-                            className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline shadow-xs cursor-pointer"
+                            className="px-3.5 py-1.5 bg-signalGreen hover:bg-forestGreen text-white font-bold text-xs border border-hairline shadow-xs cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            [ ⚡ DOWNLOAD INSTANT ASSESSMENT PDF ]
+                            <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
+                            <span>[ DOWNLOAD INSTANT ASSESSMENT PDF ]</span>
                           </button>
                           <button
                             onClick={() => onNavigate?.('recon')}
-                            className="px-3.5 py-1.5 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-bold text-xs cursor-pointer"
+                            className="px-3.5 py-1.5 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-bold text-xs cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            [ 🌐 LAUNCH RECON DISCOVERY ]
+                            <DoodleIcon name="globe" className="w-3.5 h-3.5 text-ink" />
+                            <span>[ LAUNCH RECON DISCOVERY ]</span>
                           </button>
                         </div>
                       </div>
