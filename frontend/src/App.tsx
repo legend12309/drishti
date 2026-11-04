@@ -41,9 +41,8 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem('drishti_auth_token');
-  });
+  // Always show login page first on open
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [operator, setOperator] = useState<OperatorProfile | null>(() => {
     const saved = localStorage.getItem('drishti_operator');
