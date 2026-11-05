@@ -10,13 +10,25 @@ export type TabId =
   | 'profile'
   | 'reports';
 
+export interface EngineInfo {
+  name?: string;
+  status: string;
+  tier?: string;
+  description: string;
+  latency_ms?: number;
+  connected?: boolean;
+}
+
 export interface SystemHealth {
   status: string;
   platform: string;
+  version?: string;
   uptime_seconds: number;
-  sqlite: {
+  database?: any;
+  sqlite?: {
     wal_mode: boolean;
     path: string;
+    status?: string;
   };
   memory: {
     rss_mb: number;
@@ -24,7 +36,7 @@ export interface SystemHealth {
     system_used_percent: number;
     system_available_mb: number;
   };
-  engines: Record<string, { status: string; description: string }>;
+  engines: Record<string, EngineInfo>;
 }
 
 export interface OperatorProfile {

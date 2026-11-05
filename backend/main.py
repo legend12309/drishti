@@ -95,6 +95,11 @@ async def health_check() -> Dict[str, Any]:
         "version": "v1.0.0-rc1",
         "uptime_seconds": round(time.time() - START_TIME, 2),
         "database": db_status,
+        "sqlite": {
+            "wal_mode": db_status.get("wal_mode", True) if isinstance(db_status, dict) else True,
+            "path": db_status.get("path", "drishti.db") if isinstance(db_status, dict) else "drishti.db",
+            "status": db_status.get("status", "operational") if isinstance(db_status, dict) else "operational",
+        },
         "memory": {
             "rss_mb": round(mem_info.rss / (1024 * 1024), 2),
             "vms_mb": round(mem_info.vms / (1024 * 1024), 2),

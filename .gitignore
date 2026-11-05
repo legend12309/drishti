@@ -31,3 +31,4 @@ frontend/.vite/
 .env
 .env.local
 *.log
+assessment_output.json/
