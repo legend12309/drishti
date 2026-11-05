@@ -96,28 +96,38 @@ def normalize_tech_banner(
                 fingerprints.append(fp)
                 break
 
-        # Fallback generic tokenization if segment didn't match known technologies
+        # Fallback generic tokenization ONLY if segment has an actual candidate software version
+        # and is not a protocol / scanner artifact keyword.
         if not matched:
             tokens = seg.split()
-            prod_name = tokens[0].lower() if tokens else "unknown"
-            ver_candidate = None
-            if len(tokens) > 1 and re.match(r"^[0-9]+(\.[0-9]+)*", tokens[1]):
-                ver_candidate = tokens[1]
+            raw_name = tokens[0].lower().rstrip(":,.-") if tokens else ""
+            stop_words = {
+                "open", "closed", "filtered", "http", "https", "tcp", "udp",
+                "owasp", "zap", "plugin", "nuclei", "port", "nmap", "alert",
+                "cwe", "service", "unknown", "discovered", "host", "ip",
+                "resolved", "status", "web", "found", "info", "low", "medium", "high", "critical"
+            }
+            if raw_name and raw_name not in stop_words and len(raw_name) >= 3 and re.match(r"^[a-z0-9_\-]+$", raw_name):
+                ver_candidate = None
+                if len(tokens) > 1 and re.match(r"^[0-9]+(\.[0-9]+)*", tokens[1]):
+                    ver_candidate = tokens[1]
 
-            fp = AssetFingerprint(
-                scan_id=scan_id,
-                asset_id=asset_id,
-                host=host,
-                port=port,
-                vendor=prod_name,
-                product=prod_name,
-                version=ver_candidate,
-                version_scheme="semver",
-                cpe23=f"cpe:2.3:a:{prod_name}:{prod_name}:{ver_candidate or '*'}:*:*:*:*:*:*:*",
-                fingerprint_source=source,
-                is_inferred=True,
-                confidence=0.50
-            )
-            fingerprints.append(fp)
+                # Only register fallback if a specific version candidate exists or product is plausible
+                if ver_candidate:
+                    fp = AssetFingerprint(
+                        scan_id=scan_id,
+                        asset_id=asset_id,
+                        host=host,
+                        port=port,
+                        vendor=raw_name,
+                        product=raw_name,
+                        version=ver_candidate,
+                        version_scheme="semver",
+                        cpe23=f"cpe:2.3:a:{raw_name}:{raw_name}:{ver_candidate}:*:*:*:*:*:*:*",
+                        fingerprint_source=source,
+                        is_inferred=True,
+                        confidence=0.60
+                    )
+                    fingerprints.append(fp)
 
     return fingerprints

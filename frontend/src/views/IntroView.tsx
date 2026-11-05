@@ -44,10 +44,28 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
     }
   }, []);
 
+  // Play wakeup voice line after video finishes
+  const playWakeupAudio = useCallback(() => {
+    try {
+      if ((window as any).__drishtiWakeupAudio) {
+        (window as any).__drishtiWakeupAudio.pause();
+      }
+      const audio = new Audio('/wakeup.mp3');
+      audio.volume = 1.0;
+      (window as any).__drishtiWakeupAudio = audio;
+      audio.play().catch((err) => {
+        console.warn('Wakeup audio autoplay deferred:', err);
+      });
+    } catch (e) {
+      console.warn('Wakeup audio init error:', e);
+    }
+  }, []);
+
   // Cinematic two-step transition:
   // Step 1: Fade out the video completely into pure black (#030407)
-  // Step 2: Slowly dissolve out IntroView while LoginView slowly fades in from pure black
-  // Step 3: Complete handoff to LoginView once fade-in has fully engaged
+  // Step 2: Trigger uploaded voice transmission (/wakeup.mp3)
+  // Step 3: Slowly dissolve out IntroView while LoginView slowly fades in from pure black
+  // Step 4: Complete handoff to LoginView once fade-in has fully engaged
   const startVideoFadeOut = useCallback((quick = false) => {
     if (transitionStartedRef.current) return;
     transitionStartedRef.current = true;
@@ -55,6 +73,11 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
 
     const videoFadeDuration = quick ? 350 : 1000;
     fadeOutAudio(videoFadeDuration);
+
+    // Trigger wakeup audio right as video fades into pure blackout
+    setTimeout(() => {
+      playWakeupAudio();
+    }, Math.max(100, videoFadeDuration - 200));
 
     setTimeout(() => {
       const v = videoRef.current;
@@ -71,13 +94,13 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
       onBeginExit?.();
       setIsContainerExiting(true);
 
-      // Step 3: Complete handoff to LoginView after the slow 2000ms dissolve finishes
-      const revealDuration = quick ? 1600 : 2000;
+      // Step 3: Complete handoff to LoginView after the slow 2200ms dissolve finishes
+      const revealDuration = quick ? 1600 : 2200;
       setTimeout(() => {
         onComplete();
       }, revealDuration);
     }, videoFadeDuration);
-  }, [fadeOutAudio, onBeginExit, onComplete]);
+  }, [fadeOutAudio, onBeginExit, onComplete, playWakeupAudio]);
 
   // Video time tracker: detect when video reaches final action climax (12.60s) to begin fade-out to black
   const handleTimeUpdate = () => {
@@ -240,6 +263,24 @@ export const IntroView: React.FC<IntroViewProps> = ({ onComplete, onBeginExit })
           isVideoFadingOut ? 'opacity-100' : 'opacity-0'
         }`}
       />
+
+      {/* Cinematic Voice Quote Overlay After Video Ends */}
+      {isVideoFadingOut && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none px-6 text-center select-none animate-fade-in">
+          <div className="space-y-4 max-w-xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#EF4444]/15 border border-[#EF4444]/60 text-[#EF4444] text-[10px] font-mono font-bold tracking-[0.25em] uppercase shadow-[0_0_25px_rgba(239,68,68,0.35)] backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-ping" />
+              OCULAR AWAKENING // VOICE TRANSMISSION
+            </div>
+            <p className="text-xl md:text-2xl font-black text-white tracking-[0.2em] uppercase font-grotesk drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+              &ldquo;Wake up to reality...&rdquo;
+            </p>
+            <p className="text-xs md:text-sm text-neutral-300 font-mono tracking-[0.16em] max-w-lg mx-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+              Nothing ever goes as planned in this accursed world.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Subtle CRT Scanline Overlay */}
       <div className="crt-overlay pointer-events-none absolute inset-0 z-20"></div>
