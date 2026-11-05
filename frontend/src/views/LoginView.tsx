@@ -1678,14 +1678,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
             id="scanArena"
             ref={arenaRef}
           >
-            {/* Precision Azimuth Degree Radial Marks */}
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#030407] px-2 text-[7.5px] font-mono tracking-widest text-[#EF4444]/90 pointer-events-none z-30 select-none border border-[#EF4444]/30 rounded-sm">
-              AZM 000° // APERTURE_NORTH
-            </div>
-            <div className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-[#030407] px-2 text-[7.5px] font-mono tracking-widest text-[#64748B] pointer-events-none z-30 select-none border border-[#1E293B] rounded-sm">
-              AZM 180° // APERTURE_SOUTH
-            </div>
-
             {/* Precision SVG Reticle System (Counter-rotating precision ticks, zero extra outer rings) */}
             <svg
               className="absolute w-[340px] h-[340px] pointer-events-none z-10 overflow-visible"
