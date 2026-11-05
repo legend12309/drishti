@@ -318,7 +318,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 cvss: Number(sv.cvss_score || 7.5),
                 severity: (sv.cvss_severity || 'HIGH').toUpperCase(),
                 epss: Number(sv.epss_score || 0.15),
-                status: sv.applicability_status || 'confirmed_applicability',
+                status: sv.applicability_status || 'potential_applicability',
                 fix: sv.remediation_notes || 'Apply vendor security patch.',
                 vector: sv.cvss_vector || 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
                 description: sv.description || 'Observed vulnerability matching software banner on scanned target.',
@@ -326,7 +326,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 confidence: sv.confidence_score,
                 matchRationale: sv.match_rationale,
                 references: sv.references || [],
-                provenance: 'Live Recon Correlation',
+                provenance: sv.applicability_status === 'confirmed_applicability' ? 'Active Scan Verification' : 'Passive Recon Correlation',
                 publishedAt: sv.evaluated_at,
                 isCorrelated: true,
                 isWeaponized: Boolean(sv.is_weaponized),
@@ -414,19 +414,21 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
   const stats = useMemo(() => {
     const total = cves.length;
     const critical = cves.filter((c) => c.severity === 'CRITICAL').length;
+    const confirmed = cves.filter((c) => c.status === 'confirmed_applicability').length;
+    const passiveCorrelated = cves.filter((c) => c.status !== 'confirmed_applicability' && c.isCorrelated).length;
     const correlated = cves.filter((c) => c.isCorrelated).length;
     const highEpss = cves.filter((c) => c.epss >= 0.5).length;
     const weaponized = cves.filter((c) => c.isWeaponized || Boolean(c.metasploitModule)).length;
     const avgCvss = total > 0 ? (cves.reduce((acc, c) => acc + c.cvss, 0) / total).toFixed(1) : '0.0';
     const peakEpss = total > 0 ? (Math.max(...cves.map((c) => c.epss)) * 100).toFixed(0) : '0';
-    return { total, critical, correlated, highEpss, weaponized, avgCvss, peakEpss };
+    return { total, critical, confirmed, passiveCorrelated, correlated, highEpss, weaponized, avgCvss, peakEpss };
   }, [cves]);
 
   // Filtering Logic
   const filteredCves = useMemo(() => {
     return cves.filter((c) => {
       if (filter === 'CRITICAL' && c.severity !== 'CRITICAL') return false;
-      if (filter === 'CORRELATED' && !c.isCorrelated) return false;
+      if (filter === 'CORRELATED' && (c.status === 'confirmed_applicability' || !c.isCorrelated)) return false;
       if (filter === 'CONFIRMED' && c.status !== 'confirmed_applicability') return false;
       if (filter === 'HIGH_EPSS' && c.epss < 0.5) return false;
       if (filter === 'WEAPONIZED' && !c.isWeaponized && !c.metasploitModule) return false;
@@ -720,12 +722,12 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               {/* Segmented Filter Pills */}
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none font-mono text-[10px]">
                 {[
-                  { id: 'ALL', label: 'ALL INTEL' },
-                  { id: 'CORRELATED', label: 'CORRELATED' },
-                  { id: 'CRITICAL', label: 'CRITICAL' },
-                  { id: 'WEAPONIZED', label: 'MSF WEAPONIZED' },
-                  { id: 'HIGH_EPSS', label: 'EPSS ≥ 50%' },
-                  { id: 'CONFIRMED', label: 'CONFIRMED' },
+                  { id: 'ALL', label: `ALL INTEL (${stats.total})` },
+                  { id: 'CONFIRMED', label: `⚡ CONFIRMED [ACTIVE] (${stats.confirmed})` },
+                  { id: 'CORRELATED', label: `🔍 CORRELATED [PASSIVE ONLY] (${stats.passiveCorrelated})` },
+                  { id: 'CRITICAL', label: `CRITICAL (${stats.critical})` },
+                  { id: 'WEAPONIZED', label: `MSF WEAPONIZED (${stats.weaponized})` },
+                  { id: 'HIGH_EPSS', label: `EPSS ≥ 50% (${stats.highEpss})` },
                 ].map((tab) => {
                   const isActive = filter === tab.id;
                   return (
@@ -805,16 +807,17 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                             </span>
 
                             {isConfirmed ? (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-signalGreenBg text-signalGreen border border-signalGreen">
-                                [CONFIRMED TARGET]
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-vermilion text-white border border-vermilion inline-flex items-center gap-1 shadow-xs">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                                [ ⚡ ACTIVE SCAN CONFIRMED ]
                               </span>
                             ) : cve.isCorrelated ? (
-                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-boneDark text-ink border border-hairline">
-                                [CORRELATED]
+                              <span className="px-1.5 py-0.5 text-[9px] font-bold bg-boneLight text-charcoal border border-hairline inline-flex items-center gap-1">
+                                [ 🔍 CORRELATED (PASSIVE ONLY) ]
                               </span>
                             ) : (
                               <span className="px-1.5 py-0.5 text-[9px] text-charcoal border border-hairline bg-pureWhite">
-                                [CATALOG]
+                                [ GLOBAL CORPUS ]
                               </span>
                             )}
 
@@ -1244,8 +1247,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 {/* Target Asset Correlation */}
                 <div className="p-3 bg-boneLight border border-hairline space-y-1">
                   <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider">
-                    <span>OBSERVED INFRASTRUCTURE TARGET</span>
-                    <span className="text-signalGreen font-bold">{selectedCve.isCorrelated ? '[ LIVE ACTIVE ]' : '[ GLOBAL CATALOG ]'}</span>
+                    <span>VULNERABILITY VERIFICATION STATUS</span>
+                    <span className={selectedCve.status === 'confirmed_applicability' ? 'text-vermilion font-bold' : 'text-pencil font-bold'}>
+                      {selectedCve.status === 'confirmed_applicability' ? '[ ⚡ ACTIVE SCAN CONFIRMED ]' : selectedCve.isCorrelated ? '[ 🔍 CORRELATED (PASSIVE ONLY) ]' : '[ GLOBAL CORPUS ]'}
+                    </span>
                   </div>
                   <div className="text-xs font-bold text-ink font-mono">
                     {selectedCve.affectedAsset}

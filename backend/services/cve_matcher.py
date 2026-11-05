@@ -273,17 +273,26 @@ def evaluate_cve_applicability(
                         observed_version=fingerprint.version
                     )
 
-            # Confirmed applicability match!
+            # Distinguish between actively confirmed scanner observations vs passive correlations
+            is_active_verified = (fingerprint.fingerprint_source or "").lower() in (
+                "nuclei", "zap_active", "active_probe", "verified_scan", "active_exploit"
+            )
+
+            status = ApplicabilityStatus.CONFIRMED if is_active_verified else ApplicabilityStatus.POTENTIAL
+            confidence = (0.98 if not fingerprint.is_inferred else 0.85) if is_active_verified else 0.70
+            rationale_prefix = "CONFIRMED (ACTIVE SCAN VERIFIED)" if is_active_verified else "CORRELATED (PASSIVE ONLY)"
+            rationale_suffix = "" if is_active_verified else " Preserved in Passive Correlation pending active vulnerability scan verification."
+
             return VulnerabilityFinding(
                 scan_id=fingerprint.scan_id or "",
                 asset_id=fingerprint.asset_id,
                 cve_id=cve.cve_id,
                 fingerprint_id=fingerprint.id,
-                applicability_status=ApplicabilityStatus.CONFIRMED,
-                confidence_score=0.98 if not fingerprint.is_inferred else 0.85,
+                applicability_status=status,
+                confidence_score=confidence,
                 match_rationale=(
-                    f"Confirmed applicability: {fingerprint.vendor} {fingerprint.product} version {fingerprint.version} "
-                    f"satisfies criteria for {cve.cve_id} ({range_reason}). Source: {fingerprint.fingerprint_source}."
+                    f"{rationale_prefix}: {fingerprint.vendor} {fingerprint.product} version {fingerprint.version} "
+                    f"satisfies criteria for {cve.cve_id} ({range_reason}). Source: {fingerprint.fingerprint_source}.{rationale_suffix}"
                 ),
                 cve_title=cve.title,
                 cve_description=cve.description,

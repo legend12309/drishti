@@ -54,6 +54,7 @@ async def list_cves(
 
 
 @router.get("/scans/{scan_id}/vulnerabilities")
+@router.get("/intel/scans/{scan_id}/vulnerabilities")
 async def get_scan_vulns(scan_id: str):
     """Retrieves all vulnerability findings and applicability results for a scan."""
     actual_scan_id = scan_id
@@ -69,13 +70,17 @@ async def get_scan_vulns(scan_id: str):
                 "confirmed_count": 0,
                 "potential_count": 0,
                 "insufficient_evidence_count": 0,
+                "confirmed_vulnerabilities": [],
+                "correlated_passive_vulnerabilities": [],
                 "vulnerabilities": []
             }
 
     findings = await get_scan_vulnerabilities(actual_scan_id)
-    confirmed_count = sum(1 for f in findings if f["applicability_status"] == "confirmed_applicability")
-    potential_count = sum(1 for f in findings if f["applicability_status"] == "potential_applicability")
-    insufficient_count = sum(1 for f in findings if f["applicability_status"] == "insufficient_evidence")
+    confirmed_vulns = [f for f in findings if f.get("applicability_status") == "confirmed_applicability"]
+    correlated_vulns = [f for f in findings if f.get("applicability_status") != "confirmed_applicability"]
+    confirmed_count = len(confirmed_vulns)
+    potential_count = sum(1 for f in findings if f.get("applicability_status") == "potential_applicability")
+    insufficient_count = sum(1 for f in findings if f.get("applicability_status") == "insufficient_evidence")
 
     return {
         "status": "success",
@@ -84,6 +89,8 @@ async def get_scan_vulns(scan_id: str):
         "confirmed_count": confirmed_count,
         "potential_count": potential_count,
         "insufficient_evidence_count": insufficient_count,
+        "confirmed_vulnerabilities": confirmed_vulns,
+        "correlated_passive_vulnerabilities": correlated_vulns,
         "vulnerabilities": findings
     }
 

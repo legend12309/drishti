@@ -160,8 +160,35 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
     const es = new EventSource(streamUrl);
     eventSourceRef.current = es;
 
+    // Fast polling fallback to guarantee progress and completion even if SSE drops
+    const pollInterval = setInterval(async () => {
+      try {
+        const url = isWf ? `/api/scans/orchestrator/workflows/${workflowId}` : `/api/scans/${workflowId}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const resData = await res.json();
+          const item = isWf ? resData.workflow : resData;
+          if (item) {
+            if (item.progress !== undefined && item.progress !== null) {
+              setProgress((prev) => Math.max(prev, Number(item.progress)));
+            }
+            if (item.current_step) setStatusText(item.current_step);
+            if (isWf && item.stages) {
+              setOrchestratorWorkflow(item);
+            }
+            if (TERMINAL_WORKFLOW_STATES.includes(item.overall_status || item.status)) {
+              clearInterval(pollInterval);
+              finalizeScan();
+            }
+          }
+        }
+      } catch (err) {}
+    }, 1000);
+
     const finalizeScan = async () => {
+      clearInterval(pollInterval);
       setScanning(false);
+      setProgress(100);
       es.close();
       if (isWf) {
         try {
@@ -170,7 +197,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             const wfData = await wfRes.json();
             if (wfData.workflow) {
               setOrchestratorWorkflow(wfData.workflow);
-              if (wfData.workflow.progress !== undefined) setProgress(wfData.workflow.progress);
+              setProgress(100);
               if (wfData.workflow.current_step) setStatusText(wfData.workflow.current_step);
             }
           }
@@ -180,7 +207,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           const scRes = await fetch(`/api/scans/${workflowId}`);
           if (scRes.ok) {
             const scData = await scRes.json();
-            setProgress(scData.progress || 100);
+            setProgress(100);
             if (scData.current_step) setStatusText(scData.current_step);
           }
         } catch (err) {}
@@ -200,9 +227,14 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         const eventType = payload.type;
         const data = payload.data || {};
 
+        if (data.progress !== undefined && data.progress !== null) {
+          setProgress((prev) => Math.max(prev, Number(data.progress)));
+        }
+        if (data.step) setStatusText(data.step);
+
         if (eventType === 'workflow_snapshot' || data.stages) {
           setOrchestratorWorkflow(data);
-          if (data.progress !== undefined) setProgress(data.progress);
+          if (data.progress !== undefined) setProgress(Number(data.progress));
           if (data.current_step) setStatusText(data.current_step);
           if (TERMINAL_WORKFLOW_STATES.includes(data.overall_status)) {
             finalizeScan();
@@ -212,6 +244,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
         if (eventType === 'stage_started') {
           if (data.step) setStatusText(data.step);
+          if (data.progress !== undefined) setProgress(Number(data.progress));
           setOrchestratorWorkflow((prev: any) => {
             if (!prev || !prev.stages) return prev;
             return {
@@ -225,6 +258,8 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             };
           });
         } else if (eventType === 'stage_completed') {
+          if (data.progress !== undefined) setProgress(Number(data.progress));
+          if (data.step) setStatusText(data.step);
           setOrchestratorWorkflow((prev: any) => {
             if (!prev || !prev.stages) return prev;
             return {
@@ -244,6 +279,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           });
           loadFindingsForScan(workflowId, targetDomain || target);
         } else if (eventType === 'stage_skipped') {
+          if (data.progress !== undefined) setProgress(Number(data.progress));
           setOrchestratorWorkflow((prev: any) => {
             if (!prev || !prev.stages) return prev;
             return {
@@ -256,6 +292,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             };
           });
         } else if (eventType === 'stage_failed') {
+          if (data.progress !== undefined) setProgress(Number(data.progress));
           setOrchestratorWorkflow((prev: any) => {
             if (!prev || !prev.stages) return prev;
             return {
@@ -890,34 +927,52 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         </div>
 
         {/* Live Execution & Progress Card */}
-        {scanning && (
-          <div className="p-4 bg-pureWhite border border-hairline space-y-3 shadow-xs">
-            <div className="flex items-center justify-between">
+        {(scanning || (progress > 0 && currentScanId)) && (
+          <div className="p-4 bg-pureWhite border border-hairline space-y-3 shadow-xs transition-all">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-2.5 h-2.5 bg-vermilion animate-ping"></div>
+                <div className={`w-2.5 h-2.5 ${scanning ? 'bg-vermilion animate-ping' : 'bg-signalGreen'} rounded-full`}></div>
                 <div>
-                  <div className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
-                    {statusText}
+                  <div className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk flex items-center gap-2">
+                    <span>{statusText || (scanning ? 'EXECUTING PIPELINE...' : 'ASSESSMENT COMPLETED')}</span>
+                    <span className={`px-1.5 py-0.2 text-[9px] font-mono font-bold uppercase border ${
+                      scanning ? 'bg-vermilion text-white border-vermilion animate-pulse' : 'bg-signalGreenBg text-signalGreen border-signalGreen'
+                    }`}>
+                      {scanning ? 'ACTIVE SCAN' : '100% COMPLETE'}
+                    </span>
                   </div>
                   <div className="text-[10px] text-charcoal font-mono mt-0.5">
-                    WORKFLOW ID: {currentScanId} • {progress}% COMPLETE
+                    WORKFLOW: <strong className="text-ink">{currentScanId}</strong> • <strong>{progress}% COMPLETE</strong>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={cancelWorkflow}
-                className="px-3 py-1 bg-pureWhite border border-vermilion text-vermilion hover:bg-vermilion hover:text-white text-[10px] font-mono font-bold transition-colors cursor-pointer"
-              >
-                [ ABORT WORKFLOW ]
-              </button>
+              <div className="flex items-center gap-2">
+                {scanning ? (
+                  <button
+                    onClick={cancelWorkflow}
+                    className="px-3 py-1 bg-pureWhite border border-vermilion text-vermilion hover:bg-vermilion hover:text-white text-[10px] font-mono font-bold transition-colors cursor-pointer"
+                  >
+                    [ ABORT WORKFLOW ]
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setActiveTab('findings')}
+                    className="px-3 py-1 bg-ink text-white hover:bg-charcoal text-[10px] font-mono font-bold transition-colors cursor-pointer shadow-xs"
+                  >
+                    [ INSPECT FINDINGS ➔ ]
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Progress track */}
-            <div className="w-full bg-boneDark border border-hairline h-2">
+            <div className="w-full bg-boneDark border border-hairline h-2.5 relative overflow-hidden">
               <div
-                className="bg-vermilion h-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
+                className={`h-full transition-all duration-500 ease-out ${
+                  scanning ? 'bg-vermilion' : 'bg-signalGreen'
+                }`}
+                style={{ width: `${Math.max(4, Math.min(100, progress))}%` }}
               ></div>
             </div>
           </div>

@@ -428,8 +428,18 @@ class UnifiedScanOrchestrator:
 
                     # Execute Stage
                     stage_start = time.time()
+                    stage_start_prog = min(current_overall_progress + max(2, progress_per_stage // 4), 88)
+                    await db_queue.execute_write(
+                        "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (stage_start_prog, f"Running {display_name} ({idx+1}/{total_stages})", workflow_id)
+                    )
                     await self._record_stage_started(workflow_id, sid, sname)
-                    await broadcast_workflow_event(workflow_id, "stage_started", {"scanner": sid, "scanner_name": sname, "step": display_name})
+                    await broadcast_workflow_event(workflow_id, "stage_started", {
+                        "scanner": sid,
+                        "scanner_name": sname,
+                        "step": f"Running {display_name} ({idx+1}/{total_stages})",
+                        "progress": stage_start_prog
+                    })
 
                     try:
                         res: ScannerResult = await self._run_single_stage(
@@ -443,11 +453,17 @@ class UnifiedScanOrchestrator:
                             resolved_ips=resolved_ips,  # Pass resolved IPs for Nmap
                         )
                         stage_duration = round(time.time() - stage_start, 2)
+                        stage_end_prog = min(15 + int((idx + 1) * (75.0 / total_stages)), 90)
+                        current_overall_progress = stage_end_prog
 
                         if res.status == ScannerExecutionState.COMPLETED:
                             findings_count = await self._persist_and_correlate_results(sid, res)
                             total_findings += findings_count
                             stage_status_map[sid] = StageExecutionState.COMPLETED
+                            await db_queue.execute_write(
+                                "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                                (current_overall_progress, f"Completed {display_name}", workflow_id)
+                            )
                             await self._record_stage_completion(
                                 workflow_id=workflow_id,
                                 scanner_id=sid,
@@ -459,7 +475,9 @@ class UnifiedScanOrchestrator:
                             await broadcast_workflow_event(workflow_id, "stage_completed", {
                                 "scanner": sid,
                                 "findings_count": findings_count,
-                                "duration_seconds": stage_duration
+                                "duration_seconds": stage_duration,
+                                "progress": current_overall_progress,
+                                "step": f"Completed {display_name}"
                             })
                         elif res.status == ScannerExecutionState.CANCELLED:
                             stage_status_map[sid] = StageExecutionState.CANCELLED
@@ -475,6 +493,10 @@ class UnifiedScanOrchestrator:
                             break
                         elif res.status == ScannerExecutionState.SKIPPED:
                             stage_status_map[sid] = StageExecutionState.SKIPPED
+                            await db_queue.execute_write(
+                                "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                                (current_overall_progress, f"Skipped {display_name}: {res.error_message}", workflow_id)
+                            )
                             await self._record_stage_completion(
                                 workflow_id=workflow_id,
                                 scanner_id=sid,
@@ -486,10 +508,16 @@ class UnifiedScanOrchestrator:
                             )
                             await broadcast_workflow_event(workflow_id, "stage_skipped", {
                                 "scanner": sid,
-                                "reason": res.error_message
+                                "reason": res.error_message,
+                                "progress": current_overall_progress,
+                                "step": f"Skipped {display_name}"
                             })
                         elif res.status == ScannerExecutionState.NOT_APPLICABLE:
                             stage_status_map[sid] = StageExecutionState.NOT_APPLICABLE
+                            await db_queue.execute_write(
+                                "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                                (current_overall_progress, f"Not Applicable: {display_name}", workflow_id)
+                            )
                             await self._record_stage_completion(
                                 workflow_id=workflow_id,
                                 scanner_id=sid,
@@ -501,10 +529,16 @@ class UnifiedScanOrchestrator:
                             )
                             await broadcast_workflow_event(workflow_id, "stage_skipped", {
                                 "scanner": sid,
-                                "reason": res.error_message
+                                "reason": res.error_message,
+                                "progress": current_overall_progress,
+                                "step": f"Not Applicable: {display_name}"
                             })
                         else:
                             stage_status_map[sid] = StageExecutionState.FAILED
+                            await db_queue.execute_write(
+                                "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                                (current_overall_progress, f"Failed {display_name}: {res.error_message}", workflow_id)
+                            )
                             await self._record_stage_completion(
                                 workflow_id=workflow_id,
                                 scanner_id=sid,
@@ -516,7 +550,9 @@ class UnifiedScanOrchestrator:
                             )
                             await broadcast_workflow_event(workflow_id, "stage_failed", {
                                 "scanner": sid,
-                                "error": res.error_message
+                                "error": res.error_message,
+                                "progress": current_overall_progress,
+                                "step": f"Failed {display_name}"
                             })
                             if not plan.allow_partial_completion:
                                 break
@@ -524,6 +560,12 @@ class UnifiedScanOrchestrator:
                     except Exception as stage_ex:
                         stage_duration = round(time.time() - stage_start, 2)
                         stage_status_map[sid] = StageExecutionState.FAILED
+                        stage_end_prog = min(15 + int((idx + 1) * (75.0 / total_stages)), 90)
+                        current_overall_progress = stage_end_prog
+                        await db_queue.execute_write(
+                            "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                            (current_overall_progress, f"Exception in {display_name}", workflow_id)
+                        )
                         await self._record_stage_completion(
                             workflow_id=workflow_id,
                             scanner_id=sid,
@@ -533,14 +575,14 @@ class UnifiedScanOrchestrator:
                             findings=0,
                             err=str(stage_ex),
                         )
+                        await broadcast_workflow_event(workflow_id, "stage_failed", {
+                            "scanner": sid,
+                            "error": str(stage_ex),
+                            "progress": current_overall_progress,
+                            "step": f"Exception in {display_name}"
+                        })
                         if not plan.allow_partial_completion:
                             break
-
-                    current_overall_progress = min(current_overall_progress + progress_per_stage, 90)
-                    await db_queue.execute_write(
-                        "UPDATE scans SET progress = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                        (current_overall_progress, workflow_id)
-                    )
 
                 if cancel_event.is_set():
                     await db_queue.execute_write(
@@ -569,6 +611,15 @@ class UnifiedScanOrchestrator:
                     final_state = WorkflowExecutionState.COMPLETED
 
                 # Correlate findings, normalize fingerprints, evaluate vulnerabilities, and build attack graph
+                await db_queue.execute_write(
+                    "UPDATE scans SET progress = 95, current_step = 'Synthesizing topological attack graph and threat correlation', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (workflow_id,)
+                )
+                await broadcast_workflow_event(workflow_id, "progress", {
+                    "progress": 95,
+                    "step": "Synthesizing topological attack graph and threat correlation"
+                })
+
                 try:
                     from backend.services.scanner import get_scan_findings
                     from backend.services.vulnerability_service import (
@@ -637,8 +688,10 @@ class UnifiedScanOrchestrator:
                 await broadcast_workflow_event(workflow_id, "workflow_completed", {
                     "workflow_id": workflow_id,
                     "status": final_state.value,
+                    "progress": 100,
                     "total_findings": total_findings,
                     "duration_seconds": total_duration,
+                    "step": "Workflow orchestration finalized",
                 })
 
                 await log_audit_event(

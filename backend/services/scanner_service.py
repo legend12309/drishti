@@ -677,6 +677,63 @@ async def correlate_nuclei_findings_to_scan_findings(result: ScannerResult) -> i
         )
         findings_created += 1
 
+        # Actively confirmed vulnerability on target wire: promote to CONFIRMED in vulnerability_findings
+        cve_id_val = None
+        if finding.cve_id and finding.cve_id.upper().startswith("CVE-"):
+            cve_id_val = finding.cve_id.upper().strip()
+        elif finding.template_id and finding.template_id.upper().startswith("CVE-"):
+            cve_id_val = finding.template_id.upper().strip()
+
+        if cve_id_val:
+            # Ensure vulnerability metadata exists in corpus
+            await db_queue.execute_write(
+                """
+                INSERT OR IGNORE INTO vulnerabilities (
+                    cve_id, source_id, title, description, cvss_score, cvss_severity, cached_at
+                ) VALUES (?, 'NUCLEI_ACTIVE', ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """,
+                (
+                    cve_id_val,
+                    finding.template_name or finding.template_id,
+                    f"Confirmed via active ProjectDiscovery Nuclei scan at {finding.matched_at}",
+                    float(score),
+                    sev_lower.upper(),
+                )
+            )
+
+            # Check if this CVE was previously recorded as potential/correlated and update to confirmed
+            updated_count = await db_queue.execute_write(
+                """
+                UPDATE vulnerability_findings
+                SET applicability_status = 'confirmed_applicability',
+                    confidence_score = 0.99,
+                    match_rationale = ?
+                WHERE scan_id = ? AND UPPER(cve_id) = ?
+                """,
+                (
+                    f"CONFIRMED (ACTIVE SCAN VERIFIED): ProjectDiscovery Nuclei executed active template {finding.template_id} and verified vulnerability on target wire at {finding.matched_at}.",
+                    result.scan_id,
+                    cve_id_val,
+                )
+            )
+
+            # If not previously present, insert directly as confirmed
+            if not updated_count:
+                await db_queue.execute_write(
+                    """
+                    INSERT INTO vulnerability_findings (
+                        scan_id, asset_id, cve_id, fingerprint_id,
+                        applicability_status, confidence_score, match_rationale, evaluated_at
+                    ) VALUES (?, ?, ?, NULL, 'confirmed_applicability', 0.99, ?, CURRENT_TIMESTAMP)
+                    """,
+                    (
+                        result.scan_id,
+                        finding.host[:250],
+                        cve_id_val,
+                        f"CONFIRMED (ACTIVE SCAN VERIFIED): ProjectDiscovery Nuclei executed active template {finding.template_id} and verified vulnerability on target wire at {finding.matched_at}.",
+                    )
+                )
+
     return findings_created
 
 
