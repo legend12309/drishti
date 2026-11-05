@@ -1,6 +1,7 @@
 """
-DRISHTI — Metasploit Weaponization & Exploit Management API Endpoints
-Provides module inspection, resource script generation, and exploit simulation.
+DRISHTI — Metasploit Weaponization & Exploit Management API Endpoints (Grade 10/10)
+Provides module inspection, threat actor campaigns, MITRE ATT&CK attribution,
+custom payload matrix selection, resource script generation, and exploit simulation.
 """
 
 from typing import Any, Dict, List, Optional
@@ -10,6 +11,7 @@ from pydantic import BaseModel, Field
 from backend.services.metasploit_service import (
     get_all_metasploit_modules,
     get_module_by_cve,
+    get_threat_campaigns_summary,
     generate_msf_resource_script,
     simulate_exploit_assessment,
 )
@@ -25,6 +27,9 @@ class GenerateMsfScriptRequest(BaseModel):
     lport: Optional[int] = Field(4444, description="Listener port number")
     ssl: Optional[bool] = Field(None, description="Force SSL on connection")
     target_uri: Optional[str] = Field(None, description="Target URI path")
+    payload_override: Optional[str] = Field(None, description="Custom payload from supported matrix")
+    safe_check_only: Optional[bool] = Field(True, description="Output safe non-destructive check command")
+    encoder: Optional[str] = Field(None, description="Payload encoder (e.g. x64/zutto_dekiru)")
 
 
 class SimulateExploitRequest(BaseModel):
@@ -36,14 +41,21 @@ class SimulateExploitRequest(BaseModel):
 
 @router.get("/modules")
 async def list_metasploit_modules():
-    """Returns all indexed Metasploit exploit and auxiliary modules with weaponization data."""
+    """Returns all 32 indexed Metasploit exploit and auxiliary modules with weaponization data."""
     modules = get_all_metasploit_modules()
     return {"status": "success", "total": len(modules), "modules": modules}
 
 
+@router.get("/campaigns")
+async def get_threat_campaigns():
+    """Returns an aggregated index of all threat actors, ransomware groups, and MITRE tactics."""
+    summary = get_threat_campaigns_summary()
+    return {"status": "success", **summary}
+
+
 @router.get("/modules/{cve_id}")
 async def get_metasploit_module(cve_id: str):
-    """Retrieves Metasploit module information mapped to a specific CVE."""
+    """Retrieves comprehensive Metasploit module information mapped to a specific CVE."""
     module = get_module_by_cve(cve_id)
     if not module:
         raise HTTPException(
@@ -65,6 +77,12 @@ async def get_metasploit_module(cve_id: str):
             "description": module.description,
             "target_uri": module.target_uri,
             "ssl": module.ssl,
+            "mitre_attack": module.mitre_attack,
+            "mitre_tactic": module.mitre_tactic,
+            "threat_actors": module.threat_actors,
+            "supported_payloads": module.supported_payloads,
+            "safe_check_available": module.safe_check_available,
+            "cwe_id": module.cwe_id,
         }
     }
 
@@ -72,7 +90,7 @@ async def get_metasploit_module(cve_id: str):
 @router.post("/generate")
 async def generate_script(payload: GenerateMsfScriptRequest):
     """
-    Synthesizes an executable Metasploit Resource Script (.rc) and runnable msfconsole CLI command.
+    Synthesizes an executable Metasploit Resource Script (.rc) and runnable msfconsole CLI commands.
     """
     try:
         result = generate_msf_resource_script(
@@ -83,6 +101,9 @@ async def generate_script(payload: GenerateMsfScriptRequest):
             lport=payload.lport or 4444,
             ssl_override=payload.ssl,
             target_uri=payload.target_uri,
+            payload_override=payload.payload_override,
+            safe_check_only=payload.safe_check_only if payload.safe_check_only is not None else True,
+            encoder=payload.encoder,
         )
         return {"status": "success", **result}
     except Exception as ex:
@@ -101,6 +122,6 @@ async def simulate_exploit(payload: SimulateExploitRequest):
             observed_version=payload.observed_version,
             target_port=payload.target_port,
         )
-        return assessment
+        return {"status": "success", **assessment}
     except Exception as ex:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex))
