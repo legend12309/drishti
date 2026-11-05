@@ -7,7 +7,6 @@ interface LoginViewProps {
   showToast?: (type: 'success' | 'warning' | 'error' | 'info', title: string, detail?: string) => void;
   onReplayIntro?: () => void;
   startFadeIn?: boolean;
-  isExitReturn?: boolean;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({
@@ -15,7 +14,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
   showToast,
   onReplayIntro,
   startFadeIn = true,
-  isExitReturn = false,
 }) => {
   // Input & Mode States
   const [tokenInput, setTokenInput] = useState('ED25519-948A-AUTH-BIO-09');
@@ -81,38 +79,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
   const isBlinkingRef = useRef(false);
   const blinkTimerRef = useRef<any>(null);
   const blinkTimeoutRef = useRef<any>(null);
-
-  // Background Speech Audio Ref ("Wake up to reality...")
-  const wakeAudioRef = useRef<HTMLAudioElement | null>(null);
-  const wakeAudioFadingRef = useRef<any>(null);
-
-  // Smoothly fade out and stop background voice dialogue
-  const stopWakeAudio = useCallback((fadeMs = 1200) => {
-    if (wakeAudioFadingRef.current) {
-      clearInterval(wakeAudioFadingRef.current);
-      wakeAudioFadingRef.current = null;
-    }
-    const audio = wakeAudioRef.current;
-    if (!audio) return;
-    if (fadeMs <= 0 || audio.paused) {
-      audio.pause();
-      audio.currentTime = 0;
-      return;
-    }
-    const stepTime = 50;
-    const stepDec = audio.volume / (fadeMs / stepTime);
-    wakeAudioFadingRef.current = setInterval(() => {
-      if (audio.volume > stepDec) {
-        audio.volume = Math.max(0, audio.volume - stepDec);
-      } else {
-        audio.volume = 0;
-        audio.pause();
-        audio.currentTime = 0;
-        clearInterval(wakeAudioFadingRef.current);
-        wakeAudioFadingRef.current = null;
-      }
-    }, stepTime);
-  }, []);
 
   // Eye Physics Parameters (Unified 280x280 Cyber-Portal Geometry)
   const SIZE = 280;
@@ -283,46 +249,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }, duration);
   }, []);
 
-  // Handle cinematic fade-in, background voice dialogue, and slow physiological eye opening
+  // Handle cinematic fade-in and slow physiological eye opening
   useEffect(() => {
-    // When returning from user exit / logout, start directly from the awakened RED EYE
-    if (isExitReturn) {
-      stopWakeAudio(0);
-      physicsRef.current.colorMorph = 0.0;
-      setEyeColorProgress(0.0);
-      physicsRef.current.scanBeamActive = false;
-      physicsRef.current.scanBeamProgress = -1;
-      physicsRef.current.targetPupilR = 21;
-      physicsRef.current.currentPupilR = 21;
-      physicsRef.current.lockGazeToCenter = false;
-      setPupilDil('4.80mm');
-      setCorneaRefract('OK [NOMINAL]');
-      setBiolockStatus('ENGAGED');
-      setButtonText('[ EXECUTE COCKPIT LOGIN ⌘↵ ]');
-      setAuthStatus({ custom: false, text: '', className: '' });
-      setBootProgress(78.4);
-      setStages({ step1: true, step2: true, step3: true, step4: false });
-      setEngineBadge({
-        text: 'DEFCON-1: [RECON_ACTIVE]',
-        className: 'text-[9px] px-1.5 py-0.5 bg-[#E62E25]/20 text-[#EF4444] border border-[#E62E25]/50 font-bold rounded-sm',
-      });
-      setEyeAwakened(true);
-      eyeAwakenedRef.current = true;
-      hasTriggeredAwakenRef.current = true;
-
-      const top = eyelidTopRef.current;
-      const bottom = eyelidBottomRef.current;
-      if (top && bottom) {
-        top.style.transition = 'none';
-        bottom.style.transition = 'none';
-        top.style.transform = 'translateY(-100%)';
-        bottom.style.transform = 'translateY(100%)';
-      }
-      return;
-    }
-
     if (!startFadeIn) {
-      stopWakeAudio(0);
       hasTriggeredAwakenRef.current = false;
       setEyeAwakened(false);
       eyeAwakenedRef.current = false;
@@ -343,28 +272,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
     if (hasTriggeredAwakenRef.current) return;
     hasTriggeredAwakenRef.current = true;
 
-    // Persist Gateway phase to localStorage
-    try {
-      localStorage.setItem('drishti_phase', 'GATEWAY');
-      localStorage.setItem('drishti_has_seen_intro', 'true');
-    } catch {}
-
-    // Start background speech audio ("Wake up to reality... Nothing ever goes as planned...")
-    try {
-      if (!wakeAudioRef.current) {
-        const audio = new Audio('/wakeup.mp3');
-        audio.volume = 0.9;
-        audio.preload = 'auto';
-        wakeAudioRef.current = audio;
-      } else {
-        wakeAudioRef.current.currentTime = 0;
-        wakeAudioRef.current.volume = 0.9;
-      }
-      wakeAudioRef.current.play().catch((err) => {
-        console.log('Autoplay audio deferred until next interaction:', err);
-      });
-    } catch {}
-
     // Start with gaze locked centered and pupil constricted (resting dormancy)
     physicsRef.current.lockGazeToCenter = true;
     physicsRef.current.currentPupilR = 12;
@@ -372,9 +279,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
     setCorneaRefract('ACQUIRING_OPTICS...');
     setBiolockStatus('INITIALIZING...');
 
-    // Wait 1600ms as voice intones "Wake up to reality...", then slowly open eyelids over 4800ms
-    const openDelay = 1600;
-    const openDuration = 4800;
+    // Wait 900ms into the login page fade-in (as the UI emerges), then slowly open eyelids over 2200ms
+    const openDelay = 900;
+    const openDuration = 2200;
 
     const tOpen = setTimeout(() => {
       const top = eyelidTopRef.current;
@@ -398,10 +305,10 @@ export const LoginView: React.FC<LoginViewProps> = ({
         physicsRef.current.currentPupilR = 12 + eased * 9;
         setPupilDil(`${(3.2 + eased * 1.6).toFixed(2)}mm`);
 
-        if (p < 0.35) {
+        if (p < 0.4) {
           setCorneaRefract('CORNEA_REFRACT_ACQUIRING...');
           setBiolockStatus('SYNCHRONIZING...');
-        } else if (p < 0.8) {
+        } else if (p < 0.9) {
           setCorneaRefract('OCULAR_ALIGNMENT_NOMINAL');
           setBiolockStatus('LOCK_CONFIRMED');
         }
@@ -412,18 +319,13 @@ export const LoginView: React.FC<LoginViewProps> = ({
           setCorneaRefract('OK [NOMINAL]');
           setBiolockStatus('ENGAGED');
           physicsRef.current.lockGazeToCenter = false;
-          // Eyelids fully open! Smoothly fade out the background dialogue over 1200ms
-          stopWakeAudio(1200);
         }
       };
       requestAnimationFrame(dilateStep);
     }, openDelay);
 
-    return () => {
-      clearTimeout(tOpen);
-      stopWakeAudio(0);
-    };
-  }, [startFadeIn, isExitReturn, stopWakeAudio]);
+    return () => clearTimeout(tOpen);
+  }, [startFadeIn]);
 
   // Cinematic biometric laser scan & smooth color morph animation from Red to Blue (or vice-versa)
   const animateEyeColor = useCallback((from: number, to: number, duration = 1800) => {
@@ -1161,7 +1063,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
   // 5. White optical flash transition blooming into main software cockpit (at 4400ms)
   const simulateAuth = useCallback(() => {
     if (isAuthenticating || isEntering) return;
-    stopWakeAudio(300);
     setIsAuthenticating(true);
     isAuthenticatingRef.current = true;
 
@@ -1640,10 +1541,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
           {/* Right Section (3 cols): Exploits, Live Distance, Re-Calibrate Trigger */}
           <div className="lg:col-span-3 flex flex-col items-end gap-1 text-[10px]">
             <div className="flex items-center gap-2">
-              <span className="text-[8.5px] px-1.5 py-0.5 bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/40 font-bold font-mono tracking-wider rounded-sm flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse"></span>
-                <span>PHASE 2: GATEWAY</span>
-              </span>
               <span className="text-[8.5px] px-1.5 py-0.2 bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 font-bold rounded-sm">
                 PAYLOADS: 0
               </span>
@@ -1659,10 +1556,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <button
                   type="button"
                   className="flex items-center gap-1.5 text-[9px] text-[#38BDF8] hover:text-white px-2 py-0.5 border border-[#2563EB]/40 hover:border-[#38BDF8] bg-[#0A0E18] hover:bg-[#2563EB]/20 active:scale-95 transition-all duration-150 cursor-pointer shadow-sm font-mono rounded-sm"
-                  onClick={() => {
-                    stopWakeAudio(0);
-                    onReplayIntro();
-                  }}
+                  onClick={onReplayIntro}
                   title="Watch boot video intro again"
                 >
                   <span>↺</span>

@@ -25,6 +25,7 @@ from backend.api.vulnerabilities import router as vulnerabilities_router
 from backend.api.graph import router as graph_router
 from backend.api.llm import router as llm_router
 from backend.api.defense import router as defense_router
+from backend.api.metasploit import router as metasploit_router
 from backend.db.database import get_db, init_db, get_db_status
 from backend.engines import get_active_engines
 
@@ -61,6 +62,7 @@ app.include_router(vulnerabilities_router)
 app.include_router(graph_router)
 app.include_router(llm_router)
 app.include_router(defense_router)
+app.include_router(metasploit_router)
 app.include_router(engines_router)
 
 # Compatibility route: /api/v1/stream

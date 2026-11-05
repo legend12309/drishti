@@ -42,13 +42,11 @@ const DEFAULT_OPERATOR: OperatorProfile = {
 };
 
 export default function App() {
-  // Always start from intro video on initial launch / open
+  // Play intro video sequence on initial startup
   const [hasSeenIntro, setHasSeenIntro] = useState<boolean>(false);
   const [isIntroExiting, setIsIntroExiting] = useState<boolean>(false);
-  const [isExitReturn, setIsExitReturn] = useState<boolean>(false);
-  const [loginResetKey, setLoginResetKey] = useState<number>(0);
 
-  // Authentication state: starts unauthenticated until operator logs in
+  // Always show login page first on open
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const [operator, setOperator] = useState<OperatorProfile | null>(() => {
@@ -107,12 +105,7 @@ export default function App() {
     localStorage.removeItem('drishti_auth_token');
     localStorage.removeItem('drishti_operator');
     setIsAuthenticated(false);
-    // When user exits, start again directly from the RED EYE without re-playing the intro video
-    setHasSeenIntro(true);
-    setIsIntroExiting(false);
-    setIsExitReturn(true);
-    setLoginResetKey((prev) => prev + 1);
-    showToast('info', 'Session Terminated', 'Operator logged out. Re-engaged Ocular Biolock.');
+    showToast('info', 'Session Ended', 'Operator logged out.');
   }, [showToast]);
 
   // Fetch System Health status
@@ -166,29 +159,23 @@ export default function App() {
       <div className="relative w-screen h-screen overflow-hidden bg-[#030407]">
         {/* Living Login Gateway (Biometric circular eye and cyber HUD) */}
         <LoginView
-          key={`login-view-${loginResetKey}`}
           onLoginSuccess={(op) => {
             setOperator(op);
             setIsAuthenticated(true);
             setEntranceFlash(true);
-            setIsExitReturn(false);
           }}
           onReplayIntro={() => {
-            setIsExitReturn(false);
             setIsIntroExiting(false);
             setHasSeenIntro(false);
           }}
           showToast={showToast}
           startFadeIn={hasSeenIntro || isIntroExiting}
-          isExitReturn={isExitReturn}
         />
 
         {/* Cinematic Video Intro Overlay (Runs completely, then fades out from last black frame) */}
         {!hasSeenIntro && (
           <IntroView
-            onBeginExit={() => {
-              setIsIntroExiting(true);
-            }}
+            onBeginExit={() => setIsIntroExiting(true)}
             onComplete={() => {
               setHasSeenIntro(true);
               setIsIntroExiting(false);

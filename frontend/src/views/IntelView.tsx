@@ -32,6 +32,7 @@ export interface CveRecord {
   isWeaponized?: boolean;
   metasploitModule?: string;
   cisaKev?: boolean;
+  port?: number;
 }
 
 interface ScanOption {
@@ -43,7 +44,7 @@ interface ScanOption {
 
 export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) => {
   const [intelMode, setIntelMode] = useState<'TARGET_ALONE' | 'GLOBAL_CATALOG'>('TARGET_ALONE');
-  const [filter, setFilter] = useState<'ALL' | 'CORRELATED' | 'CRITICAL' | 'HIGH_EPSS' | 'CONFIRMED'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'CORRELATED' | 'CRITICAL' | 'HIGH_EPSS' | 'CONFIRMED' | 'WEAPONIZED'>('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -54,6 +55,16 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
   const [targetFindings, setTargetFindings] = useState<any[]>([]);
   const [targetScanInfo, setTargetScanInfo] = useState<ScanOption | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Metasploit Weaponization Execution State
+  const [msfScript, setMsfScript] = useState<{ rc_script: string; msf_command: string; notes?: string; module?: string } | null>(null);
+  const [generatingMsf, setGeneratingMsf] = useState(false);
+  const [simulatingMsf, setSimulatingMsf] = useState(false);
+  const [simResult, setSimResult] = useState<any | null>(null);
+  const [showMsfCatalogModal, setShowMsfCatalogModal] = useState(false);
+  const [msfModules, setMsfModules] = useState<any[]>([]);
+  const [loadingMsfModules, setLoadingMsfModules] = useState(false);
+  const [msfSearch, setMsfSearch] = useState('');
 
   // AI Advisory State
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
@@ -67,6 +78,89 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
     setTimeout(() => setCopiedId(null), 2000);
     if (showToast) {
       showToast('success', 'Copied to Clipboard', `${label} ${text} copied`);
+    }
+  };
+
+  // Generate Metasploit Resource Script (.rc)
+  const handleGenerateMsfScript = async (cve: CveRecord) => {
+    setGeneratingMsf(true);
+    try {
+      const targetHost = cve.affectedAsset || targetScanInfo?.target || 'target.local';
+      const res = await fetch('/api/metasploit/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cve_id: cve.id,
+          target_host: targetHost,
+          target_port: cve.port || 80,
+          lhost: '127.0.0.1',
+          lport: 4444,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Script generation failed');
+      }
+      setMsfScript({
+        rc_script: data.rc_script,
+        msf_command: data.msf_command,
+        notes: data.notes,
+        module: data.module,
+      });
+      if (showToast) {
+        showToast('success', 'Metasploit Script Generated', `Created resource script for ${cve.id}`);
+      }
+    } catch (err: any) {
+      if (showToast) showToast('error', 'Metasploit Generation Failed', err.message);
+    } finally {
+      setGeneratingMsf(false);
+    }
+  };
+
+  // Simulate Exploit Feasibility Check
+  const handleSimulateExploit = async (cve: CveRecord) => {
+    setSimulatingMsf(true);
+    try {
+      const targetHost = cve.affectedAsset || targetScanInfo?.target || 'target.local';
+      const res = await fetch('/api/metasploit/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cve_id: cve.id,
+          target_host: targetHost,
+          observed_version: cve.version || 'detected',
+          target_port: cve.port || 80,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Exploit simulation failed');
+      setSimResult(data.simulation);
+      if (showToast) {
+        showToast('info', 'Exploit Feasibility Simulated', `Assessment completed for ${cve.id}`);
+      }
+    } catch (err: any) {
+      if (showToast) showToast('error', 'Simulation Failed', err.message);
+    } finally {
+      setSimulatingMsf(false);
+    }
+  };
+
+  // Load and open Metasploit modules catalog
+  const handleOpenMsfCatalog = async () => {
+    setShowMsfCatalogModal(true);
+    if (msfModules.length === 0) {
+      setLoadingMsfModules(true);
+      try {
+        const res = await fetch('/api/metasploit/modules');
+        const data = await res.json();
+        if (res.ok && data.modules) {
+          setMsfModules(data.modules);
+        }
+      } catch (e) {
+        console.error('Failed to load MSF modules:', e);
+      } finally {
+        setLoadingMsfModules(false);
+      }
     }
   };
 
@@ -280,9 +374,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
     const critical = cves.filter((c) => c.severity === 'CRITICAL').length;
     const correlated = cves.filter((c) => c.isCorrelated).length;
     const highEpss = cves.filter((c) => c.epss >= 0.5).length;
+    const weaponized = cves.filter((c) => c.isWeaponized || Boolean(c.metasploitModule)).length;
     const avgCvss = total > 0 ? (cves.reduce((acc, c) => acc + c.cvss, 0) / total).toFixed(1) : '0.0';
     const peakEpss = total > 0 ? (Math.max(...cves.map((c) => c.epss)) * 100).toFixed(0) : '0';
-    return { total, critical, correlated, highEpss, avgCvss, peakEpss };
+    return { total, critical, correlated, highEpss, weaponized, avgCvss, peakEpss };
   }, [cves]);
 
   // Filtering Logic
@@ -292,6 +387,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
       if (filter === 'CORRELATED' && !c.isCorrelated) return false;
       if (filter === 'CONFIRMED' && c.status !== 'confirmed_applicability') return false;
       if (filter === 'HIGH_EPSS' && c.epss < 0.5) return false;
+      if (filter === 'WEAPONIZED' && !c.isWeaponized && !c.metasploitModule) return false;
 
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -300,7 +396,8 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           c.title.toLowerCase().includes(q) ||
           c.product.toLowerCase().includes(q) ||
           (c.affectedAsset && c.affectedAsset.toLowerCase().includes(q)) ||
-          (c.description && c.description.toLowerCase().includes(q))
+          (c.description && c.description.toLowerCase().includes(q)) ||
+          (c.metasploitModule && c.metasploitModule.toLowerCase().includes(q))
         );
       }
       return true;
@@ -413,6 +510,14 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </button>
 
             <button
+              onClick={handleOpenMsfCatalog}
+              className="bg-pureWhite border border-vermilion hover:bg-vermilion hover:text-white text-vermilion px-3 py-1.5 text-xs font-mono font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <DoodleIcon name="spark" className="w-3.5 h-3.5 text-vermilion" />
+              <span>[ METASPLOIT MODULES ({msfModules.length > 0 ? msfModules.length : '18+'}) ]</span>
+            </button>
+
+            <button
               onClick={loadIntelligence}
               disabled={loading}
               className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer"
@@ -425,7 +530,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
         {/* ------------------------------------------------------------- */}
         {/* 2. EXECUTIVE KPI CARDS */}
         {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {/* Target Asset / Scope */}
           <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
             <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">
@@ -441,7 +546,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </div>
             <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
               <span className="w-1.5 h-1.5 bg-signalGreen inline-block"></span>
-              <span>{intelMode === 'TARGET_ALONE' ? 'Verified Scanned Target Infrastructure' : 'Active NIST NVD 2.0 Baseline'}</span>
+              <span>{intelMode === 'TARGET_ALONE' ? 'Verified Scanned Infrastructure' : 'Active NIST NVD 2.0 Baseline'}</span>
             </div>
           </div>
 
@@ -457,7 +562,23 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </div>
             <div className="text-[9px] text-vermilion mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
               <span className={`w-1.5 h-1.5 ${stats.critical > 0 ? 'bg-vermilion animate-pulse' : 'bg-signalGreen'} inline-block`}></span>
-              <span>{stats.critical > 0 ? 'Immediate Mitigation Recommended' : 'Perimeter Secure — 0 Critical CVEs'}</span>
+              <span>{stats.critical > 0 ? 'Immediate Mitigation Recommended' : '0 Critical Threats'}</span>
+            </div>
+          </div>
+
+          {/* Metasploit Weaponized */}
+          <div className="bg-pureWhite border border-hairline p-4 relative shadow-xs">
+            <div className="flex items-center justify-between text-[10px] font-bold text-vermilion uppercase tracking-wider font-mono">
+              <span>MSF WEAPONIZED</span>
+              <span className="text-vermilion font-bold font-mono">[RED TEAM]</span>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-3xl font-condensed font-bold text-vermilion leading-none">{stats.weaponized}</span>
+              <span className="text-[10px] font-mono text-charcoal">MODULES</span>
+            </div>
+            <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
+              <span className="w-1.5 h-1.5 bg-vermilion inline-block"></span>
+              <span>Metasploit Framework Exploitable</span>
             </div>
           </div>
 
@@ -476,7 +597,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               </span>
             </div>
             <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
-              <span>{intelMode === 'TARGET_ALONE' && stats.total === 0 ? 'Zero Remote Exploit Signatures' : 'Mean Topological Threat Baseline'}</span>
+              <span>{intelMode === 'TARGET_ALONE' && stats.total === 0 ? 'Zero Remote Exploit Signatures' : 'Mean Topological Threat'}</span>
             </div>
           </div>
 
@@ -492,7 +613,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </div>
             <div className="text-[9px] text-charcoal mt-2 pt-2 border-t border-hairlineLight flex items-center gap-1.5 font-mono">
               <span className="w-1.5 h-1.5 bg-signalGreen inline-block"></span>
-              <span>FIRST.org Exploit Prediction Model</span>
+              <span>FIRST.org Exploit Model</span>
             </div>
           </div>
         </div>
@@ -560,6 +681,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   { id: 'ALL', label: 'ALL INTEL' },
                   { id: 'CORRELATED', label: 'CORRELATED' },
                   { id: 'CRITICAL', label: 'CRITICAL' },
+                  { id: 'WEAPONIZED', label: 'MSF WEAPONIZED' },
                   { id: 'HIGH_EPSS', label: 'EPSS ≥ 50%' },
                   { id: 'CONFIRMED', label: 'CONFIRMED' },
                 ].map((tab) => {
@@ -602,6 +724,8 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                       onClick={() => {
                         setSelectedCve(cve);
                         setAiExplanation(null);
+                        setMsfScript(null);
+                        setSimResult(null);
                       }}
                       className={`relative p-3.5 bg-pureWhite transition-colors cursor-pointer border ${
                         isSelected
@@ -877,9 +1001,9 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   </div>
                 </div>
 
-                {/* Metasploit Weaponization Callout */}
+                {/* Metasploit Weaponization Callout & Interactive Execution */}
                 {(selectedCve.isWeaponized || selectedCve.metasploitModule) && (
-                  <div className="p-3 bg-pureWhite border border-vermilion space-y-1.5 shadow-xs">
+                  <div className="p-3.5 bg-pureWhite border-2 border-vermilion space-y-3 shadow-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-vermilion uppercase tracking-wider flex items-center gap-1.5">
                         <DoodleIcon name="spark" className="w-3.5 h-3.5 text-vermilion" />
@@ -889,6 +1013,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                         RED TEAM READY
                       </span>
                     </div>
+
                     {selectedCve.metasploitModule && (
                       <div className="font-mono text-[10px] font-bold text-ink bg-boneLight p-2 border border-hairline select-all flex items-center justify-between">
                         <span className="truncate">{selectedCve.metasploitModule}</span>
@@ -901,9 +1026,92 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                         </button>
                       </div>
                     )}
-                    <p className="text-[10px] text-charcoal leading-relaxed">
+
+                    <p className="text-[10px] text-charcoal leading-relaxed font-mono">
                       An active Metasploit module exists in the public domain. Traversal friction for this vulnerability has been reduced by 60% in the topological Attack Graph.
                     </p>
+
+                    {/* Metasploit Action Buttons */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-hairlineLight flex-wrap">
+                      <button
+                        onClick={() => handleGenerateMsfScript(selectedCve)}
+                        disabled={generatingMsf}
+                        className="px-3 py-1.5 bg-ink hover:bg-black text-white text-[10px] font-mono font-bold border border-ink cursor-pointer transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <DoodleIcon name="terminal" className="w-3 h-3 text-signalGreen" />
+                        <span>{generatingMsf ? '[ GENERATING .RC SCRIPT... ]' : '[ ⚡ GENERATE MSF RESOURCE SCRIPT (.rc) ]'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleSimulateExploit(selectedCve)}
+                        disabled={simulatingMsf}
+                        className="px-3 py-1.5 bg-boneLight hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline cursor-pointer transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <DoodleIcon name="spark" className="w-3 h-3 text-vermilion" />
+                        <span>{simulatingMsf ? '[ SIMULATING... ]' : '[ 🎯 SIMULATE FEASIBILITY CHECK ]'}</span>
+                      </button>
+                    </div>
+
+                    {/* Generated Resource Script Panel */}
+                    {msfScript && (
+                      <div className="p-3 bg-black text-white font-mono text-[10px] space-y-2 border border-vermilion animate-fadeIn">
+                        <div className="flex items-center justify-between border-b border-white/20 pb-1.5">
+                          <span className="text-signalGreen font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 bg-signalGreen inline-block"></span>
+                            METASPLOIT RESOURCE SCRIPT // {selectedCve.id}.rc
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopy(msfScript.msf_command, 'msfconsole Command')}
+                              className="text-white hover:text-signalGreen font-bold underline cursor-pointer"
+                            >
+                              [ COPY MSF COMMAND ]
+                            </button>
+                            <button
+                              onClick={() => handleCopy(msfScript.rc_script, 'Resource Script')}
+                              className="text-signalGreen hover:underline font-bold cursor-pointer"
+                            >
+                              [ COPY .RC SCRIPT ]
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="bg-charcoal/60 p-2 border border-white/10 select-all overflow-x-auto text-emerald-400">
+                          <pre className="whitespace-pre-wrap">{msfScript.rc_script}</pre>
+                        </div>
+
+                        <div className="text-[9.5px] text-white/70">
+                          <span className="text-white font-bold">CLI RUN COMMAND:</span>{' '}
+                          <code className="text-amber-300 bg-white/10 px-1 py-0.5 select-all">{msfScript.msf_command}</code>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Exploit Feasibility Simulation Result Panel */}
+                    {simResult && (
+                      <div className="p-3 bg-boneLight border border-hairline text-ink font-mono text-[10px] space-y-2 animate-fadeIn">
+                        <div className="flex items-center justify-between border-b border-hairline pb-1.5">
+                          <span className="font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <span className={`w-2 h-2 ${simResult.feasibility === 'HIGH' || simResult.exploit_feasible ? 'bg-vermilion' : 'bg-signalGreen'}`}></span>
+                            SIMULATED EXPLOIT FEASIBILITY ASSESSMENT
+                          </span>
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-pureWhite border border-hairline">
+                            RANK: {simResult.module_rank || 'EXCELLENT'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-[9.5px]">
+                          <div><strong>FEASIBILITY:</strong> <span className={simResult.exploit_feasible ? 'text-vermilion font-bold' : 'text-signalGreen font-bold'}>{simResult.feasibility || (simResult.exploit_feasible ? 'HIGH' : 'LOW')}</span></div>
+                          <div><strong>CISA KEV:</strong> <span className="font-bold">{simResult.cisa_kev ? 'YES (KNOWN EXPLOITED)' : 'NO'}</span></div>
+                          <div><strong>TARGET HOST:</strong> {simResult.target_host}</div>
+                          <div><strong>PORT / BANNER:</strong> {simResult.target_port || '80'} ({simResult.observed_version || 'Detected'})</div>
+                        </div>
+
+                        <div className="p-2 bg-pureWhite border border-hairline text-charcoal">
+                          <strong>SIMULATION LOG:</strong> {simResult.simulation_log || simResult.details || 'Target is directly vulnerable based on service fingerprint matching.'}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1051,6 +1259,148 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           </div>
 
         </div>
+
+        {/* Metasploit Modules Catalog Modal */}
+        {showMsfCatalogModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-pureWhite border-2 border-ink max-w-4xl w-full max-h-[85vh] flex flex-col p-6 space-y-4 shadow-2xl font-mono text-xs animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline pb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-vermilion"></span>
+                  <h3 className="text-sm font-bold text-ink uppercase tracking-wider font-grotesk">
+                    RAPID7 METASPLOIT WEAPONIZATION MODULE CORPUS // {msfModules.length} MODULES INDEXED
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowMsfCatalogModal(false)}
+                  className="text-charcoal hover:text-ink font-bold text-sm cursor-pointer"
+                >
+                  [ ✕ ]
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 px-2.5 py-1.5 bg-boneLight border border-hairline shrink-0">
+                <span className="text-charcoal font-bold text-[11px] select-none font-mono">SEARCH MODULES:</span>
+                <input
+                  type="text"
+                  placeholder="Filter by CVE ID, title, platform, or module path..."
+                  value={msfSearch}
+                  onChange={(e) => setMsfSearch(e.target.value)}
+                  className="w-full bg-transparent border-none p-0 text-xs text-ink focus:outline-none placeholder:text-pencil font-mono"
+                />
+                {msfSearch && (
+                  <button onClick={() => setMsfSearch('')} className="text-charcoal hover:text-ink font-bold cursor-pointer">[✕]</button>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto border border-hairline scrollbar-tactical">
+                {loadingMsfModules ? (
+                  <div className="p-8 text-center text-charcoal">
+                    <span className="animate-pulse">[ LOADING METASPLOIT MODULE REGISTRY... ]</span>
+                  </div>
+                ) : (
+                  <table className="w-full text-left font-mono text-[11px] border-collapse">
+                    <thead className="bg-boneDark text-ink border-b border-hairline text-[10px] sticky top-0">
+                      <tr>
+                        <th className="py-2 px-3 font-black border-r border-hairline">[ CVE ID ]</th>
+                        <th className="py-2 px-3 font-black border-r border-hairline">[ MODULE PATH ]</th>
+                        <th className="py-2 px-3 font-black border-r border-hairline">[ TITLE / PLATFORM ]</th>
+                        <th className="py-2 px-3 font-black border-r border-hairline">[ RANK / PORT ]</th>
+                        <th className="py-2 px-3 font-black text-right pr-3">[ ACTIONS ]</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairlineLight bg-white">
+                      {msfModules
+                        .filter((m) => {
+                          if (!msfSearch.trim()) return true;
+                          const q = msfSearch.toLowerCase();
+                          return (
+                            m.cve_id.toLowerCase().includes(q) ||
+                            m.module_path.toLowerCase().includes(q) ||
+                            m.title.toLowerCase().includes(q) ||
+                            m.platform.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((mod, idx) => (
+                          <tr key={idx} className="hover:bg-boneLight/80 transition-colors">
+                            <td className="py-2.5 px-3 font-bold text-ink border-r border-hairlineLight whitespace-nowrap">
+                              <span className="flex items-center gap-1.5">
+                                <span className={`w-1.5 h-1.5 ${mod.cisa_kev ? 'bg-vermilion' : 'bg-signalGreen'}`}></span>
+                                <span>{mod.cve_id}</span>
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-[10px] text-ink border-r border-hairlineLight max-w-[220px] truncate" title={mod.module_path}>
+                              {mod.module_path}
+                            </td>
+                            <td className="py-2.5 px-3 text-ink border-r border-hairlineLight">
+                              <div className="font-bold truncate max-w-[240px]" title={mod.title}>{mod.title}</div>
+                              <div className="text-[9px] text-charcoal font-mono">{mod.platform.toUpperCase()} • {mod.category}</div>
+                            </td>
+                            <td className="py-2.5 px-3 border-r border-hairlineLight whitespace-nowrap">
+                              <span className="px-1.5 py-0.5 text-[9px] bg-boneDark border border-hairline font-bold">
+                                {mod.rank.toUpperCase()}
+                              </span>
+                              <span className="text-[9px] text-charcoal ml-1.5 font-mono">PORT {mod.default_port}</span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right pr-3 whitespace-nowrap space-x-1.5">
+                              <button
+                                onClick={() => handleCopy(mod.module_path, 'Module')}
+                                className="px-2 py-0.5 bg-boneLight hover:bg-boneDark text-ink text-[9px] font-bold border border-hairline cursor-pointer"
+                              >
+                                [ COPY PATH ]
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowMsfCatalogModal(false);
+                                  const matchingCve = cves.find(c => c.id === mod.cve_id);
+                                  if (matchingCve) {
+                                    setSelectedCve(matchingCve);
+                                    handleGenerateMsfScript(matchingCve);
+                                  } else {
+                                    const synthCve = {
+                                      id: mod.cve_id,
+                                      title: mod.title,
+                                      product: mod.platform,
+                                      cvss: 9.8,
+                                      severity: 'CRITICAL',
+                                      epss: 0.95,
+                                      status: 'confirmed_applicability',
+                                      fix: 'Apply vendor security patch immediately.',
+                                      vector: 'AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+                                      description: mod.description,
+                                      isWeaponized: true,
+                                      metasploitModule: mod.module_path,
+                                    };
+                                    setSelectedCve(synthCve);
+                                    handleGenerateMsfScript(synthCve);
+                                  }
+                                }}
+                                className="px-2 py-0.5 bg-vermilion hover:bg-crimson text-white text-[9px] font-bold border border-hairline cursor-pointer"
+                              >
+                                [ SCRIPT (.rc) ➔ ]
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-hairline pt-3 shrink-0">
+                <span className="text-[10px] text-charcoal">
+                  All modules indexed under Rapid7 Metasploit Framework and correlated with Drishti Graph Engine.
+                </span>
+                <button
+                  onClick={() => setShowMsfCatalogModal(false)}
+                  className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-4 py-1.5 font-mono font-bold text-xs transition-colors cursor-pointer"
+                >
+                  [ CLOSE CATALOG ]
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

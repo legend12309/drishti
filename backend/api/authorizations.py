@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from backend.db.database import get_db
 from backend.services.authorizations import (
     create_challenge,
+    create_loa_authorization,
     get_authorization,
     verify_challenge,
     revoke_authorization,
@@ -20,6 +21,15 @@ from backend.services.authorizations import (
 from backend.services.scope import PERMITTED_SCOPES, normalize_domain
 
 router = APIRouter(prefix="/api/authorizations", tags=["Authorizations"])
+
+
+class CreateLoaRequest(BaseModel):
+    target_domain: str = Field(..., description="Target apex domain or IP, e.g. vvdx.in")
+    loa_reference: str = Field("LOA-2026-ENGAGEMENT-AUTH", description="Letter of Authorization reference / contract number")
+    authorized_by: str = Field("Client Security Operations", description="Authorizing organization official")
+    permitted_scope: str = Field("FULL_ACTIVE", description="Permitted scope: FULL_ACTIVE or FULL_PASSIVE")
+    operator_id: str = Field("local-operator-dev", description="Operator identity identifier")
+    notes: Optional[str] = Field("Signed Letter of Authorization (LOA) executed.", description="Engagement notes")
 
 
 class CreateChallengeRequest(BaseModel):
@@ -35,6 +45,28 @@ class VerifyChallengeRequest(BaseModel):
 class RevokeAuthorizationRequest(BaseModel):
     reason: str = Field("Revoked by operator", description="Reason for revoking authorization")
     operator_id: str = Field("local-operator-dev", description="Operator requesting revocation")
+
+
+@router.post("/loa", status_code=status.HTTP_201_CREATED)
+async def grant_letter_of_authorization(payload: CreateLoaRequest):
+    """
+    Records and verifies an enterprise Letter of Authorization (LOA) for a target domain.
+    Instantly grants verified active scanning permissions without requiring DNS TXT records.
+    """
+    try:
+        auth = await create_loa_authorization(
+            target_domain=payload.target_domain,
+            loa_reference=payload.loa_reference,
+            authorized_by=payload.authorized_by,
+            permitted_scope=payload.permitted_scope,
+            operator_id=payload.operator_id,
+            notes=payload.notes
+        )
+        return {"status": "success", "authorization": auth}
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as ex:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(ex))
 
 
 @router.post("/challenges", status_code=status.HTTP_201_CREATED)

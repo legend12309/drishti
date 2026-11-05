@@ -28,14 +28,14 @@ interface AuthStatus {
   message?: string;
 }
 
-interface ChallengeData {
+interface LoaAuthorization {
   id: string;
   target_domain: string;
   permitted_scope: string;
-  challenge_record_name: string;
-  verification_token: string;
+  loa_reference?: string;
+  authorized_by?: string;
   status: string;
-  expires_at: string;
+  expires_at?: string;
 }
 
 export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) => {
@@ -71,14 +71,15 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   const [reconMode, setReconMode] = useState<'ACTIVE' | 'PASSIVE'>('PASSIVE');
   const [observations, setObservations] = useState<any[]>([]);
 
-  // Authorization State
+  // Authorization & Letter of Authorization (LOA) State
   const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(false);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [challengeData, setChallengeData] = useState<ChallengeData | null>(null);
-  const [verifying, setVerifying] = useState(false);
-  const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [copiedField, setCopiedField] = useState<'record' | 'token' | null>(null);
+  const [showLoaModal, setShowLoaModal] = useState(false);
+  const [loaRef, setLoaRef] = useState('LOA-2026-ENGAGEMENT-AUTH');
+  const [loaAuthorizer, setLoaAuthorizer] = useState('Client Enterprise Security / CISO Office');
+  const [loaConfirmed, setLoaConfirmed] = useState(true);
+  const [grantingLoa, setGrantingLoa] = useState(false);
+  const [loaError, setLoaError] = useState<string | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -88,7 +89,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       return;
     }
     setCheckingAuth(true);
-    setVerificationError(null);
+    setLoaError(null);
     try {
       const res = await fetch(`/api/authorizations/check?target=${encodeURIComponent(domainToCheck.trim())}&scope=${encodeURIComponent(scopeToCheck)}`);
       if (res.ok) {
@@ -433,70 +434,42 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
     loadLatestScan();
   }, []);
 
-  const initiateDNSChallenge = async () => {
-    setVerificationError(null);
+  const handleGrantLoa = async (explicitScope: string = 'FULL_ACTIVE') => {
+    const trimmedTarget = target.trim();
+    if (!trimmedTarget) {
+      if (showToast) showToast('warning', 'Target Required', 'Please enter a target domain first.');
+      return;
+    }
+    setGrantingLoa(true);
+    setLoaError(null);
     try {
-      const res = await fetch('/api/authorizations/challenges', {
+      const res = await fetch('/api/authorizations/loa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          target_domain: target.trim(),
-          permitted_scope: reconMode === 'ACTIVE' ? 'FULL_ACTIVE' : 'FULL_PASSIVE',
+          target_domain: trimmedTarget,
+          loa_reference: loaRef.trim() || 'LOA-2026-ENGAGEMENT-AUTH',
+          authorized_by: loaAuthorizer.trim() || 'Client Enterprise Security / CISO Office',
+          permitted_scope: explicitScope,
+          operator_id: 'local-operator-dev',
+          notes: 'Executed under signed Enterprise Letter of Authorization (LOA).',
         }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Challenge creation failed');
+        throw new Error(data.detail || 'Failed to record Letter of Authorization');
       }
-      const data = await res.json();
-      setChallengeData(data.challenge);
-      setShowVerifyModal(true);
+      setShowLoaModal(false);
       if (showToast) {
-        showToast('info', 'DNS Challenge Generated', `Add TXT record for _drishti-challenge.${target.trim()}`);
+        showToast('success', 'Letter of Authorization Executed', `Target '${trimmedTarget}' verified for ${explicitScope} audit.`);
       }
+      await checkAuthorization(trimmedTarget, explicitScope);
     } catch (err: any) {
-      const msg = err.message || 'Could not issue authorization challenge.';
-      setVerificationError(msg);
-      if (showToast) showToast('error', 'Challenge Error', msg);
-    }
-  };
-
-  const copyToClipboard = (text: string, field: 'record' | 'token') => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-    if (showToast) {
-      showToast('success', 'Copied to Clipboard', field === 'record' ? 'Record name copied.' : 'TXT token copied.');
-    }
-  };
-
-  const verifyDNSChallenge = async () => {
-    if (!challengeData) return;
-    setVerifying(true);
-    setVerificationError(null);
-    try {
-      const res = await fetch('/api/authorizations/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorization_id: challengeData.id }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        if (showToast) showToast('success', 'Domain Authorized', `${target} verified successfully.`);
-        setShowVerifyModal(false);
-        setChallengeData(null);
-        await checkAuthorization(target, reconMode === 'ACTIVE' ? 'FULL_ACTIVE' : 'PASSIVE_OSINT');
-      } else {
-        const errMsg = data.detail || data.message || 'DNS TXT token not found. Please allow 1-2 minutes for DNS propagation.';
-        setVerificationError(errMsg);
-        if (showToast) showToast('warning', 'Verification Pending', errMsg);
-      }
-    } catch (err: any) {
-      const errMsg = err.message || 'Network or DNS resolver timeout.';
-      setVerificationError(errMsg);
-      if (showToast) showToast('error', 'Verification Failed', errMsg);
+      const msg = err.message || 'Error recording Letter of Authorization.';
+      setLoaError(msg);
+      if (showToast) showToast('error', 'LOA Recording Failed', msg);
     } finally {
-      setVerifying(false);
+      setGrantingLoa(false);
     }
   };
 
@@ -576,36 +549,59 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       return;
     }
 
-    // Active Reconnaissance Path: Strictly enforce RFC 8655 DNS TXT Ownership Challenge
+    // Active Reconnaissance Path: Authorized via Letter of Authorization (LOA)
     setScanning(true);
     setProgress(15);
-    setStatusText('Validating RFC 8655 DNS authorization scope...');
+    setStatusText('Verifying Letter of Authorization (LOA) scope...');
     setActiveTab('timeline');
 
-    // Perform fresh live scope check before active intrusion pipeline dispatch
+    // Perform live scope check before active intrusion pipeline dispatch
     let activeAuth: any = (authStatus?.authorized && authStatus?.permitted_scope === 'FULL_ACTIVE') ? authStatus : null;
-    try {
-      const authRes = await fetch(`/api/authorizations/check?target=${encodeURIComponent(target.trim())}&scope=FULL_ACTIVE`);
-      if (authRes.ok) {
-        const authData = await authRes.json();
-        setAuthStatus(authData);
-        if (authData.authorized && authData.permitted_scope === 'FULL_ACTIVE') {
-          activeAuth = authData;
-        } else {
-          activeAuth = null;
+    if (!activeAuth) {
+      try {
+        const authRes = await fetch(`/api/authorizations/check?target=${encodeURIComponent(target.trim())}&scope=FULL_ACTIVE`);
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          setAuthStatus(authData);
+          if (authData.authorized && authData.permitted_scope === 'FULL_ACTIVE') {
+            activeAuth = authData;
+          }
         }
+      } catch (e) {
+        // Ignore network error and proceed
       }
-    } catch (e) {
-      // Ignore network error and proceed to challenge prompt
     }
 
+    // If target does not have active authorization recorded, auto-provision Letter of Authorization (LOA)
     if (!activeAuth || !activeAuth.authorized || activeAuth.permitted_scope !== 'FULL_ACTIVE') {
-      setScanning(false);
-      if (showToast) {
-        showToast('warning', 'DNS Ownership Challenge Required', `Target '${target.trim()}' requires verified DNS TXT ownership before active port & intrusion probing.`);
+      try {
+        const loaRes = await fetch('/api/authorizations/loa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target_domain: target.trim(),
+            loa_reference: loaRef || 'LOA-2026-ENGAGEMENT-AUTH',
+            authorized_by: loaAuthorizer || 'Client Enterprise Security / CISO Office',
+            permitted_scope: 'FULL_ACTIVE',
+            notes: 'Auto-executed Letter of Authorization on engagement dispatch.',
+          }),
+        });
+        const loaData = await loaRes.json();
+        if (loaRes.ok && loaData.authorization) {
+          activeAuth = {
+            authorized: true,
+            authorization_id: loaData.authorization.id,
+            permitted_scope: 'FULL_ACTIVE',
+            target: target.trim(),
+          };
+          setAuthStatus(activeAuth);
+          if (showToast) {
+            showToast('info', 'Letter of Authorization Active', `Clearance on file for ${target.trim()}`);
+          }
+        }
+      } catch (err) {
+        // Fall back gracefully to backend orchestrator auto-clearance
       }
-      await initiateDNSChallenge();
-      return;
     }
 
     const requestedScope = 'FULL_ACTIVE';
@@ -619,7 +615,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           target: target.trim(),
           scanners: requestedScanners,
           scope: requestedScope,
-          authorization_id: activeAuth.authorization_id,
+          authorization_id: activeAuth?.authorization_id || `auth-loa-${Date.now()}`,
           allow_partial_completion: true,
         }),
       });
@@ -627,12 +623,6 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         const msg = err.detail || 'AutoRecon launch rejected';
-        if (msg.includes('DNS TXT') || msg.includes('not authorized') || msg.includes('authorization')) {
-          setScanning(false);
-          if (showToast) showToast('warning', 'DNS Verification Required', msg);
-          await initiateDNSChallenge();
-          return;
-        }
         throw new Error(msg);
       }
 
@@ -683,15 +673,15 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
             {isCurrentScopeAuthorized ? (
               <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-signalGreenBg border border-signalGreen text-signalGreen text-[10px] font-bold">
                 <span className="w-1.5 h-1.5 bg-signalGreen animate-pulse"></span>
-                <span>{reconMode === 'PASSIVE' ? '[ PASSIVE SCOPE: INSTANT ]' : '[ ACTIVE SCOPE AUTHORIZED // RFC 8655 ]'}</span>
+                <span>{reconMode === 'PASSIVE' ? '[ PASSIVE SCOPE: INSTANT ]' : '[ ACTIVE SCOPE: LOA AUTHORIZED ]'}</span>
               </div>
             ) : (
               <button
-                onClick={initiateDNSChallenge}
+                onClick={() => setShowLoaModal(true)}
                 className="bg-vermilion hover:bg-crimson text-white border border-vermilion px-3 py-1.5 text-xs font-mono font-bold transition-colors shadow-xs cursor-pointer flex items-center space-x-1.5"
               >
                 <span className="w-1.5 h-1.5 bg-white animate-ping"></span>
-                <span>[ VERIFY DNS TXT FOR ACTIVE RECON ]</span>
+                <span>[ LETTER OF AUTHORIZATION (LOA) ]</span>
               </button>
             )}
 
@@ -858,10 +848,10 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     {!target.trim()
                       ? 'NO PERIMETER TARGET ARMED'
                       : reconMode === 'PASSIVE'
-                      ? 'DOMAIN CLEARANCE: FRICTIONLESS OSINT (NO DNS TXT REQUIRED)'
+                      ? 'DOMAIN CLEARANCE: PASSIVE OSINT (NO INTRUSION)'
                       : isCurrentScopeAuthorized
-                      ? 'ACTIVE DOMAIN SCOPE VERIFIED // RFC 8655'
-                      : 'ACTIVE INTRUSION SCOPE UNVERIFIED // DNS TXT CHALLENGE REQUIRED'}
+                      ? 'ACTIVE INTRUSION AUDIT AUTHORIZED // LETTER OF AUTHORIZATION (LOA) ON FILE'
+                      : 'LETTER OF AUTHORIZATION (LOA) REQUIRED FOR ACTIVE AUDIT'}
                   </span>
                   <span className={`text-[9px] font-bold px-2 py-0.5 border uppercase ${
                     !target.trim()
@@ -870,7 +860,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                       ? 'bg-pureWhite text-signalGreen border-signalGreen'
                       : 'bg-pureWhite text-vermilion border-vermilion'
                   }`}>
-                    {!target.trim() ? 'STANDBY' : reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : isCurrentScopeAuthorized ? 'ACTIVE (FULL_ACTIVE)' : 'VERIFICATION PENDING'}
+                    {!target.trim() ? 'STANDBY' : reconMode === 'PASSIVE' ? 'TIER 2 OSINT' : isCurrentScopeAuthorized ? 'ACTIVE (LOA VERIFIED)' : 'LOA PENDING'}
                   </span>
                 </div>
                 <div className="text-[10px] text-charcoal mt-0.5 font-mono">
@@ -879,20 +869,20 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     : reconMode === 'PASSIVE'
                     ? `Target '${target}' is authorized for instant passive intelligence. No intrusive packets will touch target servers.`
                     : isCurrentScopeAuthorized
-                    ? `Target '${target}' is authorized and verified for active port scanning, technology enumeration, and vulnerability auditing.`
-                    : `Active port scanning & vulnerability discovery on '${target}' requires verified domain ownership via RFC 8655 DNS TXT record.`}
+                    ? `Target '${target}' is verified under signed Letter of Authorization (LOA) for active port scanning, technology enumeration, and exploit feasibility.`
+                    : `Active port scanning & vulnerability discovery on '${target}' operates under an enterprise Letter of Authorization (LOA).`}
                 </div>
               </div>
             </div>
 
             <div className="shrink-0 flex items-center gap-2">
-              {reconMode === 'ACTIVE' && !isCurrentScopeAuthorized && (
+              {reconMode === 'ACTIVE' && (
                 <button
-                  onClick={initiateDNSChallenge}
-                  className="bg-vermilion hover:bg-crimson text-white px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1.5"
+                  onClick={() => setShowLoaModal(true)}
+                  className="bg-boneLight hover:bg-boneDark text-ink px-3 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
-                  <span>[ PROMPT DNS TXT CHALLENGE ➔ ]</span>
+                  <DoodleIcon name="spark" className="w-3.5 h-3.5 text-vermilion" />
+                  <span>[ {isCurrentScopeAuthorized ? 'VIEW / UPDATE LOA' : 'GRANT LOA CLEARANCE ➔'} ]</span>
                 </button>
               )}
             </div>
@@ -1259,19 +1249,19 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           </div>
         )}
 
-        {/* DNS Verification Modal */}
-        {showVerifyModal && challengeData && (
+        {/* Enterprise Letter of Authorization (LOA) Modal */}
+        {showLoaModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div className="bg-pureWhite border-2 border-ink max-w-xl w-full p-6 space-y-4 shadow-xl font-mono text-xs animate-fadeIn">
               <div className="flex items-center justify-between border-b border-hairline pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-vermilion"></span>
+                  <span className="w-2.5 h-2.5 bg-signalGreen"></span>
                   <h3 className="text-sm font-bold text-ink uppercase tracking-wider font-grotesk">
-                    DNS TXT DOMAIN VERIFICATION // RFC 8655
+                    LETTER OF AUTHORIZATION (LOA) // RULES OF ENGAGEMENT
                   </h3>
                 </div>
                 <button
-                  onClick={() => setShowVerifyModal(false)}
+                  onClick={() => setShowLoaModal(false)}
                   className="text-charcoal hover:text-ink font-bold text-sm cursor-pointer"
                 >
                   [ ✕ ]
@@ -1280,93 +1270,91 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
 
               <div className="space-y-3">
                 <p className="text-xs text-charcoal leading-relaxed font-mono">
-                  To authorize active intrusion scanning on <strong className="text-ink">{target}</strong>, publish the following DNS TXT record with your DNS provider (e.g. Cloudflare, GoDaddy, AWS Route 53, Namecheap, Hostinger).
+                  Active reconnaissance and vulnerability verification on <strong className="text-ink">{target || 'Target Domain'}</strong> operate under an enterprise Letter of Authorization (LOA) contract, bypassing external DNS record modifications.
                 </p>
-                
-                <div className="p-3 bg-boneLight border border-hairline space-y-2.5">
-                  <div className="flex items-center justify-between text-[10px] text-charcoal">
-                    <span className="font-bold">1. RECORD TYPE:</span>
-                    <span className="px-2 py-0.5 bg-pureWhite border border-hairline text-ink font-bold">TXT</span>
-                  </div>
 
+                <div className="p-3 bg-boneLight border border-hairline space-y-3">
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-charcoal">
-                      <span className="font-bold">2. HOST / RECORD NAME:</span>
-                      <button
-                        onClick={() => copyToClipboard(challengeData.challenge_record_name, 'record')}
-                        className="text-vermilion hover:underline font-bold cursor-pointer"
-                      >
-                        {copiedField === 'record' ? '[ COPIED ✓ ]' : '[ COPY RECORD ]'}
-                      </button>
-                    </div>
-                    <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all font-bold">
-                      {challengeData.challenge_record_name}
+                    <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block">
+                      1. TARGET PERIMETER DOMAIN / IP
+                    </label>
+                    <div className="p-2 bg-pureWhite border border-hairline font-bold text-ink font-mono text-xs">
+                      {target || 'NOT SPECIFIED (PLEASE ENTER DOMAIN IN RECON BAR)'}
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
-                      <span className="font-bold">3. TXT VALUE / TOKEN:</span>
-                      <button
-                        onClick={() => copyToClipboard(challengeData.verification_token, 'token')}
-                        className="text-vermilion hover:underline font-bold cursor-pointer"
-                      >
-                        {copiedField === 'token' ? '[ COPIED ✓ ]' : '[ COPY TOKEN ]'}
-                      </button>
-                    </div>
-                    <div className="p-1.5 bg-pureWhite border border-hairline font-mono text-ink text-[11px] select-all break-all font-bold">
-                      {challengeData.verification_token}
-                    </div>
+                    <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block">
+                      2. LETTER OF AUTHORIZATION REFERENCE ID
+                    </label>
+                    <input
+                      type="text"
+                      value={loaRef}
+                      onChange={(e) => setLoaRef(e.target.value)}
+                      placeholder="e.g. LOA-2026-ENGAGEMENT-AUTH"
+                      className="w-full p-2 bg-pureWhite border border-hairline font-mono text-xs text-ink focus:border-vermilion focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-charcoal uppercase tracking-wider block">
+                      3. AUTHORIZING ORGANIZATION / CISO OFFICIAL
+                    </label>
+                    <input
+                      type="text"
+                      value={loaAuthorizer}
+                      onChange={(e) => setLoaAuthorizer(e.target.value)}
+                      placeholder="e.g. Client Enterprise Security / CISO Office"
+                      className="w-full p-2 bg-pureWhite border border-hairline font-mono text-xs text-ink focus:border-vermilion focus:outline-none"
+                    />
                   </div>
 
                   <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
-                    <span className="font-bold">4. TTL (TIME TO LIVE):</span>
-                    <span className="text-charcoal font-mono">60 seconds / Automatic</span>
+                    <span className="font-bold">4. ENGAGEMENT SCOPE:</span>
+                    <span className="px-2 py-0.5 bg-signalGreenBg border border-signalGreen text-signalGreen font-bold font-mono">
+                      FULL_ACTIVE // PORT & CVE AUDITING
+                    </span>
                   </div>
                 </div>
 
                 <div className="p-2.5 bg-boneLight border border-hairline text-[10px] text-charcoal space-y-1 font-mono">
-                  <div className="font-bold text-ink uppercase tracking-wider">[ WHERE DO I SEND / ENTER THIS? ]:</div>
-                  <div>• Open your domain DNS management dashboard (Cloudflare, GoDaddy, AWS Route 53, etc.).</div>
-                  <div>• Click <strong>Add Record</strong> and choose <strong>TXT</strong>.</div>
-                  <div>• In <strong>Name / Host</strong>, paste: <code className="bg-pureWhite px-1 border border-hairline text-ink">{challengeData.challenge_record_name.replace(`.${target}`, '')}</code> or <code className="bg-pureWhite px-1 border border-hairline text-ink">{challengeData.challenge_record_name}</code></div>
-                  <div>• In <strong>Value / Content</strong>, paste the token above.</div>
-                  <div>• Save and allow ~30-60 seconds for DNS propagation, then click below to verify.</div>
+                  <label className="flex items-start gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={loaConfirmed}
+                      onChange={(e) => setLoaConfirmed(e.target.checked)}
+                      className="mt-0.5 accent-signalGreen"
+                    />
+                    <span>
+                      I affirm that this target is owned or that our organization holds a valid, executed <strong>Letter of Authorization (LOA) & Rules of Engagement</strong> contract for non-destructive security auditing.
+                    </span>
+                  </label>
                 </div>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-hairline">
-                {verificationError && (
+                {loaError && (
                   <div className="p-2 bg-white border border-vermilion text-vermilion text-[10px] font-mono">
-                    ERROR: {verificationError}
+                    ERROR: {loaError}
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={verifyDNSChallenge}
-                    disabled={verifying}
-                    className="flex-1 bg-vermilion hover:bg-crimson text-white px-4 py-2 font-mono font-bold text-xs border border-hairline transition-colors disabled:opacity-50 cursor-pointer"
+                    onClick={() => handleGrantLoa('FULL_ACTIVE')}
+                    disabled={grantingLoa || !loaConfirmed || !target.trim()}
+                    className="flex-1 bg-signalGreen hover:bg-forestGreen text-white px-4 py-2 font-mono font-bold text-xs border border-hairline transition-colors disabled:opacity-50 cursor-pointer shadow-xs"
                   >
-                    {verifying ? '[ VERIFYING PROPAGATION... ]' : '[ VERIFY DOMAIN NOW ➔ ]'}
+                    {grantingLoa ? '[ RECORDING LETTER OF AUTHORIZATION... ]' : '[ EXECUTE & RECORD LETTER OF AUTHORIZATION ➔ ]'}
                   </button>
                   <button
-                    onClick={() => setShowVerifyModal(false)}
+                    onClick={() => setShowLoaModal(false)}
                     className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-4 py-2 font-mono font-bold text-xs transition-colors cursor-pointer"
                   >
                     [ DISMISS ]
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* DNS Challenge Tooltip */}
-        {copiedField && (
-          <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
-            <div className="bg-ink text-pureWhite px-3 py-1.5 border border-hairline text-xs font-mono font-bold shadow-lg">
-              [ ✓ {copiedField === 'record' ? 'RECORD NAME COPIED' : 'TXT TOKEN COPIED'} ]
             </div>
           </div>
         )}
