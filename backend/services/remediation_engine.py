@@ -10,12 +10,15 @@ Synthesizes production-ready edge, firewall, webserver, and code hotfixes:
 
 import asyncio
 import re
+import socket
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 import httpx
 from pydantic import BaseModel, Field
 
 from backend.services.llm_models import LLMProvider, LLMRequest
 from backend.services.llm_router import llm_router
+from backend.services.scope import validate_destination_ip
 from backend.services.vulnerability_service import get_vulnerability
 
 
@@ -332,12 +335,44 @@ async def generate_defense_rules(
 async def execute_verification_probe(req: VerifyRemediationRequest) -> VerifyRemediationResponse:
     """
     Executes a targeted, non-intrusive diagnostic probe to verify whether a defensive rule
-    is actively blocking the target endpoint.
+    is actively blocking the target endpoint. Strictly bound against SSRF (CWE-918).
     """
     start = asyncio.get_event_loop().time()
     url = req.target_url.strip()
     if not url.startswith("http://") and not url.startswith("https://"):
         url = f"https://{url}"
+
+    # Enforce SSRF destination IP boundary validation
+    parsed = urlparse(url)
+    host = parsed.hostname or ""
+    if not host:
+        return VerifyRemediationResponse(
+            verified=False,
+            status_code=400,
+            verdict="INVALID TARGET",
+            details="Target URL must specify a valid hostname or IP address.",
+            latency_ms=0.0,
+        )
+
+    try:
+        ip_str = socket.gethostbyname(host)
+        is_safe, err_reason = validate_destination_ip(ip_str)
+        if not is_safe:
+            return VerifyRemediationResponse(
+                verified=False,
+                status_code=403,
+                verdict="SSRF BLOCKED",
+                details=f"Target host '{host}' resolved to restricted address ({err_reason}). Internal network probing is strictly prohibited.",
+                latency_ms=0.0,
+            )
+    except Exception as dns_err:
+        return VerifyRemediationResponse(
+            verified=False,
+            status_code=None,
+            verdict="DNS RESOLUTION FAILED",
+            details=f"Could not resolve host '{host}': {str(dns_err)}",
+            latency_ms=0.0,
+        )
 
     headers = {
         "User-Agent": "DRISHTI-Verification-Probe/1.0",
@@ -345,7 +380,7 @@ async def execute_verification_probe(req: VerifyRemediationRequest) -> VerifyRem
     }
 
     try:
-        async with httpx.AsyncClient(timeout=req.timeout_seconds, verify=False) as client:
+        async with httpx.AsyncClient(timeout=req.timeout_seconds, verify=False, follow_redirects=False) as client:
             resp = await client.request(req.method, url, headers=headers)
             latency = round((asyncio.get_event_loop().time() - start) * 1000, 2)
             

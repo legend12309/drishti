@@ -10,6 +10,7 @@ staged & stageless payload matrix synthesis, and non-destructive feasibility che
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 
@@ -804,6 +805,26 @@ def generate_msf_resource_script(
         safe_check = module.safe_check_available
         sup_payloads = module.supported_payloads
 
+    # Sanitize dynamic inputs against command and console injection (CWE-78 / CWE-88)
+    raw_host = str(target_host).strip().split()[0].split(';')[0] if target_host else "target.local"
+    clean_host = re.sub(r'[^a-zA-Z0-9.\-]', '', raw_host).strip() or "target.local"
+    raw_lhost = str(lhost).strip().split()[0].split(';')[0] if lhost else "127.0.0.1"
+    clean_lhost = re.sub(r'[^a-zA-Z0-9.\-]', '', raw_lhost).strip() or "127.0.0.1"
+    
+    if uri:
+        raw_uri = str(uri).strip().split()[0].split(';')[0]
+        clean_uri = "/" + re.sub(r'[^a-zA-Z0-9_/\-.~%?=&]', '', raw_uri).lstrip("/")
+    else:
+        clean_uri = "/"
+        
+    raw_payload = str(payload).strip().split()[0].split(';')[0] if payload else "generic/shell_reverse_tcp"
+    clean_payload = re.sub(r'[^a-zA-Z0-9_/\-]', '', raw_payload).strip() or "generic/shell_reverse_tcp"
+    
+    clean_encoder = None
+    if encoder:
+        raw_encoder = str(encoder).strip().split()[0].split(';')[0]
+        clean_encoder = re.sub(r'[^a-zA-Z0-9_/\-]', '', raw_encoder).strip() or None
+
     now = datetime.now(timezone.utc).isoformat()
     script_lines = [
         f"# DRISHTI Cyber Intelligence — Metasploit Execution Script (10/10 Arsenal)",
@@ -811,24 +832,24 @@ def generate_msf_resource_script(
         f"# Target CVE: {cve_id} — {title}",
         f"# MITRE ATT&CK: {mitre_att} | CISA KEV: {'YES' if cisa else 'NO'}",
         f"use {module_path}",
-        f"set RHOSTS {target_host}",
+        f"set RHOSTS {clean_host}",
         f"set RPORT {port}",
     ]
 
     if use_ssl:
         script_lines.append("set SSL true")
 
-    if uri and uri != "/":
-        script_lines.append(f"set TARGETURI {uri}")
+    if clean_uri and clean_uri != "/":
+        script_lines.append(f"set TARGETURI {clean_uri}")
 
-    if payload and payload != "none":
-        script_lines.append(f"set PAYLOAD {payload}")
-        script_lines.append(f"set LHOST {lhost}")
+    if clean_payload and clean_payload != "none":
+        script_lines.append(f"set PAYLOAD {clean_payload}")
+        script_lines.append(f"set LHOST {clean_lhost}")
         script_lines.append(f"set LPORT {lport}")
 
-    if encoder:
+    if clean_encoder:
         script_lines.append(f"set EnableContextEncoding true")
-        script_lines.append(f"set Encoder {encoder}")
+        script_lines.append(f"set Encoder {clean_encoder}")
 
     if safe_check_only:
         script_lines.append("# Safe Non-Destructive Vulnerability Check")
@@ -842,13 +863,13 @@ def generate_msf_resource_script(
     rc_content = "\n".join(script_lines)
 
     # Runnable one-liner msfconsole CLI commands
-    cli_parts = [f"use {module_path}", f"set RHOSTS {target_host}", f"set RPORT {port}"]
+    cli_parts = [f"use {module_path}", f"set RHOSTS {clean_host}", f"set RPORT {port}"]
     if use_ssl:
         cli_parts.append("set SSL true")
-    if uri and uri != "/":
-        cli_parts.append(f"set TARGETURI {uri}")
-    if payload and payload != "none":
-        cli_parts.extend([f"set PAYLOAD {payload}", f"set LHOST {lhost}", f"set LPORT {lport}"])
+    if clean_uri and clean_uri != "/":
+        cli_parts.append(f"set TARGETURI {clean_uri}")
+    if clean_payload and clean_payload != "none":
+        cli_parts.extend([f"set PAYLOAD {clean_payload}", f"set LHOST {clean_lhost}", f"set LPORT {lport}"])
     
     safe_cli = f'msfconsole -q -x "{" ; ".join(cli_parts)} ; check ; exit"'
     exploit_cli = f'msfconsole -q -x "{" ; ".join(cli_parts)} ; check ; exploit -j -z"'
@@ -858,10 +879,11 @@ def generate_msf_resource_script(
         "cve_id": cve_id,
         "module_path": module_path,
         "title": title,
-        "target_host": target_host,
+        "target_host": clean_host,
         "target_port": port,
         "ssl": use_ssl,
-        "payload": payload,
+        "payload": clean_payload,
+        "target_uri": clean_uri,
         "rank": rank,
         "cisa_kev": cisa,
         "mitre_attack": mitre_att,

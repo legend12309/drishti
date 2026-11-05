@@ -45,11 +45,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in ALLOWED_ORIGINS if o.strip()] or ["http://127.0.0.1:5173", "http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -102,15 +107,30 @@ async def health_check() -> Dict[str, Any]:
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
-    # Serve SPA for non-API paths only
+    # Serve SPA for non-API paths only with strict canonical boundary containment (CWE-22 Defense)
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str = ""):
         if full_path.startswith("api/") or full_path == "api":
             return JSONResponse({"detail": "Not Found"}, status_code=404)
-        file_path = FRONTEND_DIST / full_path
+        
+        # Prevent Directory Traversal & Encoded Separator Bypass
+        if ".." in full_path or "\\" in full_path:
+            return JSONResponse({"detail": "Access Denied: Path Traversal Disallowed"}, status_code=403)
+
+        file_path = (FRONTEND_DIST / full_path).resolve()
+        frontend_root = FRONTEND_DIST.resolve()
+
+        # Enforce that requested path strictly lives inside FRONTEND_DIST
+        try:
+            if not file_path.is_relative_to(frontend_root):
+                return JSONResponse({"detail": "Access Denied: Path Outside Root"}, status_code=403)
+        except (ValueError, AttributeError):
+            if not str(file_path).startswith(str(frontend_root)):
+                return JSONResponse({"detail": "Access Denied: Path Outside Root"}, status_code=403)
+
         if full_path and file_path.is_file():
             return FileResponse(file_path)
-        return FileResponse(FRONTEND_DIST / "index.html")
+        return FileResponse(frontend_root / "index.html")
 else:
     @app.get("/", include_in_schema=False)
     async def index_placeholder():

@@ -12,6 +12,7 @@ and dynamically reconfigures providers when keys are submitted via the UI.
 
 import os
 from pathlib import Path
+import re
 from typing import Dict, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -174,14 +175,15 @@ async def update_settings(payload: SettingsUpdateRequest):
         with open(ENV_PATH, "r", encoding="utf-8") as f:
             env_lines = f.readlines()
 
+    # Sanitize updated values to strictly prevent newline injection into .env (CWE-93 / CWE-20)
     updated_keys = {
-        "GROQ_API_KEY": RUNTIME_CONFIG["groq_api_key"],
-        "NVIDIA_API_KEY": RUNTIME_CONFIG["nvidia_api_key"],
-        "HUGGINGFACE_API_KEY": RUNTIME_CONFIG["huggingface_api_key"],
-        "HF_TOKEN": RUNTIME_CONFIG["huggingface_api_key"],
-        "GEMINI_API_KEY": RUNTIME_CONFIG["gemini_api_key"],
-        "JWT_SECRET": RUNTIME_CONFIG["jwt_secret"],
-        "FORCE_LOCAL_MODE": str(RUNTIME_CONFIG["force_local_mode"]).lower(),
+        "GROQ_API_KEY": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["groq_api_key"])).strip(),
+        "NVIDIA_API_KEY": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["nvidia_api_key"])).strip(),
+        "HUGGINGFACE_API_KEY": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["huggingface_api_key"])).strip(),
+        "HF_TOKEN": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["huggingface_api_key"])).strip(),
+        "GEMINI_API_KEY": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["gemini_api_key"])).strip(),
+        "JWT_SECRET": re.sub(r'[\r\n]', '', str(RUNTIME_CONFIG["jwt_secret"])).strip(),
+        "FORCE_LOCAL_MODE": "true" if RUNTIME_CONFIG["force_local_mode"] else "false",
     }
 
     new_file_lines = []

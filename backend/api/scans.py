@@ -680,12 +680,16 @@ async def download_workflow_report(workflow_id: str):
     if not file_path or not os.path.exists(file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report file not found on disk")
     
-    safe_filename = f"drishti-security-report-{workflow_id}.pdf"
+    import re
+    clean_id = re.sub(r'[^a-zA-Z0-9_\-]', '', str(workflow_id)).strip()
+    if not clean_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid workflow ID syntax.")
+    safe_filename = f"drishti-security-report-{clean_id}.pdf"
     return FileResponse(
         file_path,
         media_type="application/pdf",
         filename=safe_filename,
-        headers={"Content-Disposition": f"attachment; filename={safe_filename}"}
+        headers={"Content-Disposition": f'attachment; filename="{safe_filename}"'}
     )
 
 
@@ -696,10 +700,12 @@ async def download_latest_report(target: Optional[str] = Query(None)):
     Delivers directly to the operating system's Downloads folder.
     """
     import os
+    import re
     import tempfile
     from fastapi.responses import FileResponse
 
     target_name = (target or "curezy.in").strip().lower()
+    clean_target = re.sub(r'[^a-zA-Z0-9_\-\.]', '', target_name) or "target"
     latest_id = None
     async with get_db() as db:
         async with db.execute("SELECT id, target FROM scans ORDER BY created_at DESC LIMIT 1") as cursor:
@@ -708,9 +714,10 @@ async def download_latest_report(target: Optional[str] = Query(None)):
                 latest_id = row["id"]
                 if row["target"]:
                     target_name = row["target"]
+                    clean_target = re.sub(r'[^a-zA-Z0-9_\-\.]', '', target_name) or "target"
 
     if not latest_id:
-        latest_id = f"audit-{target_name}"
+        latest_id = f"audit-{clean_target}"
 
     output_dir = tempfile.gettempdir()
     result = await generate_security_report(latest_id, output_dir)
@@ -719,12 +726,12 @@ async def download_latest_report(target: Optional[str] = Query(None)):
     if not file_path or not os.path.exists(file_path):
         raise HTTPException(status_code=500, detail="Could not generate executive report")
 
-    filename = f"drishti-security-assessment-{target_name}.pdf"
+    filename = f"drishti-security-assessment-{clean_target}.pdf"
     return FileResponse(
         file_path,
         media_type="application/pdf",
         filename=filename,
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
 

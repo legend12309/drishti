@@ -229,7 +229,8 @@ class DetectiveEngine:
         """
         url = f"{scheme}://{host}:{port}" if (scheme == "http" and port != 80) or (scheme == "https" and port != 443) else f"{scheme}://{host}"
         try:
-            async with httpx.AsyncClient(timeout=0.6, verify=False, follow_redirects=True) as client:
+            # Disable follow_redirects to prevent 30x SSRF redirection into private subnets (CWE-918)
+            async with httpx.AsyncClient(timeout=0.6, verify=False, follow_redirects=False) as client:
                 t0 = asyncio.get_event_loop().time()
                 resp = await client.get(url)
                 latency_ms = round((asyncio.get_event_loop().time() - t0) * 1000, 2)
