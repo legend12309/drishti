@@ -362,12 +362,28 @@ export const GuardView: React.FC<GuardViewProps> = ({ onNavigate, showToast }) =
             </table>
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-charcoal pt-1">
+          <div className="flex items-center justify-between text-[10px] text-charcoal pt-1 flex-wrap gap-2">
             <span className="font-bold text-signalGreen flex items-center gap-1">
               ✓ {auditVerdict}
             </span>
+            {onNavigate && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onNavigate('graph')}
+                  className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                >
+                  [ 05_ ATTACK GRAPH ➔ ]
+                </button>
+                <button
+                  onClick={() => onNavigate('reports')}
+                  className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                >
+                  [ 07_ EXECUTIVE REPORT ➔ ]
+                </button>
+              </div>
+            )}
             <span className="font-mono text-[9px] text-pencil">
-              Commit: 5ab3d88 • All Automated Regression Tests Passing
+              All Automated Defense Rules Synthesized & Passing
             </span>
           </div>
         </div>

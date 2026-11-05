@@ -213,6 +213,11 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         } catch (err) {}
       }
       await loadFindingsForScan(workflowId, targetDomain || target);
+      const finalTarget = targetDomain || target;
+      if (finalTarget) {
+        localStorage.setItem('drishti_target_domain', finalTarget.trim());
+        window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: finalTarget.trim() }));
+      }
       // Auto-trigger graph synthesis for the newly completed scan
       fetch('/api/graph/build', {
         method: 'POST',
@@ -669,6 +674,8 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
       if (showToast) showToast('info', 'AutoRecon Pipeline Dispatched', `Assessment ID: ${data.workflow_id}`);
 
       localStorage.setItem(STORAGE_KEY, data.workflow_id);
+      localStorage.setItem('drishti_target_domain', target.trim());
+      window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: target.trim() }));
       attachWorkflowStream(data.workflow_id, target.trim());
     } catch (err: any) {
       if (showToast) showToast('error', 'Execution Error', err.message || 'AutoRecon could not be started.');
@@ -956,12 +963,57 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     [ ABORT WORKFLOW ]
                   </button>
                 ) : (
-                  <button
-                    onClick={() => setActiveTab('findings')}
-                    className="px-3 py-1 bg-ink text-white hover:bg-charcoal text-[10px] font-mono font-bold transition-colors cursor-pointer shadow-xs"
-                  >
-                    [ INSPECT FINDINGS ➔ ]
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setActiveTab('findings')}
+                      className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                    >
+                      [ 02_ OBSERVATIONS ]
+                    </button>
+                    {onNavigate && (
+                      <>
+                        <button
+                          onClick={() => {
+                            localStorage.setItem('drishti_intel_tab', 'INTEL');
+                            window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'INTEL' }));
+                            onNavigate('intel');
+                          }}
+                          className="px-2.5 py-1 bg-ink text-white hover:bg-charcoal text-[10px] font-mono font-bold transition-colors cursor-pointer shadow-xs"
+                        >
+                          [ 03_ INTEL ➔ ]
+                        </button>
+                        <button
+                          onClick={() => {
+                            localStorage.setItem('drishti_intel_tab', 'METASPLOIT');
+                            window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'METASPLOIT' }));
+                            onNavigate('intel');
+                          }}
+                          className="px-2.5 py-1 bg-vermilion text-white hover:bg-crimson text-[10px] font-mono font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                        >
+                          <DoodleIcon name="spark" className="w-3 h-3 text-white" />
+                          <span>[ 04_ METASPLOIT (10/10) ➔ ]</span>
+                        </button>
+                        <button
+                          onClick={() => onNavigate('graph')}
+                          className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                        >
+                          [ 05_ GRAPH ➔ ]
+                        </button>
+                        <button
+                          onClick={() => onNavigate('guard')}
+                          className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                        >
+                          [ 06_ GUARD ➔ ]
+                        </button>
+                        <button
+                          onClick={() => onNavigate('reports')}
+                          className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
+                        >
+                          [ 07_ REPORT ➔ ]
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

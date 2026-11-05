@@ -49,7 +49,25 @@ interface ScanOption {
 
 export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) => {
   // Primary Workspace Mode: Vulnerability Intel vs Metasploit Arsenal vs Neural AI Copilot
-  const [primaryTab, setPrimaryTab] = useState<'INTEL' | 'METASPLOIT' | 'AI_ADVISORY'>('INTEL');
+  const [primaryTab, setPrimaryTab] = useState<'INTEL' | 'METASPLOIT' | 'AI_ADVISORY'>(() => {
+    return (localStorage.getItem('drishti_intel_tab') as any) || 'INTEL';
+  });
+
+  // Synchronize primary tab if switched from Cockpit, Recon, or other components
+  useEffect(() => {
+    const handleIntelTabChange = (e: any) => {
+      if (e.detail === 'INTEL' || e.detail === 'METASPLOIT' || e.detail === 'AI_ADVISORY') {
+        setPrimaryTab(e.detail);
+      }
+    };
+    window.addEventListener('drishti_intel_tab_change', handleIntelTabChange);
+    return () => window.removeEventListener('drishti_intel_tab_change', handleIntelTabChange);
+  }, []);
+
+  const handleSelectPrimaryTab = (tab: 'INTEL' | 'METASPLOIT' | 'AI_ADVISORY') => {
+    setPrimaryTab(tab);
+    localStorage.setItem('drishti_intel_tab', tab);
+  };
 
   const [intelMode, setIntelMode] = useState<'TARGET_ALONE' | 'GLOBAL_CATALOG'>('TARGET_ALONE');
   const [filter, setFilter] = useState<'ALL' | 'CORRELATED' | 'CRITICAL' | 'HIGH_EPSS' | 'CONFIRMED' | 'WEAPONIZED'>('ALL');
@@ -800,7 +818,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           {/* Primary View Mode Switcher Pills */}
           <div className="flex items-center gap-2 border-t border-hairlineLight pt-2.5 flex-wrap">
             <button
-              onClick={() => setPrimaryTab('INTEL')}
+              onClick={() => handleSelectPrimaryTab('INTEL')}
               className={`px-3.5 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 border ${
                 primaryTab === 'INTEL'
                   ? 'bg-ink text-white border-ink shadow-xs'
@@ -817,7 +835,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </button>
 
             <button
-              onClick={() => setPrimaryTab('METASPLOIT')}
+              onClick={() => handleSelectPrimaryTab('METASPLOIT')}
               className={`px-3.5 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 border ${
                 primaryTab === 'METASPLOIT'
                   ? 'bg-vermilion text-white border-vermilion shadow-xs'
@@ -832,7 +850,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
             </button>
 
             <button
-              onClick={() => setPrimaryTab('AI_ADVISORY')}
+              onClick={() => handleSelectPrimaryTab('AI_ADVISORY')}
               className={`px-3.5 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 border ${
                 primaryTab === 'AI_ADVISORY'
                   ? 'bg-signalGreen text-ink border-signalGreen font-black shadow-xs'

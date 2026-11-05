@@ -416,7 +416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               },
               {
                 id: 'intel' as TabId,
-                num: '04_',
+                num: '⚡',
                 code: 'METASPLOIT',
                 name: 'Weaponization (10/10)',
                 desc: '30+ Modules • MITRE ATT&CK • Ransomware',
@@ -425,7 +425,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               },
               {
                 id: 'graph' as TabId,
-                num: '05_',
+                num: '04_',
                 code: 'GRAPH',
                 name: 'Attack Graph / Dijkstra',
                 desc: 'NetworkX • Pathfinding • Crown Jewels',
@@ -434,7 +434,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               },
               {
                 id: 'guard' as TabId,
-                num: '06_',
+                num: '05_',
                 code: 'GUARD',
                 name: 'Llama-Prompt-Guard',
                 desc: 'L1/L2/L3 AI Defense & WAF Synthesizer',
@@ -443,7 +443,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               },
               {
                 id: 'stix' as TabId,
-                num: '07_',
+                num: '06_',
                 code: 'STIX',
                 name: 'STIX 2.1 Threat Intel',
                 desc: 'OASIS Bundle • Cryptographic Dossier',
@@ -453,7 +453,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
             ].map((eng) => (
               <div
                 key={eng.code}
-                onClick={() => onNavigate(eng.id)}
+                onClick={() => {
+                  if (eng.code === 'METASPLOIT') {
+                    localStorage.setItem('drishti_intel_tab', 'METASPLOIT');
+                    window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'METASPLOIT' }));
+                    onNavigate('intel');
+                  } else if (eng.code === 'INTEL') {
+                    localStorage.setItem('drishti_intel_tab', 'INTEL');
+                    window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'INTEL' }));
+                    onNavigate('intel');
+                  } else {
+                    onNavigate(eng.id);
+                  }
+                }}
                 className="p-2.5 bg-boneLight hover:bg-boneDark border border-hairline space-y-1.5 cursor-pointer transition-all active:scale-95 group shadow-xs"
               >
                 <div className="flex items-center justify-between text-[9px] font-bold">
@@ -792,13 +804,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               </p>
             </div>
 
-            <div className="flex items-center space-x-2 font-mono text-xs">
+            <div className="flex items-center space-x-2 font-mono text-xs flex-wrap gap-1">
               <button
                 type="button"
-                onClick={() => onNavigate('intel')}
-                className="px-3.5 py-1.5 bg-boneLight border border-hairline hover:bg-boneDark text-ink font-bold transition-colors cursor-pointer shadow-xs"
+                onClick={() => {
+                  localStorage.setItem('drishti_intel_tab', 'INTEL');
+                  window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'INTEL' }));
+                  onNavigate('intel');
+                }}
+                className="px-3 py-1.5 bg-boneLight border border-hairline hover:bg-boneDark text-ink font-bold transition-colors cursor-pointer shadow-xs"
               >
-                [ 04_ VIEW ALL INTELLIGENCE ➔ ]
+                [ 03_ VULNERABILITY INTEL ➔ ]
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('drishti_intel_tab', 'METASPLOIT');
+                  window.dispatchEvent(new CustomEvent('drishti_intel_tab_change', { detail: 'METASPLOIT' }));
+                  onNavigate('intel');
+                }}
+                className="px-3 py-1.5 bg-vermilion hover:bg-crimson text-white font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+              >
+                <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
+                <span>[ 04_ METASPLOIT ARSENAL ➔ ]</span>
               </button>
             </div>
           </div>
