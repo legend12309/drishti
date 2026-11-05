@@ -1,0 +1,1384 @@
+{
+  "type": "bundle",
+  "id": "bundle--7379a0f0-5b02-4067-bbcc-4982e06157a6",
+  "spec_version": "2.1",
+  "created": "2026-11-05T09:26:49.128289+00:00",
+  "objects": [
+    {
+      "type": "attack-pattern",
+      "id": "attack-pattern--2c56f1c1-c373-4dc3-b73f-9bcd59cbd299",
+      "name": "Exploitation of Remote Services",
+      "description": "Adversaries may exploit remote services to gain initial unauthorized access.",
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "initial-access"
+        }
+      ]
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--a76ba24b-7ee8-46c2-b3bf-47a8ab8d3241",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '216.198.79.1']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--c62c4d1f-4a09-418e-a09d-c17e64653f67",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '127.0.0.1']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--bbdf7daf-1592-46ff-93ea-75c173ff64ff",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '127.0.0.1']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--62273504-f7e8-4e8c-b318-dec2b98b975d",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--7e5e6788-7cfb-4cc7-b30f-52f7f487b743",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--dfe0ec1c-f99a-4fbe-aed5-fb4d50a9bf51",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--19e7c54b-c323-400f-a04b-6fc1d54e7dcf",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--454f5d3e-e618-4325-828b-6694b7b3fef4",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--c1af59ea-269f-4e0d-ba3e-aa241b9c4af9",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--5cfbf417-f667-4ed2-aa80-e92d9b69aa78",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--88041d10-7082-4633-82de-3a0f8c254955",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '0.0.0.0']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--2655d901-6887-4965-bbc6-7fb8fc4cca54",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '127.0.0.1']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--e00a46cc-be9b-4380-b24e-3e8a8e650561",
+      "name": "Exposed Asset curezy.in",
+      "pattern": "[ipv4-addr:value = '127.0.0.1']",
+      "pattern_type": "stix",
+      "valid_from": "2026-11-05T09:26:49.119665+00:00"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0dc7008c-e5a6-477d-8f06-d7c1a068b502",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c48fbd4f-1d91-4020-af7e-0cb4d8dd6fea",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6169e025-d792-4c59-a19b-7dcfe8a484b2",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0a304ef0-01bb-474f-9e48-3a1637ca38af",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8cbbbfe6-9744-416f-864a-17c8dfdc9305",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ea6b1b30-2b65-4025-8a30-f51bc8b3cb2b",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--cf0afd0d-177e-4c6c-9a0f-f243d2948522",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7013a933-f483-472a-a807-45427bf717a2",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e74842db-7257-437d-a528-2515f3414104",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7aaef341-a463-40c8-bb85-5ecec0d7d465",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--95136b45-f501-4037-bc8d-a758f4d10794",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--40e0f374-439f-4a0d-9dcf-bbaf7cdd5f51",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--5c80b363-7976-423a-a540-a2e9a6fde868",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--838aa1fd-dedf-470f-85a7-af871f8c69e5",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a92ef702-88b1-4166-822a-e5a12624d06f",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6bed1517-b1f9-4d99-8390-60582ad65bd1",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a1dac31e-2be8-4958-af61-8eb3c71dad69",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--2da4fe6f-aa82-4d69-85eb-93629ae22097",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--bfc9d1df-5e75-4c5b-9afe-bc9015689c52",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b3f95352-004f-4b11-8850-4751996c58f6",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--2c433cb3-14da-411f-97ea-ca6a8759d75e",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c9fe8ac3-eb65-45c8-b509-dac4ff45aa2e",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e43e9598-1c54-4dbd-b1e6-71c78ba16850",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a7c958fc-f473-4d39-b232-c8bc5e857a8e",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3a0de331-0628-4b9c-b86f-9cd806d77dc9",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--df698235-7641-4da7-825e-28afb8f2da36",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--38e644d2-41b3-4cb7-b3f4-6ea520af3a59",
+      "name": "CVE-2020-7224",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-7224)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--82c1b3ee-ac81-42f8-baea-44058cbb1f70",
+      "name": "CVE-2023-32002",
+      "description": "node.js 18. Vulnerability (CVE-2023-32002)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--976ecfcc-562c-4929-8dca-512ad7135e19",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--42eff36c-2b15-4ccf-ad1f-aec129e5d9d2",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e4502d09-d5ea-4344-b231-4c5ce19d0a41",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--eb56e506-fc4d-44fc-b38b-16448bf9b5d3",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--cf45bd7b-a43c-4bf2-b406-8dfe6c7804e3",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b8d51b87-7d20-468e-8045-d5838d1a6b48",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--dcbefdfe-c03e-4e05-b41b-a57c7feff248",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7f37a6e8-a34f-4133-abca-1c3accb08a9a",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ed82aff6-6fec-45cd-a84a-e1cbc6f31036",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3774bfc2-1a7d-4943-8604-4b378fcddbc2",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4151491c-1745-4322-8cb9-ed2409ba0ad3",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0b355d50-4530-49ff-a4d2-5fd289015b33",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c1e514fd-7623-4936-92ec-2ae7b0be1039",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ffa10cf0-5ed9-4ac4-b323-a9a5598c1693",
+      "name": "CVE-2023-32006",
+      "description": "node.js 18. Vulnerability (CVE-2023-32006)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3a9cc603-5886-439d-af4d-7992c60c34c6",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--aa76d241-7d5f-4d5c-b020-cf057f6d9f01",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--86af1c5c-8425-454f-b588-bbb4e2269862",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--51e37b03-0dc4-4158-b925-b1a08f8b213c",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a40bd222-2735-43fc-b5f6-34068f1598e4",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--93b1579c-0ec6-4f7c-ae4d-f0d3b99af170",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1955346e-d239-48d9-ad25-643b8dea0461",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b52e7f29-3d2e-42f5-8617-1f11c4c63049",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4dd80c99-0969-42d5-ab56-1028db964842",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1a047e53-00ed-4cc5-bc7f-ca887cd762a7",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3c9c466c-6647-493f-8b81-c6a56df5fdbc",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--750b58d3-84b6-4551-bde1-be4f2331e0b8",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fb9b2770-0dd2-49ec-91fe-212fa5ccf993",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--814660f2-d4ad-4934-aaa0-09e03621716f",
+      "name": "CVE-2021-3606",
+      "description": "openvpn 2.5 Vulnerability (CVE-2021-3606)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fbbf0675-a588-4fa8-8e51-1439544853fc",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e6e04ffc-1ef9-4578-9c17-4291fc51d98a",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0efdc2bc-8bc9-4511-b9bd-2c97843612ff",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0f8d4079-783d-4899-bd50-b3a77517541f",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a9f5fa1f-d879-4199-95b8-34daf352e227",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--45139b37-0756-435a-8a73-475ad16ba56e",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--74191987-5410-425a-955b-6d4fa72e36e3",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1130cd0d-cce2-4652-9c71-3cfc327dfa8c",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--dfa1140e-60a6-4231-8bfe-12b182e2a598",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7828fae4-d974-40e4-a2f1-f2db78dc8d2a",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1bf8e4c6-9fd3-4d65-87e8-f58006574b01",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f0bf8ee4-258d-4799-be15-0ee7f2c16f9f",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--088f6233-fa8d-4e0c-b6ad-782c7990a72d",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--12822efc-ab56-4c2d-8a61-7e121cf8b733",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3cff55ac-5684-4328-857d-63a9e02cd0f7",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fe8ced9c-2240-4ec1-86c7-6d0991ea6482",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c8bbe44c-ad1a-417c-8c22-c63cca2d315a",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--69533a11-ae80-45ba-adf5-2f97d53d7566",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--19577175-98c2-496b-ae71-5f91947a8278",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--988de9fa-6d57-414f-8381-eefbf30521c8",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c667dc08-b202-4ca0-9c06-dc7fb5c75866",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f901b4b9-cc53-4c94-81ac-486602d5895b",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6fbf54c4-f3c9-413c-9709-fa31acbeb4bb",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4aa28ea5-a20e-4190-b2e6-e9aa9b92c70e",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--9c445d5c-33bd-4b8b-aa87-c66cf5ccf6bb",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f252b41f-c097-4c8d-9e83-a0c1aac7ef17",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ea6e5638-455c-41bf-8f30-00ea34ee2b65",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e28505dc-cd61-42c6-a697-bbcf4c44db0d",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--48d1c233-6a5e-490d-a103-ba5b2b913c44",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--548e949a-6f3d-41ea-a5dd-740e014b771d",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c39cd347-3efd-4bb6-a450-55e9a73fefbf",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c7ced99d-a94e-4bb3-aecd-68fc3b4e184a",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f2d6a639-aabb-4f4e-9f8c-8f0834395650",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--619330c2-7951-4f8a-8aef-d90fe8560c63",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--44adf961-7fcb-4255-85a9-8179427c2232",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--016ad044-946a-4f68-b2bd-c37a55e59984",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ad4034da-9c7a-4c16-bbfd-a3f4d10f916e",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--62ab7765-c04b-48c8-930e-a4fe14f2c0dc",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--dde1a0c5-b681-4845-a8b0-17b77f19af7c",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--37c3278a-b887-4b7b-b171-cd1c9acfbf20",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--0243b571-4751-4404-b8c7-345bcecf879b",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--2275aa68-de4d-42ac-bb34-312e47084b36",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a33d4e4c-05b1-48b5-a8c8-7e518840dbbd",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--41f00b0f-5785-4dcd-8531-7376c82f20a1",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--21002cfa-6b67-435b-8c7e-71b5ac88a978",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--aa19349b-c97b-4baa-8ea9-3fadce9cbeaa",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--aac14c11-401d-475e-85a0-067918ef0783",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ed0dbcd2-9dab-4301-9248-3ec15a5fc5b7",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--40239367-afeb-4ede-80eb-f26c88c0977d",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--422c7a57-48a3-4a20-b6fd-b3e2ee40e0c9",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8583613a-d57e-4799-a4c8-acd3b20609ef",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4ce400f2-7270-483b-9344-022b13203263",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--99a7a188-fdb4-47c5-ad91-e6a10d9be647",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8af46eca-e329-4a0c-a6c7-e55dc4fb8b39",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fd3bb9ac-8416-4cc2-bbe6-2700f81485a0",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--5ff49714-cb50-4e4f-b33f-5213ab4e4dea",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4b2d94ae-ff89-412d-a3e9-b0e6720d4ca7",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8aec0ec0-5209-4e10-86d6-edf6ea59a618",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--94ceeba3-c7af-4296-ae85-6405d58c5409",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--92a6a60c-673d-459c-b8d3-5d876caaab84",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--060babee-adc2-45c5-b0d7-f3154f084ee1",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c90c2347-35ad-45c2-99d7-ad4ef70f2805",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b931b5ef-03e7-45ab-b141-7673f095f22f",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ccdc1163-1375-47e2-b95f-f7febcf7a3d9",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--d42dc56e-e9e1-4c7d-82ef-9bfa760ae540",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c9204467-9cbf-4848-974c-80b3d6227c1d",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1bbf771d-71dc-4e5c-bbc2-3988dff376d4",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ca60ee87-5da9-4fe1-878a-cdf08937b494",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--18a962e2-0475-4e21-954a-0f7746f53f94",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--90f56669-1c61-4017-9a44-0c396dcc40a2",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ee1fd9f1-487a-49a9-9a30-70e32d4c4ffa",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6d3ba6ca-9538-403d-bd47-59cde95d809b",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--86fed56f-1273-4a5a-ba3d-f5d8e0a3d32d",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6d99d2c7-8ee1-4933-94a7-0afe26d6aa90",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--960db800-b254-4f36-af61-9921b2f7acbb",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--80f7457d-ba46-4ec3-9186-5ccfab560486",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f6373c1a-e302-4778-b45c-a6d4664ecf11",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1a76f154-60a6-4444-a473-35eac78facad",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ab3506ea-305f-4237-8ee2-4af05593fd53",
+      "name": "CVE-2006-1959",
+      "description": "php 8.2 Vulnerability (CVE-2006-1959)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--bc19e193-9e5d-4187-b553-57c93d32a044",
+      "name": "CVE-2009-3055",
+      "description": "php 8.2 Vulnerability (CVE-2009-3055)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--12a63d0c-4d4b-4fcb-9da3-82f6df897544",
+      "name": "CVE-2013-0135",
+      "description": "php 8.2 Vulnerability (CVE-2013-0135)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--d8347eeb-5737-4661-8531-c1efd418035b",
+      "name": "CVE-2013-2778",
+      "description": "php 8.2 Vulnerability (CVE-2013-2778)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--caf45a43-7677-433f-b826-ca1598dbb728",
+      "name": "CVE-2020-15078",
+      "description": "openvpn 2.5 Vulnerability (CVE-2020-15078)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--6c6651c9-04f3-418d-93da-b8fcd3723f9d",
+      "name": "CVE-2023-32559",
+      "description": "node.js 18. Vulnerability (CVE-2023-32559)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--18c6ccd5-2497-4d8d-8c2f-e2d465e248df",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--33757fe1-918e-442c-9a5b-45eb83dbdcf1",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--06ba6888-d249-4344-b0e8-579050911658",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7f8920ff-b9c4-4375-a194-5509d12b3050",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f30af6f6-9f85-4ddf-bfab-5782e77de39f",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--563b81af-d101-4469-8be2-eb388ac6a897",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f9782c74-73a6-43b5-a65d-31ae427050d3",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1dc18d9e-78f1-4263-84aa-0adb2118979d",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--50db30a6-acfb-4df9-a4c9-0fbdcb161d87",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--014d7bad-a899-4579-a2a3-ab06a9ee4a90",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--18d2e123-ee29-4820-b0ff-e325c48475a8",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--5e2714f2-b54c-4aeb-8dec-f51bbb435a31",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--34779ad9-3a10-49d6-a2e8-1e6b18baeacd",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c58f4e53-23de-42c8-8c4a-508d1c9911e1",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e9885723-0e5f-41a9-8b3e-7882a2f32f8e",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8ea9e6aa-24ed-405b-ae6f-b06ed2dc867f",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--af267e43-21ff-46da-be76-75a8e2b4b998",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f037a902-d885-44ce-9efc-671024137b25",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b9ccfb61-b6d2-48b5-86af-90d46579acef",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4f73121c-d23a-466b-8312-be6b6531de6c",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7c5ea73c-65a3-4447-ae65-41a67886b611",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--d6d28f65-e723-451c-b38b-e01039681181",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--66f9ef86-0c22-4352-b6c2-957c122f8294",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--bc6355a5-d9c7-4bd9-9291-a04e86ff7147",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4887747e-f63f-4aa9-a21c-81d9e288b29f",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--4be97cc7-0c9d-418d-89a6-5c3c15ef951d",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--707f9e52-7eff-455e-ab3b-ca176b3c0e09",
+      "name": "CVE-2025-13751",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-13751)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e08e103b-6238-489d-a31a-cb8772560692",
+      "name": "CVE-2025-50054",
+      "description": "openvpn 2.5 Vulnerability (CVE-2025-50054)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ca44f4d9-8e2e-4e4c-95f3-5e56037b949b",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f8022b9e-498c-411b-8f87-79f725248fc5",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--eecec3eb-919f-488c-8104-905e06324d9e",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--ba28574e-553f-43dc-b32f-7e5cf5d4db4d",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e18bac4a-36e7-46ab-a108-63f1dcceaf67",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e08a4456-4d69-4d7f-860d-4cfd04becc9e",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f19e4726-6cd1-4aeb-9d0f-e54e5e5e2c2c",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--1b353c22-4969-4f71-8c46-2465e5cf321e",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c3db89d2-85a5-4f51-ac88-996256ef239a",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--aad85d4f-5430-46b0-bb9e-fdd725ee02cd",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--485384e2-2275-4e35-845b-eb4e2ec7bfd8",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--5a65ca8d-9dae-4dee-8ed1-c87a25c94672",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--e96ff927-bf39-48e1-8530-a093700a42c8",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a94d5d9a-223a-4065-a962-841a4f5f73f2",
+      "name": "CVE-2022-32222",
+      "description": "node.js 18. Vulnerability (CVE-2022-32222)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--61686a7a-151e-4b3b-99d0-5ce35448f9fc",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c7e119be-3129-480c-b09e-04584fd6dd77",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f47ba36a-8ba9-4466-9535-30c670efe546",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7f88a6c6-c6c7-4e78-bd49-6de3bef29cc5",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7b510e1b-beb4-4daf-bb72-4fca021c11ed",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--53ffe361-ff37-4e16-807f-8c0dfd9a547e",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--120d26e9-fcd4-440f-ad89-f0fb5281393c",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f47b4889-ddf5-4483-ba8a-37624d234f0d",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--87dca027-035f-4e04-8ac3-8bc6a6102148",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3f075b93-ea48-4fca-9d20-779adb96622f",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fe717998-2a06-4cb4-a070-e531be81ee55",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b900cd3a-0075-4da0-99b2-b566f75d8de4",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--c013b938-e49b-4081-a9df-bc07167223c8",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--7c5b1fe7-9da9-4f03-8cc6-b897cdb95b29",
+      "name": "CVE-2005-3133",
+      "description": "php 8.2 Vulnerability (CVE-2005-3133)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--fe4644e3-29c9-46a5-b956-771a62f4cf73",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--80f772cf-a0c4-4cc9-b430-a1566c42e873",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--8a5ab713-319d-46fa-9fc5-6de5cc0f9ca7",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--2ce5e248-9ad6-4d65-9d67-642e0943acc0",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--774144b0-9c9d-4b63-86d1-2d049719670d",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b5b8d917-f8fb-49b4-bcd1-3319b275d08e",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--85139f72-c766-47cd-b3ca-607ba1fdb993",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--b98eeb5b-a9fb-4b9d-a3ed-0d6aa9173aca",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f6700a32-1460-4b53-8687-11626afee7f4",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--a83eee2a-8ff7-4bd1-8959-b8719c8320ae",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--f891013c-5456-4b47-b4ee-525ff62ab51c",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--060daa3e-3b93-478a-8c29-c97622c69343",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--99f1f9bd-cf3f-4f43-b27a-75b625a7e6ff",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    },
+    {
+      "type": "vulnerability",
+      "id": "vulnerability--3f90fd04-a831-4aef-9699-f8530ac9d6a2",
+      "name": "CVE-2022-29247",
+      "description": "node.js 18. Vulnerability (CVE-2022-29247)"
+    }
+  ]
+}
