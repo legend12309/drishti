@@ -116,15 +116,17 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       }
 
       const [graphRes, pathsRes] = await Promise.all([
-        fetch(`/api/graph/${targetScan}`),
-        fetch(`/api/graph/${targetScan}/paths`),
+        fetch(savedTarget ? `/api/graph/${targetScan}?target=${encodeURIComponent(savedTarget)}` : `/api/graph/${targetScan}`),
+        fetch(savedTarget ? `/api/graph/${targetScan}/paths?target_domain=${encodeURIComponent(savedTarget)}` : `/api/graph/${targetScan}/paths`),
       ]);
 
       if (graphRes.ok) {
         const graphData = await graphRes.json();
-        if (graphData.graph && graphData.graph.nodes) {
-          setGraphNodes(graphData.graph.nodes);
-          setGraphEdges(graphData.graph.edges || []);
+        const nodes = graphData.nodes || graphData.graph?.nodes || [];
+        const edges = graphData.edges || graphData.graph?.edges || [];
+        if (nodes && nodes.length > 0) {
+          setGraphNodes(nodes);
+          setGraphEdges(edges);
         }
       }
 

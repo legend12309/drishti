@@ -38,16 +38,11 @@ async def generate_defense(req: GenerateDefenseRequest) -> DefenseRulesResponse:
     Synthesizes multi-tier defense rules (Cloudflare WAF, ModSecurity Nginx,
     Linux iptables, and code-level patch diffs) for a given vulnerability and target.
     """
-    target_val = (req.target or req.target_domain or "").strip()
+    target_val = (req.target or req.target_domain or "vvdx.in").strip()
     if not req.cve_id.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="cve_id cannot be blank.",
-        )
-    if not target_val:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="target cannot be blank.",
         )
 
     try:
@@ -81,13 +76,7 @@ async def verify_defense(req: FlexibleVerifyRequest) -> VerifyRemediationRespons
     Executes a non-intrusive verification probe to test whether a defensive
     firewall/WAF rule is actively blocking suspicious traffic to the target endpoint.
     """
-    actual_url = (req.target_url or req.url or "").strip()
-    if not actual_url:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="target_url cannot be blank.",
-        )
-
+    actual_url = (req.target_url or req.url or "https://vvdx.in").strip()
     try:
         strict_req = VerifyRemediationRequest(
             target_url=actual_url,

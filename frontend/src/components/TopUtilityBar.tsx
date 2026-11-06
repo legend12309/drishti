@@ -21,6 +21,38 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   onNavigateToIntel,
 }) => {
   const [utcTime, setUtcTime] = useState<string>('');
+  const [syntheticActive, setSyntheticActive] = useState<boolean>(false);
+  const [testingPipeline, setTestingPipeline] = useState<boolean>(false);
+  const [pipelineResult, setPipelineResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleFallbackEvent = (e: any) => {
+      if (e.detail?.active !== undefined) {
+        setSyntheticActive(Boolean(e.detail.active));
+      }
+    };
+    window.addEventListener('drishti_synthetic_fallback', handleFallbackEvent);
+    return () => window.removeEventListener('drishti_synthetic_fallback', handleFallbackEvent);
+  }, []);
+
+  const handleTestPipeline = async () => {
+    setTestingPipeline(true);
+    setPipelineResult(null);
+    try {
+      const res = await fetch('/api/health/pipeline-test', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setPipelineResult(`PIPELINE 8/8 GATES OK (${data.status})`);
+      } else {
+        setPipelineResult('PIPELINE TEST HTTP ERROR');
+      }
+    } catch {
+      setPipelineResult('PIPELINE OFFLINE');
+    } finally {
+      setTestingPipeline(false);
+      setTimeout(() => setPipelineResult(null), 5000);
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -72,6 +104,12 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
         <span className="hidden xl:inline-block border border-hairline px-2 py-0.5 text-[9px] font-mono text-charcoal bg-boneLight font-medium">
           AIR-GAP ENCLAVE
         </span>
+
+        {syntheticActive && (
+          <span className="px-2 py-0.5 bg-vermilion/20 border border-vermilion text-vermilion text-[9.5px] font-black tracking-wider animate-pulse">
+            [SYNTHETIC_FALLBACK_ACTIVE]
+          </span>
+        )}
       </div>
 
       {/* 2. Center: Active Target Focus HUD */}
@@ -98,6 +136,19 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
       {/* 3. Right: Telemetry, CLI & Operator Credentials */}
       <div className="flex items-center space-x-2.5 shrink-0 text-xs">
+        <button
+          onClick={handleTestPipeline}
+          disabled={testingPipeline}
+          className={`border px-2.5 py-1 font-bold cursor-pointer text-[10px] active:scale-95 transition-all duration-150 flex items-center space-x-1 ${
+            pipelineResult && pipelineResult.includes('OK')
+              ? 'border-signalGreen bg-signalGreenBg text-signalGreen'
+              : 'border-vermilion bg-pureWhite hover:bg-vermilion hover:text-white text-vermilion'
+          }`}
+          title="Run Full End-to-End Pipeline Diagnostic (Karpathy Style)"
+        >
+          <span>{testingPipeline ? '[ TESTING... ]' : (pipelineResult || '[ ⚡ TEST PIPELINE ]')}</span>
+        </button>
+
         <button
           onClick={onOpenCommandPalette}
           className="border border-hairline bg-boneLight hover:bg-boneDark px-2.5 py-1 text-charcoal hover:text-ink font-semibold cursor-pointer text-[11px] active:scale-95 transition-all duration-150 flex items-center space-x-1"

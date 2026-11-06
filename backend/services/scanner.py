@@ -810,13 +810,27 @@ async def cancel_scan(scan_id: str) -> bool:
 async def get_latest_scan_for_target(target: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Retrieves the most recent scan and its findings (for page refresh persistence)."""
     async with get_db() as db:
-        query = "SELECT * FROM scans"
-        params = ()
-        if target:
+        if target and target.strip():
             clean = target.strip().lower()
-            query += " WHERE target = ?"
-            params = (clean,)
-        query += " ORDER BY created_at DESC LIMIT 1"
+            clean_bare = clean.replace("www.", "")
+            query = """
+                SELECT * FROM scans 
+                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ?)
+                ORDER BY CASE WHEN status IN ('completed', 'partially_completed') THEN 0 ELSE 1 END,
+                         (SELECT COUNT(*) FROM scan_findings WHERE scan_id = scans.id) DESC,
+                         created_at DESC 
+                LIMIT 1
+            """
+            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%")
+        else:
+            query = """
+                SELECT * FROM scans 
+                ORDER BY CASE WHEN status IN ('completed', 'partially_completed') THEN 0 ELSE 1 END,
+                         (SELECT COUNT(*) FROM scan_findings WHERE scan_id = scans.id) DESC,
+                         created_at DESC 
+                LIMIT 1
+            """
+            params = ()
 
         async with db.execute(query, params) as cursor:
             row = await cursor.fetchone()

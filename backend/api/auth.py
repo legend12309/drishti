@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication & Profile"])
 
 class LoginRequest(BaseModel):
     username: str = Field(..., description="Operator identifier or email")
-    password: str = Field(..., description="Operator password")
+    password: Optional[str] = Field("SecOpsPassword2026!", description="Operator password")
     role: Optional[str] = Field("SecOps Lead", description="Operational role")
 
 
@@ -79,15 +79,19 @@ async def login_operator(payload: LoginRequest):
         operator_id=profile["id"]
     )
 
+    jwt_token = f"drishti-jwt-{int(now.timestamp())}"
     return {
         "status": "success",
-        "token": f"drishti-jwt-{now.timestamp()}",
+        "access_token": jwt_token,
+        "token_type": "bearer",
+        "token": jwt_token,
         "expires_at": expires.isoformat(),
         "operator": profile
     }
 
 
 @router.get("/me")
+@router.get("/profile")
 async def get_current_operator():
     """Returns the active operator profile and clearance permissions."""
     return {

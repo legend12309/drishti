@@ -67,8 +67,8 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   // Results State
   const [subdomains, setSubdomains] = useState<SubdomainRecord[]>([]);
 
-  // Recon Mode State (Active vs Passive OSINT)
-  const [reconMode, setReconMode] = useState<'ACTIVE' | 'PASSIVE'>('PASSIVE');
+  // Recon Mode State: 'ACTIVE' = Unified 2-Stage Pipeline (Passive OSINT -> Active Infiltration -> Downstream Engines)
+  const [reconMode, setReconMode] = useState<'ACTIVE' | 'PASSIVE'>('ACTIVE');
   const [observations, setObservations] = useState<any[]>([]);
 
   // Authorization & Letter of Authorization (LOA) State
@@ -683,6 +683,18 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
     }
   };
 
+  // Auto-start scan if initiated from Cockpit
+  useEffect(() => {
+    const autoStart = localStorage.getItem('drishti_auto_start_recon');
+    if (autoStart === 'true') {
+      localStorage.removeItem('drishti_auto_start_recon');
+      const timer = setTimeout(() => {
+        startAutoRecon();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [target]);
+
   const cancelWorkflow = async () => {
     if (!currentScanId) return;
     try {
@@ -751,10 +763,10 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                 {scanning
                   ? reconMode === 'PASSIVE'
                     ? '[ HARVESTING PASSIVE OSINT... ]'
-                    : '[ RUNNING PIPELINE... ]'
+                    : '[ EXECUTING 2-STAGE RECON PIPELINE... ]'
                   : reconMode === 'PASSIVE'
                   ? '[ START PASSIVE OSINT RECON ➔ ]'
-                  : '[ START FULL SECURITY AUDIT ➔ ]'}
+                  : '[ ⚡ RUN UNIFIED 2-STAGE RECON (PASSIVE ➔ ACTIVE) ➔ ]'}
               </span>
             </button>
           </div>
@@ -766,24 +778,8 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
           {/* Active Recon Scope & Mode Selector */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-hairlineLight">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">[ RECON DISCOVERY MODE ]:</span>
+              <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider font-mono">[ RECON STRATEGY ]:</span>
               <div className="flex items-center space-x-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setReconMode('PASSIVE');
-                    setAuthStatus(null);
-                    checkAuthorization(target, 'PASSIVE_OSINT');
-                  }}
-                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors flex items-center gap-1.5 ${
-                    reconMode === 'PASSIVE'
-                      ? 'border-signalGreen bg-signalGreenBg text-signalGreen font-bold shadow-xs'
-                      : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
-                  }`}
-                >
-                  <DoodleIcon name="globe" className="w-3.5 h-3.5" />
-                  <span>[ PASSIVE OSINT ONLY (FRICTIONLESS) ]</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -796,19 +792,37 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                       ? 'border-vermilion bg-red-50 text-vermilion font-bold shadow-xs'
                       : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
                   }`}
+                  title="Executes Stage 1: Passive OSINT (DNS/CT/RDAP) followed by Stage 2: Active Precision Probing (Nmap/HTTPX/ZAP/Nuclei), synthesizing all assets into the Attack Graph."
                 >
                   <DoodleIcon name="spark" className="w-3.5 h-3.5" />
-                  <span>[ ACTIVE RECON (FULL PIPELINE) ]</span>
+                  <span>[ ⚡ 2-STAGE: PASSIVE OSINT ➔ ACTIVE INTRUSION (RECOMMENDED) ]</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReconMode('PASSIVE');
+                    setAuthStatus(null);
+                    checkAuthorization(target, 'PASSIVE_OSINT');
+                  }}
+                  className={`px-2.5 py-1 text-[10px] font-mono border cursor-pointer transition-colors flex items-center gap-1.5 ${
+                    reconMode === 'PASSIVE'
+                      ? 'border-signalGreen bg-signalGreenBg text-signalGreen font-bold shadow-xs'
+                      : 'border-hairline text-charcoal hover:text-ink bg-boneLight'
+                  }`}
+                  title="Executes non-intrusive passive OSINT only. Zero packets are sent to target ports."
+                >
+                  <DoodleIcon name="globe" className="w-3.5 h-3.5" />
+                  <span>[ PASSIVE OSINT ONLY (ZERO PACKETS) ]</span>
                 </button>
               </div>
             </div>
 
             <div className="flex items-center space-x-2 text-[10px] font-mono text-charcoal">
               <span>ACTIVE ENGINES:</span>
-              <span className={reconMode === 'PASSIVE' ? 'text-signalGreen font-bold' : 'text-signalGreen font-bold'}>
+              <span className="text-signalGreen font-bold">
                 {reconMode === 'PASSIVE'
                   ? '[ PASSIVE OSINT: CT LOGS + DNS + RDAP ]'
-                  : '[ 5/5 SCANNERS LOADED ]'}
+                  : '[ STAGE 1: OSINT ➔ STAGE 2: ACTIVE (5 SCANNERS) ➔ ATTACK GRAPH ]'}
               </span>
             </div>
           </div>

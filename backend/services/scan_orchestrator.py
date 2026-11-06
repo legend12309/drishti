@@ -325,6 +325,50 @@ class UnifiedScanOrchestrator:
                     "resolved_ips": resolved_ips
                 })
 
+                # =========================================================================
+                # STAGE 1: PASSIVE OSINT RECONNAISSANCE (DNS, CT Logs, RDAP Metadata)
+                # =========================================================================
+                await db_queue.execute_write(
+                    "UPDATE scans SET progress = 12, current_step = 'Stage 1/2: Executing Passive OSINT (DNS, CT logs, RDAP)', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (workflow_id,)
+                )
+                await broadcast_workflow_event(workflow_id, "stage_started", {
+                    "scanner": "passive_recon",
+                    "step": "Stage 1: Harvesting subdomains, DNS records, and certificate transparency logs"
+                })
+
+                try:
+                    from backend.services.passive import execute_passive_reconnaissance
+                    passive_res = await execute_passive_reconnaissance(
+                        scan_id=workflow_id,
+                        target=target,
+                        authorization_id=auth.get("id") if auth else None
+                    )
+                    discovered_subs = passive_res.get("discovered_hosts", [])
+                    primary_ip = resolved_ips[0] if resolved_ips else "127.0.0.1"
+
+                    for sub in discovered_subs:
+                        if sub != target:
+                            await db_queue.execute_write(
+                                """
+                                INSERT OR IGNORE INTO scan_findings (
+                                    scan_id, host, ip, tech, status, risk, score, ports, created_at
+                                ) VALUES (?, ?, ?, ?, 'Discovered (Passive CT/DNS)', 'INFORMATIONAL', '1.0', '[]', CURRENT_TIMESTAMP)
+                                """,
+                                (workflow_id, sub, primary_ip, "Passive OSINT Asset")
+                            )
+
+                    await broadcast_workflow_event(workflow_id, "stage_completed", {
+                        "scanner": "passive_recon",
+                        "step": f"Stage 1 Complete: {len(discovered_subs)} subdomains & {passive_res.get('total_observations', 0)} DNS observations harvested",
+                        "discovered_hosts": discovered_subs
+                    })
+                except Exception as p_err:
+                    logger.warning(f"Passive reconnaissance phase warning: {p_err}")
+
+                # =========================================================================
+                # STAGE 2: ACTIVE INTRUSION & PORT RECONNAISSANCE (Nmap -> HTTPX -> ZAP -> Nuclei)
+                # =========================================================================
                 # Strict Sequential Pipeline: Nmap -> HTTPX -> ZAP -> Nuclei -> SQL -> Trivy
                 # Each stage runs only after the previous reaches a terminal state
                 # HTTPX must run before ZAP and Nuclei (dependency declared in registry)

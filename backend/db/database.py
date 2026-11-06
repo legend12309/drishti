@@ -49,6 +49,8 @@ _postgres_active: Optional[bool] = None
 def is_postgres_enabled() -> bool:
     """Returns True if a PostgreSQL / Supabase connection URL is configured and active."""
     global _postgres_active
+    if os.getenv("FORCE_LOCAL_MODE", "").lower() in ("true", "1", "yes"):
+        return False
     if _postgres_active is False:
         return False
     return bool(DATABASE_URL and (

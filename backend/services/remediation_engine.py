@@ -28,8 +28,11 @@ class DefenseRulesResponse(BaseModel):
     summary: str
     cloudflare_waf: Dict[str, Any]
     modsecurity_nginx: Dict[str, Any]
+    nginx_modsec: Optional[Dict[str, Any]] = None
     iptables_firewall: Dict[str, Any]
+    iptables_rule: Optional[Dict[str, Any]] = None
     patch_diff: Dict[str, Any]
+    code_patch_diff: Optional[Dict[str, Any]] = None
     verification_probe: Dict[str, Any]
     provider_used: str
     is_weaponized: bool = False
@@ -48,6 +51,14 @@ class VerifyRemediationRequest(BaseModel):
 class VerifyRemediationResponse(BaseModel):
     verified: bool
     status_code: Optional[int] = None
+    target_url: Optional[str] = None
+    probe_duration_ms: Optional[float] = None
+    latency_ms: Optional[float] = None
+    response_body_snippet: Optional[str] = None
+    headers_received: Optional[Dict[str, str]] = None
+    error: Optional[str] = None
+    verdict: Optional[str] = None
+    details: Optional[str] = None
     verdict: str
     details: str
     latency_ms: float = 0.0
@@ -176,6 +187,93 @@ DETERMINISTIC_RULES: Dict[str, Dict[str, Any]] = {
         "probe": {
             "path": "/ssh-check",
             "method": "HEAD",
+            "expected_status": 403,
+        },
+    },
+    "CWE-538": {
+        "summary": "Git Repository Metadata (.git) Public Disclosure Mitigation",
+        "cloudflare": {
+            "expression": 'http.request.uri.path contains "/.git"',
+            "action": "block",
+            "description": "Block all access to hidden Git repository metadata (.git/config, .git/HEAD)",
+        },
+        "modsecurity": {
+            "rule_id": 200054,
+            "directive": (
+                'SecRule REQUEST_URI "@rx \\.git(?:/|$)" '
+                '"id:200054,phase:1,deny,status:403,log,msg:\'DRISHTI Defense: Git Metadata Exposure Blocked\'"'
+            ),
+            "location_snippet": (
+                "location ~ /\\.git {\n"
+                "    deny all;\n"
+                "    return 404;\n"
+                "}"
+            ),
+        },
+        "iptables": {
+            "command": "sudo iptables -A INPUT -p tcp -m multiport --dports 80,443 -m string --string '.git' --algo bm -j DROP",
+            "rollback_command": "sudo iptables -D INPUT -p tcp -m multiport --dports 80,443 -m string --string '.git' --algo bm -j DROP",
+            "explanation": "Drops inbound HTTP/HTTPS packets requesting Git source tree metadata.",
+        },
+        "patch": {
+            "file_target": "nginx.conf",
+            "diff": (
+                "--- a/etc/nginx/nginx.conf\n"
+                "+++ b/etc/nginx/nginx.conf\n"
+                "@@ -40,3 +40,7 @@\n"
+                "+location ~ /\\.git {\n"
+                "+    deny all;\n"
+                "+    return 404;\n"
+                "+}\n"
+            ),
+            "instructions": "Deny all web requests matching `/.git` in Nginx/Apache root configuration.",
+        },
+        "probe": {
+            "path": "/.git/config",
+            "method": "GET",
+            "expected_status": 403,
+        },
+    },
+    "CWE-306": {
+        "summary": "Exposed Administrative Portal (wp-login.php / admin) Access Restriction",
+        "cloudflare": {
+            "expression": 'http.request.uri.path contains "wp-login.php" or http.request.uri.path contains "/wp-admin"',
+            "action": "challenge",
+            "description": "Enforces Managed Challenge on exposed administrative login surfaces",
+        },
+        "modsecurity": {
+            "rule_id": 200055,
+            "directive": (
+                'SecRule REQUEST_URI "@rx wp-login\\.php" '
+                '"id:200055,phase:1,deny,status:403,log,msg:\'DRISHTI Defense: Unauthorized Admin Access Blocked\'"'
+            ),
+            "location_snippet": (
+                "location = /wp-login.php {\n"
+                "    allow 10.0.0.0/8;\n"
+                "    deny all;\n"
+                "}"
+            ),
+        },
+        "iptables": {
+            "command": "sudo iptables -A INPUT -p tcp --dport 443 -m limit --limit 10/minute --limit-burst 20 -j ACCEPT",
+            "rollback_command": "sudo iptables -D INPUT -p tcp --dport 443 -m limit --limit 10/minute --limit-burst 20 -j ACCEPT",
+            "explanation": "Rate limits login attempts to prevent brute-force authentication attacks.",
+        },
+        "patch": {
+            "file_target": "nginx.conf",
+            "diff": (
+                "--- a/etc/nginx/nginx.conf\n"
+                "+++ b/etc/nginx/nginx.conf\n"
+                "@@ -50,3 +50,5 @@\n"
+                "+location = /wp-login.php {\n"
+                "+    allow 127.0.0.1; deny all;\n"
+                "+}\n"
+            ),
+            "instructions": "Restrict wp-login.php to authorized VPN subnet or internal IP addresses.",
+        },
+        "probe": {
+            "path": "/wp-login.php",
+            "method": "GET",
             "expected_status": 403,
         },
     },
@@ -323,8 +421,11 @@ async def generate_defense_rules(
         summary=rules["summary"],
         cloudflare_waf=rules["cloudflare"],
         modsecurity_nginx=rules["modsecurity"],
+        nginx_modsec=rules["modsecurity"],
         iptables_firewall=rules["iptables"],
+        iptables_rule=rules["iptables"],
         patch_diff=rules["patch"],
+        code_patch_diff=rules["patch"],
         verification_probe=rules["probe"],
         provider_used=provider_used,
         is_weaponized=is_weaponized,
