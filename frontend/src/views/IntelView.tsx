@@ -107,7 +107,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
 
   // Metasploit Arsenal Interactive Controls State
   const [msfTargetHost, setMsfTargetHost] = useState<string>(
-    () => localStorage.getItem('drishti_target') || localStorage.getItem('drishti_target_domain') || 'www.iiit-bh.ac.in'
+    () => localStorage.getItem('drishti_target_domain') || localStorage.getItem('drishti_target') || 'target.local'
   );
   const [msfTargetPort, setMsfTargetPort] = useState<number>(443);
   const [msfLhost, setMsfLhost] = useState<string>('127.0.0.1');
@@ -263,7 +263,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
           setMsfTargetUri(defaultMod.target_uri || '/');
 
           // Auto-compile .rc script on launch so terminal is immediately populated
-          const host = localStorage.getItem('drishti_target') || localStorage.getItem('drishti_target_domain') || 'www.iiit-bh.ac.in';
+          const host = localStorage.getItem('drishti_target_domain') || localStorage.getItem('drishti_target') || 'target.local';
           fetch('/api/metasploit/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -323,7 +323,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
     }
 
     // Auto-generate script on selection
-    const host = msfTargetHost || targetScanInfo?.target || 'www.iiit-bh.ac.in';
+    const host = msfTargetHost || localStorage.getItem('drishti_target_domain') || targetScanInfo?.target || 'target.local';
     const port = Number(mod.default_port) || 80;
     fetch('/api/metasploit/generate', {
       method: 'POST',
@@ -672,7 +672,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
       }
 
       const activeScan = scanList.find((s) => s.id === targetScanId) || (scanList.length > 0 ? scanList[0] : null);
-      setTargetScanInfo(activeScan || { id: 'wf-seed-iiit-bh-ac-in', target: savedTarget || 'iiit-bh.ac.in', status: 'completed', created_at: new Date().toISOString() });
+      setTargetScanInfo(activeScan || { id: 'wf-dynamic-scope', target: savedTarget || 'target.local', status: 'completed', created_at: new Date().toISOString() });
 
       if (intelMode === 'TARGET_ALONE') {
         // Fetch findings and vulnerabilities for the target
@@ -704,7 +704,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               fix: sv.remediation_notes || 'Apply vendor security patch.',
               vector: sv.cvss_vector || 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
               description: sv.description || 'Observed vulnerability matching software banner on scanned target.',
-              affectedAsset: sv.asset_id || (activeScan?.target ? `${activeScan.target}:${sv.port || 80}` : `${savedTarget || 'iiit-bh.ac.in'}:${sv.port || 80}`),
+              affectedAsset: sv.asset_id || (activeScan?.target ? `${activeScan.target}:${sv.port || 80}` : `${savedTarget || 'target.local'}:${sv.port || 80}`),
               confidence: sv.confidence_score,
               matchRationale: sv.match_rationale || 'Banner matching on exposed HTTP/SSH service.',
               references: sv.references || [],

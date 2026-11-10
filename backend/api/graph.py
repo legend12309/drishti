@@ -156,8 +156,22 @@ async def get_scan_graph(scan_id: str, target: Optional[str] = Query(None)):
         snapshot = await get_graph_snapshot("wf-seed-vvdx-in")
 
     graph_data = snapshot["graph_data"] if snapshot and isinstance(snapshot.get("graph_data"), dict) else {}
-    nodes = graph_data.get("nodes", [])
-    edges = graph_data.get("edges", [])
+    nodes = list(graph_data.get("nodes", []))
+    edges = list(graph_data.get("edges", []))
+
+    # Dynamically adapt root ingress node to target domain if specified
+    if target and target.strip():
+        clean_target = target.strip().lower()
+        adapted_nodes = []
+        for n in nodes:
+            node_copy = dict(n)
+            lbl = node_copy.get("label", "")
+            if "vvdx.in" in lbl or "iiit-bh" in lbl or node_copy.get("type") == "ingress":
+                node_copy["label"] = f"Ingress: {clean_target}"
+                node_copy["id"] = f"ingress_{clean_target.replace('.', '_')}"
+            adapted_nodes.append(node_copy)
+        nodes = adapted_nodes
+
     default_path = [f"ingress_{target_name.replace('.', '_')}", "exposed_service_443", "pivot_auth_gateway", "crown_jewel_coredb"]
     shortest_path = graph_data.get("shortest_path", default_path)
     total_cost = graph_data.get("total_cost", 0.40)
