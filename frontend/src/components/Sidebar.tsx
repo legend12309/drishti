@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabId } from '../types';
-import { DoodleIcon } from './DoodleIcon';
+import { DoodleIcon, DoodleName } from './DoodleIcon';
 
 interface SidebarProps {
   activeTab: TabId;
@@ -15,17 +15,18 @@ interface NavItem {
   id: TabId;
   index: string;
   label: string;
+  doodle: DoodleName;
 }
 
 // Canonical DRISHTI Operational Engines (Streamlined Core)
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', index: '01_', label: 'COCKPIT' },
-  { id: 'recon', index: '02_', label: 'RECON' },
-  { id: 'intel', index: '03_', label: 'INTEL' },
-  { id: 'graph', index: '04_', label: 'GRAPH' },
-  { id: 'guard', index: '05_', label: 'GUARD' },
-  { id: 'reports', index: '06_', label: 'REPORTS' },
-  { id: 'settings', index: '07_', label: 'CONFIG' },
+  { id: 'dashboard', index: '01_', label: 'COCKPIT', doodle: 'target' },
+  { id: 'recon', index: '02_', label: 'RECON', doodle: 'osint' },
+  { id: 'intel', index: '03_', label: 'INTEL', doodle: 'spark' },
+  { id: 'graph', index: '04_', label: 'GRAPH', doodle: 'pivot' },
+  { id: 'guard', index: '05_', label: 'GUARD', doodle: 'shield' },
+  { id: 'reports', index: '06_', label: 'REPORTS', doodle: 'crown' },
+  { id: 'settings', index: '07_', label: 'CONFIG', doodle: 'gear' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -46,22 +47,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.index}
               onClick={() => onSelectTab(item.id)}
-              className={`w-full py-2 px-1 flex flex-col items-center justify-center active:scale-95 transition-all duration-150 text-center cursor-pointer ${
+              className={`w-full py-2 px-1 flex flex-col items-center justify-center active:scale-95 transition-all duration-150 text-center cursor-pointer group ${
                 isActive
                   ? 'text-signalGreen bg-pureWhite border-l-[3px] border-signalGreen shadow-xs'
                   : 'text-charcoal hover:text-ink hover:bg-boneDark border-l-2 border-transparent'
               }`}
               title={`${item.index} ${item.label}`}
             >
+              <DoodleIcon
+                name={item.doodle}
+                size={15}
+                className={`mb-1 transition-transform group-hover:scale-110 ${
+                  isActive ? 'text-signalGreen' : 'text-charcoal'
+                }`}
+              />
               <span
-                className={`text-[10.5px] font-mono leading-none ${
+                className={`text-[10px] font-mono leading-none ${
                   isActive ? 'font-black text-signalGreen' : 'text-charcoal font-semibold'
                 }`}
               >
                 {item.index}
               </span>
               <span
-                className={`text-[9.5px] font-mono tracking-wider mt-0.5 uppercase ${
+                className={`text-[9px] font-mono tracking-wider mt-0.5 uppercase ${
                   isActive ? 'font-black text-ink' : 'font-bold text-charcoal'
                 }`}
               >

@@ -767,7 +767,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                     : '[ EXECUTING 2-STAGE RECON PIPELINE... ]'
                   : reconMode === 'PASSIVE'
                   ? '[ START PASSIVE OSINT RECON ➔ ]'
-                  : '[ ⚡ RUN UNIFIED 2-STAGE RECON (PASSIVE ➔ ACTIVE) ➔ ]'}
+                  : '[ RUN UNIFIED 2-STAGE RECON (PASSIVE ➔ ACTIVE) ➔ ]'}
               </span>
             </button>
           </div>
@@ -796,7 +796,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   title="Executes Stage 1: Passive OSINT (DNS/CT/RDAP) followed by Stage 2: Active Precision Probing (Nmap/HTTPX/ZAP/Nuclei), synthesizing all assets into the Attack Graph."
                 >
                   <DoodleIcon name="spark" className="w-3.5 h-3.5" />
-                  <span>[ ⚡ 2-STAGE: PASSIVE OSINT ➔ ACTIVE INTRUSION (RECOMMENDED) ]</span>
+                  <span>[ 2-STAGE: PASSIVE OSINT ➔ ACTIVE INTRUSION (RECOMMENDED) ]</span>
                 </button>
                 <button
                   type="button"
@@ -1006,25 +1006,25 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                           className="px-2.5 py-1 bg-vermilion text-white hover:bg-crimson text-[10px] font-mono font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1"
                         >
                           <DoodleIcon name="spark" className="w-3 h-3 text-white" />
-                          <span>[ 04_ METASPLOIT (10/10) ➔ ]</span>
+                          <span>[ 03_ METASPLOIT (10/10) ➔ ]</span>
                         </button>
                         <button
                           onClick={() => onNavigate('graph')}
                           className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
                         >
-                          [ 05_ GRAPH ➔ ]
+                          [ 04_ GRAPH ➔ ]
                         </button>
                         <button
                           onClick={() => onNavigate('guard')}
                           className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
                         >
-                          [ 06_ GUARD ➔ ]
+                          [ 05_ GUARD ➔ ]
                         </button>
                         <button
                           onClick={() => onNavigate('reports')}
                           className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
                         >
-                          [ 07_ REPORT ➔ ]
+                          [ 06_ REPORTS ➔ ]
                         </button>
                       </>
                     )}

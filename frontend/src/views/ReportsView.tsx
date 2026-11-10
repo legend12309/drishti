@@ -243,32 +243,33 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
               className="bg-vermilion hover:bg-crimson disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs cursor-pointer flex items-center gap-1.5"
             >
               <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
-              <span>{generating ? '[ COMPILING... ]' : '[ ⚡ COMPILE DOSSIER ]'}</span>
+              <span>{generating ? '[ COMPILING... ]' : '[ COMPILE DOSSIER ]'}</span>
             </button>
 
             <button
               onClick={handleDownloadStix}
-              className="bg-pureWhite hover:bg-boneDark border border-signalGreen text-signalGreen px-3 py-1.5 text-xs font-mono font-bold cursor-pointer flex items-center gap-1 shadow-xs"
+              className="bg-pureWhite hover:bg-boneDark border border-signalGreen text-signalGreen px-3 py-1.5 text-xs font-mono font-bold cursor-pointer flex items-center gap-1.5 shadow-xs"
               title="Download OASIS STIX 2.1 JSON Threat Intelligence Bundle"
             >
-              <span>📥</span>
+              <DoodleIcon name="download" className="w-3.5 h-3.5 text-signalGreen" />
               <span>[ STIX 2.1 JSON ]</span>
             </button>
 
             <button
               onClick={fetchReports}
               disabled={loading}
-              className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer"
+              className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              [ REFRESH ]
+              <DoodleIcon name="gear" className="w-3.5 h-3.5 text-ink hover:text-white" />
+              <span>[ REFRESH ]</span>
             </button>
 
             <button
               onClick={handlePrintPdf}
-              className="bg-pureWhite hover:bg-boneDark border border-hairline text-ink px-3 py-1.5 text-xs font-mono font-bold cursor-pointer flex items-center gap-1"
+              className="bg-pureWhite hover:bg-boneDark border border-hairline text-ink px-3 py-1.5 text-xs font-mono font-bold cursor-pointer flex items-center gap-1.5"
               title="Print or Save as PDF"
             >
-              <span>🖨️</span>
+              <DoodleIcon name="print" className="w-3.5 h-3.5 text-ink" />
               <span>[ PRINT / PDF ]</span>
             </button>
           </div>
@@ -278,7 +279,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 print:grid-cols-4">
           <div className="border border-hairline bg-pureWhite p-3 shadow-xs">
             <div className="text-[9px] font-bold text-charcoal uppercase tracking-wider flex items-center justify-between">
-              <span>[ ⚡ CONFIRMED BUGS ]</span>
+              <span className="flex items-center gap-1">
+                <DoodleIcon name="exploit" className="w-3 h-3 text-vermilion" />
+                <span>[ CONFIRMED BUGS ]</span>
+              </span>
               <span className="w-2 h-2 rounded-full bg-vermilion animate-pulse"></span>
             </div>
             <div className="font-condensed text-2xl font-extrabold text-vermilion mt-1">
@@ -289,7 +293,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
 
           <div className="border border-hairline bg-pureWhite p-3 shadow-xs">
             <div className="text-[9px] font-bold text-charcoal uppercase tracking-wider flex items-center justify-between">
-              <span>[ 🔍 STAGE 1: PASSIVE RECON ]</span>
+              <span className="flex items-center gap-1">
+                <DoodleIcon name="osint" className="w-3 h-3 text-signalGreen" />
+                <span>[ STAGE 1: PASSIVE RECON ]</span>
+              </span>
               <span className="w-1.5 h-1.5 bg-signalGreen inline-block"></span>
             </div>
             <div className="font-condensed text-2xl font-extrabold text-ink mt-1">
@@ -300,7 +307,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
 
           <div className="border border-hairline bg-pureWhite p-3 shadow-xs">
             <div className="text-[9px] font-bold text-charcoal uppercase tracking-wider flex items-center justify-between">
-              <span>[ 🌐 STAGE 2: ACTIVE PROBING ]</span>
+              <span className="flex items-center gap-1">
+                <DoodleIcon name="service" className="w-3 h-3 text-blue-600" />
+                <span>[ STAGE 2: ACTIVE PROBING ]</span>
+              </span>
               <span className="w-1.5 h-1.5 bg-blue-600 inline-block"></span>
             </div>
             <div className="font-condensed text-2xl font-extrabold text-ink mt-1">
@@ -311,7 +321,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
 
           <div className="border border-hairline bg-pureWhite p-3 shadow-xs">
             <div className="text-[9px] font-bold text-charcoal uppercase tracking-wider flex items-center justify-between">
-              <span>[ RISK POSTURE & INTEGRITY ]</span>
+              <span className="flex items-center gap-1">
+                <DoodleIcon name="shield" className="w-3 h-3 text-signalGreen" />
+                <span>[ RISK POSTURE & INTEGRITY ]</span>
+              </span>
               <span className="text-[9px] text-signalGreen font-bold">SHA-256</span>
             </div>
             <div className="font-condensed text-2xl font-extrabold text-ink mt-1">
@@ -324,11 +337,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
         {/* Section View Switcher Pills */}
         <div className="flex items-center gap-2 border-b border-hairline pb-2.5 flex-wrap print:hidden">
           {[
-            { id: 'DOSSIER', label: '[ 📄 RAW ASCII DOSSIER (.TXT) ]', icon: 'shield' },
-            { id: 'CONFIRMED', label: `[ ⚡ CONFIRMED BUGS (${confirmedVulns.length || 1}) ]`, icon: 'spark', highlight: true },
-            { id: 'PASSIVE', label: `[ 🔍 STAGE 1: PASSIVE RECON (${passiveFindings.length || 11}) ]`, icon: 'radar' },
-            { id: 'ACTIVE', label: `[ 🌐 STAGE 2: ACTIVE PROBING (${activePorts.length || 1}) ]`, icon: 'terminal' },
-            { id: 'DEFENSE', label: '[ 🛡️ REMEDIATION RULES ]', icon: 'shield' },
+            { id: 'DOSSIER', label: '[ RAW ASCII DOSSIER (.TXT) ]', icon: 'file' },
+            { id: 'CONFIRMED', label: `[ CONFIRMED BUGS (${confirmedVulns.length || 1}) ]`, icon: 'exploit', highlight: true },
+            { id: 'PASSIVE', label: `[ STAGE 1: PASSIVE RECON (${passiveFindings.length || 11}) ]`, icon: 'osint' },
+            { id: 'ACTIVE', label: `[ STAGE 2: ACTIVE PROBING (${activePorts.length || 1}) ]`, icon: 'service' },
+            { id: 'DEFENSE', label: '[ REMEDIATION RULES ]', icon: 'shield' },
           ].map((tab) => {
             const isActive = activeSection === tab.id;
             return (
@@ -345,6 +358,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
                     : 'bg-pureWhite text-charcoal border-hairline hover:border-ink hover:text-ink'
                 }`}
               >
+                <DoodleIcon name={tab.icon} className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -393,8 +407,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
                         <span className="px-2 py-0.5 text-[10px] font-bold bg-vermilion text-white">
                           CRITICAL / HIGH [{cvss}]
                         </span>
-                        <span className="px-2 py-0.5 text-[9px] font-bold bg-black text-white">
-                          ⚡ ACTIVE SCAN CONFIRMED
+                        <span className="px-2 py-0.5 text-[9px] font-bold bg-black text-white inline-flex items-center gap-1">
+                          <DoodleIcon name="exploit" size={10} className="text-vermilion" />
+                          <span>ACTIVE SCAN CONFIRMED</span>
                         </span>
                         {vuln.is_weaponized && (
                           <span className="px-2 py-0.5 text-[9px] font-bold bg-amber-500 text-black">
@@ -790,15 +805,25 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => activeReport && handleCopyText(activeReport.content_text)}
-                    className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 text-[10px] font-bold border border-gray-600 transition-colors cursor-pointer"
+                    className="px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-200 text-[10px] font-bold border border-gray-600 transition-colors cursor-pointer inline-flex items-center gap-1"
                   >
-                    {copied ? '[ COPIED ✓ ]' : '[ COPY RAW TEXT ]'}
+                    {copied ? (
+                      <>
+                        <DoodleIcon name="check" size={10} className="text-signalGreen" />
+                        <span>[ COPIED ]</span>
+                      </>
+                    ) : (
+                      <>
+                        <DoodleIcon name="copy" size={10} className="text-gray-400" />
+                        <span>[ COPY RAW TEXT ]</span>
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => activeReport && handleDownloadTxt(activeReport)}
-                    className="px-2.5 py-1 bg-signalGreen hover:bg-forestGreen text-white text-[10px] font-bold border border-signalGreen transition-colors cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1 bg-signalGreen hover:bg-forestGreen text-white text-[10px] font-bold border border-signalGreen transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>↓</span>
+                    <DoodleIcon name="download" size={11} className="text-white" />
                     <span>[ DOWNLOAD .TXT ]</span>
                   </button>
                 </div>

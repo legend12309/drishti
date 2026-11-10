@@ -112,7 +112,7 @@ CERTIFIED IMMUTABLE ACADEMIC INTELLECTUAL PROPERTY // ANTI-COPY ENFORCED
           <div className="p-3 bg-pureWhite border border-signalGreen/60 shadow-xs flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-9 h-9 border border-signalGreen bg-signalGreenBg text-signalGreen font-bold flex items-center justify-center text-sm shadow-xs">
-                🛡️
+                <DoodleIcon name="shield" size={18} className="text-signalGreen" />
               </div>
               <div>
                 <div className="text-[11px] font-black text-ink uppercase">
@@ -181,8 +181,9 @@ CERTIFIED IMMUTABLE ACADEMIC INTELLECTUAL PROPERTY // ANTI-COPY ENFORCED
                     <span className="text-pencil block text-[9.5px]">VERIFIED CORE ENGINE MODULES:</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {data.codebase_integrity?.checked_modules?.map((m, i) => (
-                        <span key={i} className="px-1.5 py-0.5 bg-boneDark border border-hairline text-[9px] text-ink font-bold">
-                          ✓ {m}
+                        <span key={i} className="px-1.5 py-0.5 bg-boneDark border border-hairline text-[9px] text-ink font-bold inline-flex items-center gap-1">
+                          <DoodleIcon name="check" size={9} className="text-signalGreen" />
+                          <span>{m}</span>
                         </span>
                       ))}
                     </div>
@@ -207,9 +208,10 @@ CERTIFIED IMMUTABLE ACADEMIC INTELLECTUAL PROPERTY // ANTI-COPY ENFORCED
         <div className="bg-pureWhite px-4 py-3 border-t border-hairline flex items-center justify-between">
           <button
             onClick={copyCert}
-            className="px-3 py-1.5 border border-ink bg-boneLight hover:bg-pureWhite font-bold text-[10px] text-ink active:scale-95 transition-all flex items-center space-x-1"
+            className="px-3 py-1.5 border border-ink bg-boneLight hover:bg-pureWhite font-bold text-[10px] text-ink active:scale-95 transition-all flex items-center space-x-1.5 cursor-pointer"
           >
-            <span>[ 📋 COPY CERTIFICATE ]</span>
+            <DoodleIcon name="copy" size={12} className="text-ink" />
+            <span>[ COPY CERTIFICATE ]</span>
           </button>
           <button
             onClick={onClose}

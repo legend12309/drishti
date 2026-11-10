@@ -1466,7 +1466,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="step1"
               >
                 <span className={stages.step1 ? 'text-[#10B981] font-bold' : 'text-[#475569]'}>01:CRYPTO</span>
-                {stages.step1 && <span className="text-[#10B981]">✓</span>}
+                {stages.step1 && <DoodleIcon name="check" size={10} className="text-[#10B981]" />}
               </div>
 
               {/* Stage 2 */}
@@ -1479,7 +1479,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="step2"
               >
                 <span className={stages.step2 ? 'text-[#10B981] font-bold' : 'text-[#475569]'}>02:NEURAL</span>
-                {stages.step2 && <span className="text-[#10B981]">✓</span>}
+                {stages.step2 && <DoodleIcon name="check" size={10} className="text-[#10B981]" />}
               </div>
 
               {/* Stage 3 */}
@@ -1497,7 +1497,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   03:BIOMETRIC
                 </span>
                 {stages.step4 ? (
-                  <span className="text-[#10B981]">✓</span>
+                  <DoodleIcon name="check" size={10} className="text-[#10B981]" />
                 ) : stages.step3 ? (
                   <span className="text-[#E62E25] animate-ping inline-block w-1.5 h-1.5 rounded-full"></span>
                 ) : null}
@@ -1513,8 +1513,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 id="step4"
               >
                 <span className={stages.step4 ? 'text-[#10B981] font-bold' : 'text-[#475569]'}>
-                  04:COCKPIT {stages.step4 && '✓'}
+                  04:COCKPIT
                 </span>
+                {stages.step4 && <DoodleIcon name="check" size={10} className="text-[#10B981]" />}
               </div>
             </div>
 

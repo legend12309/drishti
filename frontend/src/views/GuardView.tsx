@@ -363,8 +363,9 @@ export const GuardView: React.FC<GuardViewProps> = ({ onNavigate, showToast }) =
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-charcoal pt-1 flex-wrap gap-2">
-            <span className="font-bold text-signalGreen flex items-center gap-1">
-              ✓ {auditVerdict}
+            <span className="font-bold text-signalGreen flex items-center gap-1.5">
+              <DoodleIcon name="check" size={11} className="text-signalGreen" />
+              <span>{auditVerdict}</span>
             </span>
             {onNavigate && (
               <div className="flex items-center gap-2">
@@ -372,13 +373,13 @@ export const GuardView: React.FC<GuardViewProps> = ({ onNavigate, showToast }) =
                   onClick={() => onNavigate('graph')}
                   className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
                 >
-                  [ 05_ ATTACK GRAPH ➔ ]
+                  [ 04_ ATTACK GRAPH ➔ ]
                 </button>
                 <button
                   onClick={() => onNavigate('reports')}
                   className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-mono font-bold border border-hairline transition-colors cursor-pointer shadow-xs"
                 >
-                  [ 07_ EXECUTIVE REPORT ➔ ]
+                  [ 06_ REPORTS ➔ ]
                 </button>
               </div>
             )}

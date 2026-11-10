@@ -24,7 +24,14 @@ export type DoodleName =
   | 'alert'
   | 'lock'
   | 'radar'
-  | 'gear';
+  | 'gear'
+  | 'download'
+  | 'print'
+  | 'file'
+  | 'pen'
+  | 'ai'
+  | 'terminal'
+  | 'copy';
 
 interface DoodleIconProps extends React.SVGProps<SVGSVGElement> {
   name: DoodleName | string;
@@ -252,6 +259,97 @@ export const renderDoodlePaths = (name: string, strokeWidth = 1.8) => {
       return (
         <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
           <path d="M8 3v3.5A1.5 1.5 0 0 1 6.5 8H3m18 0h-3.5A1.5 1.5 0 0 1 16 6.5V3m0 18v-3.5a1.5 1.5 0 0 1 1.5-1.5H21M3 16h3.5A1.5 1.5 0 0 1 8 17.5V21" />
+        </g>
+      );
+
+    case 'download':
+      // Technical download arrow into docking tray doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 16.5v3a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-3" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </g>
+      );
+
+    case 'print':
+    case 'printer':
+      // Technical drafting printer with output feed doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9V3h12v6" />
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          <rect x="6" y="14" width="12" height="7" rx="1" fill="currentColor" fillOpacity="0.12" />
+          <circle cx="18" cy="12" r="0.8" fill="currentColor" stroke="none" />
+        </g>
+      );
+
+    case 'file':
+    case 'document':
+    case 'dossier':
+      // Folded-corner blueprint document dossier doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="currentColor" fillOpacity="0.10" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="8" y1="13" x2="16" y2="13" strokeWidth={strokeWidth * 0.9} />
+          <line x1="8" y1="17" x2="13" y2="17" strokeWidth={strokeWidth * 0.9} />
+        </g>
+      );
+
+    case 'pen':
+    case 'edit':
+      // Technical drafting mechanical stylus / pencil doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 2l4 4-13 13H5v-4L18 2z" fill="currentColor" fillOpacity="0.12" />
+          <line x1="15" y1="5" x2="19" y2="9" />
+          <circle cx="5" cy="19" r="0.6" fill="currentColor" stroke="none" />
+        </g>
+      );
+
+    case 'ai':
+    case 'neural':
+    case 'bot':
+    case 'copilot':
+      // Cybernetic neural microchip copilot doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" fillOpacity="0.12" />
+          <line x1="9" y1="1" x2="9" y2="5" />
+          <line x1="15" y1="1" x2="15" y2="5" />
+          <line x1="9" y1="19" x2="9" y2="23" />
+          <line x1="15" y1="19" x2="15" y2="23" />
+          <line x1="1" y1="9" x2="5" y2="9" />
+          <line x1="1" y1="15" x2="5" y2="15" />
+          <line x1="19" y1="9" x2="23" y2="9" />
+          <line x1="19" y1="15" x2="23" y2="15" />
+          <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="15" r="1" fill="currentColor" stroke="none" />
+          <line x1="9" y1="9" x2="12" y2="15" strokeDasharray="1.2 1.2" opacity="0.85" />
+          <line x1="15" y1="9" x2="12" y2="15" strokeDasharray="1.2 1.2" opacity="0.85" />
+        </g>
+      );
+
+    case 'terminal':
+    case 'cli':
+      // Hacker terminal prompt doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor" fillOpacity="0.08" />
+          <polyline points="7 9 10 12 7 15" />
+          <line x1="12" y1="15" x2="17" y2="15" strokeWidth={strokeWidth * 1.2} />
+        </g>
+      );
+
+    case 'copy':
+    case 'clipboard':
+      // Technical drafting dual sheets / clipboard doodle
+      return (
+        <g strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="8" y="8" width="13" height="13" rx="1.5" fill="currentColor" fillOpacity="0.12" />
+          <path d="M4 16V4a1.5 1.5 0 0 1 1.5-1.5h11" />
         </g>
       );
 

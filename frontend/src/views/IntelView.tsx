@@ -951,7 +951,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               }`}
             >
               <DoodleIcon name="shield" className="w-3.5 h-3.5" />
-              <span>[ 🛡️ VULNERABILITY INTELLIGENCE ]</span>
+              <span>[ VULNERABILITY INTELLIGENCE ]</span>
               {cves.length > 0 && (
                 <span className="px-1.5 py-0.2 bg-vermilion text-white text-[9px] font-bold">
                   {cves.length}
@@ -968,7 +968,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               }`}
             >
               <DoodleIcon name="spark" className="w-3.5 h-3.5" />
-              <span>[ ⚡ RAPID7 METASPLOIT ARSENAL (10/10) ]</span>
+              <span>[ RAPID7 METASPLOIT ARSENAL (10/10) ]</span>
               <span className="px-1.5 py-0.2 bg-black/20 text-white text-[9px] font-mono font-bold">
                 {msfModules.length || '32+'}
               </span>
@@ -982,8 +982,8 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   : 'bg-pureWhite text-ink border-hairline hover:border-signalGreen'
               }`}
             >
-              <DoodleIcon name="zap" className="w-3.5 h-3.5 text-signalGreen" />
-              <span>[ 🤖 NEURAL AI ADVISORY & COPILOT ]</span>
+              <DoodleIcon name="ai" className="w-3.5 h-3.5" />
+              <span>[ NEURAL AI ADVISORY & COPILOT ]</span>
               <span className="w-2 h-2 rounded-full bg-signalGreen animate-ping inline-block" />
             </button>
           </div>
@@ -1209,24 +1209,25 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none font-mono text-[10px]">
                 {[
                   { id: 'ALL', label: `ALL INTEL (${stats.total})` },
-                  { id: 'CONFIRMED', label: `⚡ CONFIRMED [ACTIVE] (${stats.confirmed})` },
-                  { id: 'CORRELATED', label: `🔍 CORRELATED [PASSIVE ONLY] (${stats.passiveCorrelated})` },
-                  { id: 'CRITICAL', label: `CRITICAL (${stats.critical})` },
-                  { id: 'WEAPONIZED', label: `MSF WEAPONIZED (${stats.weaponized})` },
-                  { id: 'HIGH_EPSS', label: `EPSS ≥ 50% (${stats.highEpss})` },
+                  { id: 'CONFIRMED', label: `CONFIRMED [ACTIVE] (${stats.confirmed})`, doodle: 'exploit' },
+                  { id: 'CORRELATED', label: `CORRELATED [PASSIVE] (${stats.passiveCorrelated})`, doodle: 'osint' },
+                  { id: 'CRITICAL', label: `CRITICAL (${stats.critical})`, doodle: 'warning' },
+                  { id: 'WEAPONIZED', label: `MSF WEAPONIZED (${stats.weaponized})`, doodle: 'spark' },
+                  { id: 'HIGH_EPSS', label: `EPSS ≥ 50% (${stats.highEpss})`, doodle: 'radar' },
                 ].map((tab) => {
                   const isActive = filter === tab.id;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setFilter(tab.id as any)}
-                      className={`whitespace-nowrap px-2.5 py-1 font-bold border transition-colors cursor-pointer ${
+                      className={`whitespace-nowrap px-2.5 py-1 font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
                         isActive
                           ? 'bg-ink text-white border-ink'
-                          : 'bg-pureWhite text-charcoal border-hairline hover:text-ink hover:bg-boneDark'
+                          : 'bg-pureWhite text-charcoal border-hairline hover:border-ink hover:text-ink'
                       }`}
                     >
-                      [ {tab.label} ]
+                      {tab.doodle && <DoodleIcon name={tab.doodle} size={11} className={isActive ? 'text-white' : 'text-charcoal'} />}
+                      <span>{tab.label}</span>
                     </button>
                   );
                 })}
@@ -1295,11 +1296,13 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                             {isConfirmed ? (
                               <span className="px-1.5 py-0.5 text-[9px] font-bold bg-vermilion text-white border border-vermilion inline-flex items-center gap-1 shadow-xs">
                                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
-                                [ ⚡ ACTIVE SCAN CONFIRMED ]
+                                <DoodleIcon name="exploit" size={10} className="text-white" />
+                                <span>[ ACTIVE SCAN CONFIRMED ]</span>
                               </span>
                             ) : cve.isCorrelated ? (
                               <span className="px-1.5 py-0.5 text-[9px] font-bold bg-boneLight text-charcoal border border-hairline inline-flex items-center gap-1">
-                                [ 🔍 CORRELATED (PASSIVE ONLY) ]
+                                <DoodleIcon name="osint" size={10} className="text-charcoal" />
+                                <span>[ CORRELATED (PASSIVE ONLY) ]</span>
                               </span>
                             ) : (
                               <span className="px-1.5 py-0.5 text-[9px] text-charcoal border border-hairline bg-pureWhite">
@@ -1734,8 +1737,20 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 <div className="p-3 bg-boneLight border border-hairline space-y-1">
                   <div className="flex items-center justify-between text-[10px] font-bold text-charcoal uppercase tracking-wider">
                     <span>VULNERABILITY VERIFICATION STATUS</span>
-                    <span className={selectedCve.status === 'confirmed_applicability' ? 'text-vermilion font-bold' : 'text-pencil font-bold'}>
-                      {selectedCve.status === 'confirmed_applicability' ? '[ ⚡ ACTIVE SCAN CONFIRMED ]' : selectedCve.isCorrelated ? '[ 🔍 CORRELATED (PASSIVE ONLY) ]' : '[ GLOBAL CORPUS ]'}
+                    <span className={selectedCve.status === 'confirmed_applicability' ? 'text-vermilion font-bold inline-flex items-center gap-1' : 'text-pencil font-bold inline-flex items-center gap-1'}>
+                      {selectedCve.status === 'confirmed_applicability' ? (
+                        <>
+                          <DoodleIcon name="exploit" size={10} className="text-vermilion" />
+                          <span>[ ACTIVE SCAN CONFIRMED ]</span>
+                        </>
+                      ) : selectedCve.isCorrelated ? (
+                        <>
+                          <DoodleIcon name="osint" size={10} className="text-charcoal" />
+                          <span>[ CORRELATED (PASSIVE ONLY) ]</span>
+                        </>
+                      ) : (
+                        <span>[ GLOBAL CORPUS ]</span>
+                      )}
                     </span>
                   </div>
                   <div className="text-xs font-bold text-ink font-mono">
@@ -1841,14 +1856,14 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     className="py-2 px-2 bg-vermilion hover:bg-crimson text-white font-mono font-bold text-[10px] tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <DoodleIcon name="spark" className="w-3 h-3 text-white" />
-                    <span>[ ⚡ METASPLOIT ARSENAL ]</span>
+                    <span>[ METASPLOIT ARSENAL ]</span>
                   </button>
                   <button
                     onClick={() => setPrimaryTab('AI_ADVISORY')}
                     className="py-2 px-2 bg-signalGreen hover:bg-emerald-400 text-ink font-mono font-black text-[10px] tracking-wider transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    <DoodleIcon name="zap" className="w-3 h-3 text-ink" />
-                    <span>[ 🤖 NEURAL AI ADVISORY ]</span>
+                    <DoodleIcon name="ai" className="w-3.5 h-3.5 text-ink" />
+                    <span>[ NEURAL AI ADVISORY ]</span>
                   </button>
                 </div>
 
@@ -1873,15 +1888,17 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 <div className="flex items-center justify-center gap-2 pt-3">
                   <button
                     onClick={() => setPrimaryTab('METASPLOIT')}
-                    className="px-3 py-1.5 bg-vermilion text-white font-bold text-[10px] cursor-pointer"
+                    className="px-3 py-1.5 bg-vermilion text-white font-bold text-[10px] cursor-pointer flex items-center gap-1.5"
                   >
-                    [ ⚡ OPEN METASPLOIT ARSENAL ]
+                    <DoodleIcon name="spark" className="w-3 h-3 text-white" />
+                    <span>[ OPEN METASPLOIT ARSENAL ]</span>
                   </button>
                   <button
                     onClick={() => setPrimaryTab('AI_ADVISORY')}
-                    className="px-3 py-1.5 bg-signalGreen text-ink font-black text-[10px] cursor-pointer"
+                    className="px-3 py-1.5 bg-signalGreen text-ink font-black text-[10px] cursor-pointer flex items-center gap-1.5"
                   >
-                    [ 🤖 OPEN AI ADVISORY ]
+                    <DoodleIcon name="ai" className="w-3 h-3 text-ink" />
+                    <span>[ OPEN AI ADVISORY ]</span>
                   </button>
                 </div>
               </div>
@@ -2099,7 +2116,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     className="py-2 bg-ink hover:bg-black text-white text-[10px] font-mono font-bold border border-ink cursor-pointer transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     <DoodleIcon name="terminal" className="w-3 h-3 text-signalGreen" />
-                    <span>{generatingMsf ? 'COMPILING...' : '[ ⚡ COMPILE .RC ]'}</span>
+                    <span>{generatingMsf ? 'COMPILING...' : '[ COMPILE .RC ]'}</span>
                   </button>
 
                   <button
@@ -2108,7 +2125,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     className="py-2 bg-vermilion hover:bg-crimson text-white text-[10px] font-mono font-bold border border-vermilion cursor-pointer transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     <DoodleIcon name="spark" className="w-3 h-3 text-white" />
-                    <span>{simulatingMsf ? 'SIMULATING...' : '[ 🎯 SIMULATE EXPLOIT ]'}</span>
+                    <span>{simulatingMsf ? 'SIMULATING...' : '[ SIMULATE EXPLOIT ]'}</span>
                   </button>
                 </div>
               </div>
@@ -2169,9 +2186,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                         </button>
                         <button
                           onClick={() => handleDownloadScript(msfSelectedModule?.cve_id || 'msf', msfScript.rc_script)}
-                          className="px-2 py-1 bg-[#EF4444] hover:bg-[#DC2626] text-white text-[9px] font-bold cursor-pointer"
+                          className="px-2 py-1 bg-[#EF4444] hover:bg-[#DC2626] text-white text-[9px] font-bold cursor-pointer flex items-center gap-1"
                         >
-                          [ 💾 DOWNLOAD .RC ]
+                          <DoodleIcon name="download" size={10} className="text-white" />
+                          <span>[ DOWNLOAD .RC ]</span>
                         </button>
                       </div>
                     </div>
@@ -2196,7 +2214,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 ) : (
                   <div className="py-24 text-center text-neutral-500 space-y-3">
                     <div className="w-12 h-12 border border-white/15 bg-white/5 flex items-center justify-center mx-auto text-vermilion font-bold text-lg">
-                      ⚡
+                      <DoodleIcon name="spark" size={24} className="text-vermilion" />
                     </div>
                     <p className="text-xs uppercase tracking-wider text-neutral-400 font-bold">
                       Metasploit Weaponization Script Not Yet Compiled
@@ -2206,9 +2224,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                     </p>
                     <button
                       onClick={handleCompileMsfFromArsenal}
-                      className="px-4 py-2 bg-vermilion hover:bg-crimson text-white font-bold text-xs cursor-pointer shadow-md inline-block mt-2"
+                      className="px-4 py-2 bg-vermilion hover:bg-crimson text-white font-bold text-xs cursor-pointer shadow-md inline-flex items-center gap-1.5 mt-2"
                     >
-                      [ ⚡ COMPILE RESOURCE SCRIPT NOW ]
+                      <DoodleIcon name="spark" size={13} className="text-white" />
+                      <span>[ COMPILE RESOURCE SCRIPT NOW ]</span>
                     </button>
                   </div>
                 )
@@ -2243,7 +2262,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   ) : (
                     <div className="py-24 text-center text-neutral-500 space-y-3">
                       <div className="w-12 h-12 border border-white/15 bg-white/5 flex items-center justify-center mx-auto text-signalGreen font-bold text-lg">
-                        🎯
+                        <DoodleIcon name="target" size={24} className="text-signalGreen" />
                       </div>
                       <p className="text-xs uppercase tracking-wider text-neutral-400 font-bold">
                         No Active Simulation Executed
@@ -2253,9 +2272,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                       </p>
                       <button
                         onClick={handleSimulateMsfFromArsenal}
-                        className="px-4 py-2 bg-signalGreen hover:bg-emerald-400 text-ink font-black text-xs cursor-pointer shadow-md inline-block mt-2"
+                        className="px-4 py-2 bg-signalGreen hover:bg-emerald-400 text-ink font-black text-xs cursor-pointer shadow-md inline-flex items-center gap-1.5 mt-2"
                       >
-                        [ 🎯 RUN WEAPONIZATION SIMULATION ]
+                        <DoodleIcon name="target" size={13} className="text-ink" />
+                        <span>[ RUN WEAPONIZATION SIMULATION ]</span>
                       </button>
                     </div>
                   )}
@@ -2316,10 +2336,11 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               ))}
               <button
                 onClick={() => setShowApiKeyModal(true)}
-                className="px-2 py-0.5 text-[9px] font-bold border border-ink bg-pureWhite hover:bg-ink hover:text-white transition-colors cursor-pointer font-mono ml-1"
+                className="px-2 py-0.5 text-[9px] font-bold border border-ink bg-pureWhite hover:bg-ink hover:text-white transition-colors cursor-pointer font-mono ml-1 inline-flex items-center gap-1"
                 title="Configure custom cloud API keys (Gemini, Groq, NVIDIA)"
               >
-                [ ⚙️ API KEYS ]
+                <DoodleIcon name="gear" size={10} />
+                <span>[ API KEYS ]</span>
               </button>
             </div>
           </div>
@@ -2337,30 +2358,34 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               <button
                 onClick={() => runAiCopilotAction('EXECUTIVE_BRIEF')}
                 disabled={aiCopilotLoading}
-                className="px-3 py-1.5 bg-ink hover:bg-black text-white text-[10px] font-bold border border-ink cursor-pointer transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-ink hover:bg-black text-white text-[10px] font-bold border border-ink cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                [ 📋 EXECUTIVE THREAT BRIEF ]
+                <DoodleIcon name="file" size={11} className="text-white" />
+                <span>[ EXECUTIVE THREAT BRIEF ]</span>
               </button>
               <button
                 onClick={() => runAiCopilotAction('REMEDIATION_PLAN')}
                 disabled={aiCopilotLoading}
-                className="px-3 py-1.5 bg-vermilion hover:bg-crimson text-white text-[10px] font-bold border border-vermilion cursor-pointer transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-vermilion hover:bg-crimson text-white text-[10px] font-bold border border-vermilion cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                [ 🛡️ REMEDIATION ROADMAP ]
+                <DoodleIcon name="shield" size={11} className="text-white" />
+                <span>[ REMEDIATION ROADMAP ]</span>
               </button>
               <button
                 onClick={() => runAiCopilotAction('SURFACE_AUDIT')}
                 disabled={aiCopilotLoading}
-                className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-bold border border-hairline cursor-pointer transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-bold border border-hairline cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                [ 🔍 SURFACE AUDIT ]
+                <DoodleIcon name="search" size={11} className="text-ink" />
+                <span>[ SURFACE AUDIT ]</span>
               </button>
               <button
                 onClick={() => runAiCopilotAction('ZERO_DAY_HARDENING')}
                 disabled={aiCopilotLoading}
-                className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-bold border border-hairline cursor-pointer transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-pureWhite hover:bg-boneDark text-ink text-[10px] font-bold border border-hairline cursor-pointer transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
               >
-                [ 🔒 ZERO-DAY HARDENING ]
+                <DoodleIcon name="lock" size={11} className="text-ink" />
+                <span>[ ZERO-DAY HARDENING ]</span>
               </button>
             </div>
           </div>
@@ -2389,9 +2414,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               <button
                 onClick={() => runAiCopilotAction('CUSTOM', aiPromptInput)}
                 disabled={aiCopilotLoading || !aiPromptInput.trim()}
-                className="px-4 bg-signalGreen hover:bg-emerald-400 text-ink font-mono font-black text-xs border border-signalGreen cursor-pointer transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
+                className="px-4 bg-signalGreen hover:bg-emerald-400 text-ink font-mono font-black text-xs border border-signalGreen cursor-pointer transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 shrink-0"
               >
-                {aiCopilotLoading ? '[ SYNTHESIZING... ]' : '[ ⚡ QUERY AI COPILOT ➔ ]'}
+                <DoodleIcon name="spark" size={12} className="text-ink" />
+                <span>{aiCopilotLoading ? '[ SYNTHESIZING... ]' : '[ QUERY AI COPILOT ➔ ]'}</span>
               </button>
             </div>
           </div>
@@ -2413,9 +2439,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 </div>
                 <button
                   onClick={() => handleCopy(aiCopilotResponse, 'AI Advisory')}
-                  className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink font-bold text-[9px] border border-hairline cursor-pointer"
+                  className="px-2.5 py-1 bg-pureWhite hover:bg-boneDark text-ink font-bold text-[9px] border border-hairline cursor-pointer inline-flex items-center gap-1"
                 >
-                  [ 📋 COPY ADVISORY ]
+                  <DoodleIcon name="copy" size={10} className="text-ink" />
+                  <span>[ COPY ADVISORY ]</span>
                 </button>
               </div>
 
@@ -2426,7 +2453,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           ) : (
             <div className="py-16 text-center text-charcoal space-y-3 bg-[#FAF8F5] border border-dashed border-hairline p-6">
               <div className="w-10 h-10 border border-hairline bg-pureWhite flex items-center justify-center mx-auto text-signalGreen font-bold text-lg">
-                🤖
+                <DoodleIcon name="ai" size={22} className="text-signalGreen" />
               </div>
               <h4 className="text-xs font-bold text-ink uppercase tracking-wider font-grotesk">
                 Neural AI Threat Intelligence Standing By
@@ -2727,9 +2754,10 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 <button
                   onClick={handleSaveApiKey}
                   disabled={savingApiKey || !apiKeyValue.trim()}
-                  className="px-4 py-1.5 bg-signalGreen hover:bg-emerald-400 text-ink font-black text-xs border border-signalGreen cursor-pointer disabled:opacity-50"
+                  className="px-4 py-1.5 bg-signalGreen hover:bg-emerald-400 text-ink font-black text-xs border border-signalGreen cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                 >
-                  {savingApiKey ? '[ VALIDATING... ]' : '[ 💾 ACTIVATE PROVIDER KEY ]'}
+                  <DoodleIcon name="check" size={12} className="text-ink" />
+                  <span>{savingApiKey ? '[ VALIDATING... ]' : '[ ACTIVATE PROVIDER KEY ]'}</span>
                 </button>
               </div>
             </div>

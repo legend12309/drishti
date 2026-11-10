@@ -494,7 +494,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
                 title="Runs Recon, Port Audit, CVE Matcher, Graph Synthesizer & WAF Compiler directly on target"
               >
                 <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
-                <span>{runningFullPipeline ? 'ENGINES ACTIVE...' : '⚡ ENGAGE 6 ENGINES'}</span>
+                <span>{runningFullPipeline ? 'ENGINES ACTIVE...' : 'ENGAGE 6 ENGINES'}</span>
               </button>
 
               <button
@@ -553,7 +553,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               },
               {
                 id: 'intel' as TabId,
-                num: '⚡',
+                num: '03B',
                 code: 'METASPLOIT',
                 name: 'Weaponization (10/10)',
                 desc: '30+ Modules • MITRE ATT&CK • Ransomware',
@@ -654,9 +654,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
               <button
                 type="button"
                 onClick={() => onNavigate('graph')}
-                className="px-3 py-1 bg-ink hover:bg-vermilion text-white font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                className="px-3 py-1 bg-ink hover:bg-vermilion text-white font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
               >
-                <span>[ 05_ INTERACTIVE WAR ROOM GRAPH ➔ ]</span>
+                <DoodleIcon name="pivot" className="w-3 h-3 text-white" />
+                <span>[ 04_ INTERACTIVE ATTACK GRAPH ➔ ]</span>
               </button>
             </div>
           </div>
@@ -855,9 +856,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
                 <button
                   type="button"
                   onClick={() => copyToClipboard('block http.request.uri.path contains "php-cgi" and http.request.uri.query contains "allow_url_include"')}
-                  className="px-2.5 py-1 bg-[#1E293B] hover:bg-[#334155] text-white border border-[#475569] text-[9.5px] font-bold cursor-pointer transition-colors flex items-center gap-1 active:scale-95"
+                  className="px-2.5 py-1 bg-[#1E293B] hover:bg-[#334155] text-white border border-[#475569] text-[9.5px] font-bold cursor-pointer transition-colors flex items-center gap-1.5 active:scale-95"
                 >
-                  <span>{copiedPayload ? '✓' : '⧉'}</span>
+                  {copiedPayload ? (
+                    <DoodleIcon name="check" size={10} className="text-signalGreen" />
+                  ) : (
+                    <DoodleIcon name="copy" size={10} className="text-white" />
+                  )}
                   <span>{copiedPayload ? 'COPIED TO CLIPBOARD' : 'COPY RULE'}</span>
                 </button>
               </div>
@@ -936,7 +941,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
                 onClick={() => onNavigate('guard')}
                 className="hover:text-vermilion font-bold underline cursor-pointer"
               >
-                [ VIEW GUARD FIREWALL ➔ ]
+                [ 05_ VIEW GUARD FIREWALL ➔ ]
               </button>
             </div>
           </div>
@@ -981,7 +986,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
                 className="px-3 py-1.5 bg-vermilion hover:bg-crimson text-white font-bold transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
               >
                 <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
-                <span>[ 04_ METASPLOIT ARSENAL ➔ ]</span>
+                <span>[ 03_ METASPLOIT ARSENAL ➔ ]</span>
               </button>
             </div>
           </div>

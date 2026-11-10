@@ -119,10 +119,10 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
         <button
           type="button"
           onClick={onOpenAttestation}
-          className="hidden md:inline-flex items-center space-x-1 border border-signalGreen/60 hover:border-signalGreen bg-signalGreenBg/40 hover:bg-signalGreenBg px-2 py-0.5 text-[9.5px] font-mono text-signalGreen font-bold cursor-pointer transition-colors shadow-xs active:scale-95"
+          className="hidden md:inline-flex items-center space-x-1.5 border border-signalGreen/60 hover:border-signalGreen bg-signalGreenBg/40 hover:bg-signalGreenBg px-2 py-0.5 text-[9.5px] font-mono text-signalGreen font-bold cursor-pointer transition-colors shadow-xs active:scale-95"
           title="Click to view Cryptographic Hardware Enclave Attestation & Dissertation Anti-Copy Protection Seal"
         >
-          <span>🛡️</span>
+          <DoodleIcon name="shield" size={12} className="text-signalGreen" />
           <span>[ ATTESTED ENCLAVE ]</span>
         </button>
 
@@ -178,7 +178,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
                 <span className="w-1.5 h-1.5 bg-pencil"></span>
               </>
             )}
-            <span className="text-[9px] text-pencil font-mono hover:text-ink">[✎]</span>
+            <DoodleIcon name="pen" size={11} className="text-pencil hover:text-ink shrink-0" />
           </div>
         )}
 

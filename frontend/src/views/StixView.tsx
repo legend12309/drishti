@@ -147,7 +147,7 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
               className="bg-boneLight border border-hairline hover:bg-ink hover:text-white text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors cursor-pointer flex items-center gap-1"
             >
               <DoodleIcon name="spark" className="w-3 h-3" />
-              <span>[ ⚡ COMPILE ]</span>
+              <span>[ COMPILE ]</span>
             </button>
 
             <button
@@ -155,6 +155,7 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
               disabled={loading || !stixBundle}
               className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-3 py-1.5 text-xs font-mono font-semibold transition-colors shadow-xs flex items-center gap-1.5 disabled:opacity-40 cursor-pointer"
             >
+              <DoodleIcon name="copy" size={11} className="text-ink" />
               <span>{copied ? '[ COPIED! ]' : '[ COPY JSON ]'}</span>
             </button>
 
@@ -163,6 +164,7 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
               disabled={loading || !stixBundle}
               className="bg-vermilion hover:bg-crimson text-white px-3.5 py-1.5 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 cursor-pointer"
             >
+              <DoodleIcon name="download" size={11} className="text-white" />
               <span>[ EXPORT STIX BUNDLE ↓ ]</span>
             </button>
           </div>
@@ -178,7 +180,10 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
 
           <div className="bg-pureWhite border border-hairline p-3 shadow-xs">
             <div className="text-[9px] font-bold text-charcoal uppercase tracking-wider flex items-center justify-between">
-              <span>[ ⚡ CONFIRMED BUGS ]</span>
+              <span className="flex items-center gap-1">
+                <DoodleIcon name="exploit" className="w-3 h-3 text-vermilion" />
+                <span>[ CONFIRMED BUGS ]</span>
+              </span>
               <span className="w-2 h-2 rounded-full bg-vermilion animate-pulse"></span>
             </div>
             <div className="font-condensed text-2xl font-extrabold text-vermilion mt-1">{confirmedVulns.length} Verified</div>
@@ -207,11 +212,11 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
         {/* View Mode Switcher Pills */}
         <div className="flex items-center gap-2 border-b border-hairline pb-2.5 flex-wrap">
           {[
-            { id: 'JSON', label: `[ 📄 RAW STIX 2.1 JSON (${objectCount}) ]` },
-            { id: 'VULNERABILITIES', label: `[ ⚡ VULNERABILITY SDOs (${vulnerabilities.length}) ]`, highlight: true },
-            { id: 'INDICATORS', label: `[ 🎯 THREAT INDICATORS (${indicators.length}) ]` },
-            { id: 'MITIGATIONS', label: `[ 🛡️ COURSES OF ACTION (${coursesOfAction.length}) ]` },
-            { id: 'RELATIONSHIPS', label: `[ 🕸️ RELATIONSHIPS (${relationships.length}) ]` },
+            { id: 'JSON', label: `[ RAW STIX 2.1 JSON (${objectCount}) ]`, icon: 'file' },
+            { id: 'VULNERABILITIES', label: `[ VULNERABILITY SDOs (${vulnerabilities.length}) ]`, icon: 'exploit', highlight: true },
+            { id: 'INDICATORS', label: `[ THREAT INDICATORS (${indicators.length}) ]`, icon: 'target' },
+            { id: 'MITIGATIONS', label: `[ COURSES OF ACTION (${coursesOfAction.length}) ]`, icon: 'shield' },
+            { id: 'RELATIONSHIPS', label: `[ RELATIONSHIPS (${relationships.length}) ]`, icon: 'pivot' },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -228,6 +233,7 @@ export const StixView: React.FC<StixViewProps> = ({ onNavigate, showToast }) => 
                     : 'bg-pureWhite text-charcoal border-hairline hover:border-ink hover:text-ink'
                 }`}
               >
+                <DoodleIcon name={tab.icon} className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
               </button>
             );
