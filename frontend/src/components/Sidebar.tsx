@@ -17,17 +17,15 @@ interface NavItem {
   label: string;
 }
 
-// Canonical DRISHTI Operational Engines
+// Canonical DRISHTI Operational Engines (Streamlined Core)
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', index: '01_', label: 'COCKPIT' },
   { id: 'recon', index: '02_', label: 'RECON' },
   { id: 'intel', index: '03_', label: 'INTEL' },
   { id: 'graph', index: '04_', label: 'GRAPH' },
   { id: 'guard', index: '05_', label: 'GUARD' },
-  { id: 'stix', index: '06_', label: 'STIX' },
-  { id: 'reports', index: '07_', label: 'REPORTS' },
-  { id: 'audit', index: '08_', label: 'AUDIT' },
-  { id: 'settings', index: '09_', label: 'CONFIG' },
+  { id: 'reports', index: '06_', label: 'REPORTS' },
+  { id: 'settings', index: '07_', label: 'CONFIG' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({

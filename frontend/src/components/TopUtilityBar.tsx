@@ -190,19 +190,6 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       {/* 3. Right: Telemetry, CLI & Operator Credentials */}
       <div className="flex items-center space-x-2.5 shrink-0 text-xs">
         <button
-          onClick={handleTestPipeline}
-          disabled={testingPipeline}
-          className={`border px-2.5 py-1 font-bold cursor-pointer text-[10px] active:scale-95 transition-all duration-150 flex items-center space-x-1 ${
-            pipelineResult && pipelineResult.includes('OK')
-              ? 'border-signalGreen bg-signalGreenBg text-signalGreen'
-              : 'border-vermilion bg-pureWhite hover:bg-vermilion hover:text-white text-vermilion'
-          }`}
-          title="Run Full End-to-End Pipeline Diagnostic (Karpathy Style)"
-        >
-          <span>{testingPipeline ? '[ TESTING... ]' : (pipelineResult || '[ ⚡ TEST PIPELINE ]')}</span>
-        </button>
-
-        <button
           onClick={onOpenCommandPalette}
           className="border border-hairline bg-boneLight hover:bg-boneDark px-2.5 py-1 text-charcoal hover:text-ink font-semibold cursor-pointer text-[11px] active:scale-95 transition-all duration-150 flex items-center space-x-1"
           title="Press ⌘K or Ctrl+K"

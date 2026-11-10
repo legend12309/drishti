@@ -158,6 +158,29 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
     window.print();
   };
 
+  // Action 5: Export OASIS STIX 2.1 Threat Intelligence Bundle
+  const handleDownloadStix = async () => {
+    const domain = (targetDomain || localStorage.getItem('drishti_target_domain') || 'iiit-bh.ac.in').trim();
+    try {
+      const res = await fetch(`/api/stix/bundle?target=${encodeURIComponent(domain)}`);
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `drishti-stix-bundle-${domain}-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      if (showToast) {
+        showToast('success', 'STIX 2.1 Bundle Downloaded', `Exported OASIS STIX 2.1 payload for ${domain}.`);
+      }
+    } catch (err: any) {
+      if (showToast) {
+        showToast('error', 'STIX Export Failed', err.message || 'STIX compiler error.');
+      }
+    }
+  };
+
   // Extract findings arrays with safe fallbacks
   const confirmedVulns = activeReport?.confirmed_vulnerabilities || [];
   const passiveFindings = activeReport?.passive_recon_findings || [];
@@ -185,16 +208,16 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs print:hidden">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-vermilion font-extrabold text-sm">07 //</span>
+              <span className="text-vermilion font-extrabold text-sm">06 //</span>
               <h1 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
                 TACTICAL ASSESSMENT REPORTS // RECON & VULNERABILITY DOSSIER
               </h1>
               <span className="text-[9px] font-bold px-1.5 py-0.5 border border-hairline bg-boneLight text-charcoal font-mono">
-                PASSIVE + ACTIVE + CONFIRMED BUGS
+                PASSIVE + ACTIVE + CONFIRMED BUGS + STIX 2.1
               </span>
             </div>
             <p className="text-[10px] text-charcoal mt-0.5">
-              Comprehensive security intelligence integrating Stage 1 Passive OSINT, Stage 2 Active Precision Probing, and Confirmed Vulnerability Exploitation vectors.
+              Comprehensive security intelligence integrating Stage 1 Passive OSINT, Stage 2 Active Precision Probing, Confirmed Vulnerability Exploitation vectors, and OASIS STIX 2.1 exports.
             </p>
           </div>
 
@@ -221,6 +244,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
             >
               <DoodleIcon name="spark" className="w-3.5 h-3.5 text-white" />
               <span>{generating ? '[ COMPILING... ]' : '[ ⚡ COMPILE DOSSIER ]'}</span>
+            </button>
+
+            <button
+              onClick={handleDownloadStix}
+              className="bg-pureWhite hover:bg-boneDark border border-signalGreen text-signalGreen px-3 py-1.5 text-xs font-mono font-bold cursor-pointer flex items-center gap-1 shadow-xs"
+              title="Download OASIS STIX 2.1 JSON Threat Intelligence Bundle"
+            >
+              <span>📥</span>
+              <span>[ STIX 2.1 JSON ]</span>
             </button>
 
             <button

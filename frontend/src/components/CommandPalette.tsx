@@ -27,17 +27,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const items: CommandItem[] = [
-    { id: 'nav-dash', category: 'NAVIGATION', title: 'Dashboard', subtitle: 'Overview, composite posture, and scanner telemetry', icon: 'grid_view', tab: 'dashboard' },
-    { id: 'nav-recon', category: 'NAVIGATION', title: 'AutoRecon Security Audit', subtitle: 'Unified assessment engine and DNS authorization', icon: 'radar', tab: 'recon' },
-    { id: 'nav-intel', category: 'NAVIGATION', title: 'Vulnerability Intelligence', subtitle: 'CVE correlation, EPSS probability, and AI advisories', icon: 'security_update_warning', tab: 'intel' },
-    { id: 'nav-graph', category: 'NAVIGATION', title: 'Attack Graph & Topology', subtitle: 'NetworkX topology and Dijkstra shortest attack paths', icon: 'hub', tab: 'graph' },
-    { id: 'nav-guard', category: 'NAVIGATION', title: 'AI Guard & Injection Defense', subtitle: '3-Layer defense evaluation and threat sandbox', icon: 'verified_user', tab: 'guard' },
-    { id: 'nav-stix', category: 'NAVIGATION', title: 'STIX 2.1 Threat Sharing', subtitle: 'Standardized threat bundles, audit reports, and exports', icon: 'description', tab: 'stix' },
-    { id: 'nav-reports', category: 'NAVIGATION', title: 'Reports & Executive Dossier', subtitle: 'Automated executive threat briefing and PDF exports', icon: 'description', tab: 'reports' },
-    { id: 'nav-audit', category: 'NAVIGATION', title: 'Cryptographic Audit Trail', subtitle: 'Immutable SHA-256 hash-chained compliance ledger', icon: 'history', tab: 'audit' },
-    { id: 'nav-settings', category: 'NAVIGATION', title: 'Settings & Providers', subtitle: 'Configure LLM providers and scanner paths', icon: 'tune', tab: 'settings' },
+    { id: 'nav-dash', category: 'NAVIGATION', title: '01 // Cockpit Dashboard', subtitle: 'Overview, composite posture, and scanner telemetry', icon: 'grid_view', tab: 'dashboard' },
+    { id: 'nav-recon', category: 'NAVIGATION', title: '02 // Reconnaissance & OSINT', subtitle: 'Unified assessment engine and DNS authorization', icon: 'radar', tab: 'recon' },
+    { id: 'nav-intel', category: 'NAVIGATION', title: '03 // Vulnerability & Threat Intelligence', subtitle: 'CVE correlation, Metasploit arsenal, and AI copilot', icon: 'security_update_warning', tab: 'intel' },
+    { id: 'nav-graph', category: 'NAVIGATION', title: '04 // Attack Graph & Dijkstra Path', subtitle: 'NetworkX topology and Dijkstra shortest attack paths', icon: 'hub', tab: 'graph' },
+    { id: 'nav-guard', category: 'NAVIGATION', title: '05 // Defense Guard & WAF Shield', subtitle: '3-Layer defense evaluation and threat sandbox', icon: 'verified_user', tab: 'guard' },
+    { id: 'nav-reports', category: 'NAVIGATION', title: '06 // Reports & Dossier', subtitle: 'Automated executive threat briefing, PDF & STIX export', icon: 'description', tab: 'reports' },
+    { id: 'nav-settings', category: 'NAVIGATION', title: '07 // Engine Configuration', subtitle: 'Configure LLM providers and zero-egress boundaries', icon: 'tune', tab: 'settings' },
     { id: 'act-scan', category: 'ACTION', title: 'Start Security Assessment', subtitle: 'Dispatch unified AutoRecon audit', icon: 'play_arrow', tab: 'recon' },
-    { id: 'act-export-stix', category: 'ACTION', title: 'Export STIX 2.1 Threat Bundle', subtitle: 'Download drishti-stix-bundle.json', icon: 'download', tab: 'stix' },
+    { id: 'act-export-stix', category: 'ACTION', title: 'Export STIX 2.1 Threat Bundle', subtitle: 'Download drishti-stix-bundle.json via Reports', icon: 'download', tab: 'reports' },
   ];
 
   const filtered = items.filter(
