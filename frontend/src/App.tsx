@@ -5,6 +5,8 @@ import { TopUtilityBar } from './components/TopUtilityBar';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import { CommandPalette } from './components/CommandPalette';
 import { ProfileModal } from './components/ProfileModal';
+import { AttestationModal } from './components/AttestationModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoginView } from './views/LoginView';
 import { IntroView } from './views/IntroView';
 import { DashboardView } from './views/DashboardView';
@@ -86,6 +88,7 @@ export default function App() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAttestationOpen, setIsAttestationOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -212,6 +215,7 @@ export default function App() {
         target={activeTarget}
         onOpenCommandPalette={() => setIsCommandOpen(true)}
         onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenAttestation={() => setIsAttestationOpen(true)}
         onNavigateToSettings={() => setActiveTab('settings')}
         onCreateScan={() => setActiveTab('recon')}
         onNavigateToIntel={() => setActiveTab('intel')}
@@ -227,73 +231,82 @@ export default function App() {
           onLogout={handleLogout}
         />
 
-        {/* Main Command Workspace View Container */}
+        {/* Main Command Workspace View Container with Error Boundary Shield */}
         <main className="flex-1 flex flex-col bg-bone overflow-hidden min-w-0 min-h-0">
-          {activeTab === 'dashboard' && (
-            <DashboardView
-              health={health}
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'recon' && (
-            <ReconView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'intel' && (
-            <IntelView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'graph' && (
-            <GraphView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'guard' && (
-            <GuardView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'stix' && (
-            <StixView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'reports' && (
-            <ReportsView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'audit' && (
-            <AuditView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'settings' && (
-            <SettingsView
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
-          {activeTab === 'profile' && (
-            <ProfileView
-              operator={operator}
-              onLogout={handleLogout}
-              onNavigate={(tab) => setActiveTab(tab)}
-              showToast={showToast}
-            />
-          )}
+          <ErrorBoundary>
+            {activeTab === 'dashboard' && (
+              <DashboardView
+                health={health}
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'recon' && (
+              <ReconView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'intel' && (
+              <IntelView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'graph' && (
+              <GraphView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'guard' && (
+              <GuardView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'stix' && (
+              <StixView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'reports' && (
+              <ReportsView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'audit' && (
+              <AuditView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'settings' && (
+              <SettingsView
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+            {activeTab === 'profile' && (
+              <ProfileView
+                operator={operator}
+                onLogout={handleLogout}
+                onNavigate={(tab) => setActiveTab(tab)}
+                showToast={showToast}
+              />
+            )}
+          </ErrorBoundary>
         </main>
       </div>
+
+      {/* Enclave Attestation & Intellectual Property Seal Modal */}
+      <AttestationModal
+        isOpen={isAttestationOpen}
+        onClose={() => setIsAttestationOpen(false)}
+        showToast={showToast}
+      />
 
       {/* Quick Profile Drawer / Modal */}
       <ProfileModal

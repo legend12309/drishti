@@ -370,17 +370,18 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   const fetchLatestScan = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/scans?limit=1');
-      if (!res.ok) throw new Error('Failed to fetch latest scan');
+      const savedDomain = (localStorage.getItem('drishti_target_domain') || target || '').trim();
+      const scanUrl = savedDomain ? `/api/scans?limit=1&target=${encodeURIComponent(savedDomain)}` : '/api/scans?limit=1';
+      let res = await fetch(scanUrl);
+      if (!res.ok) res = await fetch('/api/scans?limit=1');
       const data = await res.json();
       if (data.scans && data.scans.length > 0) {
         const latest = data.scans[0];
         setCurrentScanId(latest.id);
         localStorage.setItem(STORAGE_KEY, latest.id);
-        const savedDomain = localStorage.getItem('drishti_target_domain');
-        const t = savedDomain && savedDomain.trim() ? savedDomain.trim() : (latest.target || '');
-        if (savedDomain && savedDomain.trim()) {
-          setTarget(savedDomain.trim());
+        const t = savedDomain || latest.target || '';
+        if (savedDomain) {
+          setTarget(savedDomain);
         } else if (latest.target) {
           setTarget(latest.target);
           localStorage.setItem('drishti_target_domain', latest.target);
@@ -715,7 +716,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-vermilion font-extrabold text-sm">03 //</span>
+              <span className="text-vermilion font-extrabold text-sm">02 //</span>
               <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
                 ATTACK SURFACE DISCOVERY & AUTORECON PIPELINE
               </h1>

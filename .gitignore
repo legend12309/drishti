@@ -33,3 +33,12 @@ frontend/.vite/
 .env.local
 *.log
 assessment_output.json/
+
+# PyInstaller & Distribution Releases
+build/
+dist/
+releases/
+*.zip
+*.spec
+*.exe
+

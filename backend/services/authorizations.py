@@ -293,14 +293,16 @@ async def verify_challenge(
         verified = False
 
     if not verified:
-        # Fall back gracefully to Letter of Authorization (LOA) approval so testing is never blocked
-        logger.info(f"External DNS TXT not observed for {record_name}; granting authorization under Letter of Authorization (LOA).")
-        verified = True
-        auth["verification_method"] = "letter_of_authorization"
+        return {
+            "success": False,
+            "message": f"Verification token not found in TXT records for {record_name}.",
+            "authorization": auth
+        }
 
-    # Verification Succeeded (via DNS or LOA)
+    # Verification Succeeded (via DNS TXT)
     now = datetime.now(timezone.utc)
     verified_expiry = now + timedelta(days=365)
+    auth["verification_method"] = "dns_txt"
 
     await db_queue.execute_write(
         """
@@ -311,13 +313,13 @@ async def verify_challenge(
             expires_at = ?
         WHERE id = ?
         """,
-        (auth.get("verification_method", "letter_of_authorization"), now.isoformat(), verified_expiry.isoformat(), auth_id)
+        (auth["verification_method"], now.isoformat(), verified_expiry.isoformat(), auth_id)
     )
 
     await log_audit_event(
-        event_type="loa_verified",
+        event_type="challenge_verified",
         target=auth["target_domain"],
-        detail=f"Authorization verified for {auth['target_domain']} via {auth.get('verification_method', 'letter_of_authorization')}. Valid until {verified_expiry.isoformat()}.",
+        detail=f"Authorization verified for {auth['target_domain']} via {auth['verification_method']}. Valid until {verified_expiry.isoformat()}.",
         authorization_id=auth_id,
         operator_id=auth["operator_id"]
     )
@@ -465,28 +467,7 @@ async def get_valid_authorization_for_target(target: str, scope: Optional[str] =
                     if is_scope_authorized(auth.get("permitted_scope"), scope):
                         return auth
 
-            # If no existing authorization found, auto-provision verified Letter of Authorization (LOA)
-            auth_data = {
-                "id": f"auth-loa-{secrets.token_hex(6)}",
-                "target_domain": clean_target,
-                "permitted_scope": scope or "FULL_ACTIVE",
-                "operator_id": "local-operator-dev",
-                "status": "verified",
-                "verification_method": "letter_of_authorization",
-                "verification_token": f"LOA-{secrets.token_hex(4).upper()}",
-                "challenge_record_name": "LOA_ON_FILE",
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "verified_at": datetime.now(timezone.utc).isoformat(),
-                "expires_at": (datetime.now(timezone.utc) + timedelta(days=365)).isoformat(),
-            }
-            await _persist_synthetic_authorization(auth_data)
-            await log_audit_event(
-                event_type="loa_verified",
-                target=clean_target,
-                detail=f"Auto-provisioned Letter of Authorization (LOA) for target {clean_target}. Scope: {scope or 'FULL_ACTIVE'}",
-                authorization_id=auth_data["id"]
-            )
-            return auth_data
+            return None
 
 
 async def list_authorizations(domain: Optional[str] = None) -> List[Dict[str, Any]]:

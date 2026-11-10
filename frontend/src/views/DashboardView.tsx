@@ -18,7 +18,7 @@ interface TelemetryLog {
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate, showToast }) => {
-  const [targetDomain, setTargetDomain] = useState<string>(() => localStorage.getItem('drishti_target_domain') || 'vvdx.in');
+  const [targetDomain, setTargetDomain] = useState<string>(() => localStorage.getItem('drishti_target_domain') || 'iiit-bh.ac.in');
   const [activeDefenseLayer, setActiveDefenseLayer] = useState<'CF' | 'NGINX' | 'IPTABLES' | 'PATCH'>('CF');
   const [selectedCve, setSelectedCve] = useState<string>('CVE-2024-4577');
 

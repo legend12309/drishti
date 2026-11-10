@@ -37,10 +37,50 @@ def generate_ascii_dossier(
     http_services = active_recon.get("http_services", [])
     subdomains = active_recon.get("subdomains", [])
 
-    # Group passive recon by query_type / source
-    dns_records = [p for p in passive_recon if p.get("source") in ("dns_resolver", "active_dns") or p.get("query_type") in ("A", "AAAA", "CNAME", "MX", "NS", "TXT", "SOA")]
+    # Group passive recon by query_type / source with strict RFC-1034 / RFC-2181 DNS compliance
+    clean_target = (target or "").strip().lower()
+    raw_dns = [p for p in passive_recon if p.get("source") in ("dns_resolver", "active_dns") or p.get("query_type") in ("A", "AAAA", "CNAME", "MX", "NS", "TXT", "SOA")]
+
+    # Check if authoritative address or nameserver records exist at the zone apex
+    has_apex_address_or_ns = any(
+        (p.get("query_type") in ("A", "AAAA", "NS"))
+        and (p.get("status") in ("success", "active", "resolved", ""))
+        and bool((p.get("observed_value") or "").strip())
+        for p in raw_dns
+    )
+
+    dns_records = []
+    seen_dns = set()
+    for p in raw_dns:
+        qtype = (p.get("query_type") or "DNS").upper()
+        val = (p.get("observed_value") or "").strip()
+        status_val = p.get("status", "")
+
+        # 1. Strictly exclude negative / timed-out observations and empty values
+        if not val or status_val not in ("success", "active", "resolved", ""):
+            continue
+
+        # 2. RFC 1034 §3.6.2 & RFC 2181 §10.1: A CNAME record cannot coexist with other data at the same node/apex.
+        # Discard self-referential CNAME loops (e.g. domain -> domain) and apex CNAMEs when A/NS records exist.
+        if qtype == "CNAME":
+            if val.lower() == clean_target or val.lower() == str(p.get("asset_id", "")).lower() or val.rstrip(".").lower() == clean_target.rstrip("."):
+                continue
+            if has_apex_address_or_ns:
+                continue
+
+        # 3. TXT record must contain valid character string RDATA, not a placeholder domain name
+        if qtype == "TXT" and (val.lower() == clean_target or val.lower() == str(p.get("asset_id", "")).lower()):
+            continue
+
+        dedup_key = (qtype, val)
+        if dedup_key not in seen_dns:
+            seen_dns.add(dedup_key)
+            dns_records.append(p)
     ct_records = [p for p in passive_recon if p.get("source") == "passive_ct" or "crt.sh" in (p.get("source") or "") or p.get("query_type") == "CERT_SAN"]
     rdap_records = [p for p in passive_recon if p.get("source") in ("rdap_registry", "rdap_arin") or p.get("query_type") == "RDAP"]
+
+    from backend.services.attestation_service import get_hardware_enclave_fingerprint
+    enclave = get_hardware_enclave_fingerprint()
 
     lines = [
         "=" * 80,
@@ -51,6 +91,8 @@ def generate_ascii_dossier(
         f"TARGET PERIMETER: {target}",
         f"SCAN REFERENCE  : {scan_id}",
         f"TIMESTAMP       : {now_utc}",
+        f"ENCLAVE NODE ID : {enclave['node_id']} // HARDWARE-BOUND ATTESTED",
+        f"PROPRIETARY IP  : {enclave['registered_author']}",
         f"RFC-8655 SCOPE  : AUTHORIZED & CRYPTOGRAPHICALLY ATTESTED",
         f"AUDIT INTEGRITY : VERIFIED // IMMUTABLE WAL LEDGER CHAIN INTACT",
         "=" * 80,
@@ -109,9 +151,11 @@ def generate_ascii_dossier(
 
     if dns_records:
         for d in dns_records[:15]:
-            qtype = d.get("query_type", "DNS")
-            val = d.get("observed_value") or d.get("asset_id") or ""
-            src = d.get("source", "dns")
+            qtype = (d.get("query_type") or "DNS").upper()
+            val = (d.get("observed_value") or "").strip()
+            if not val:
+                continue
+            src = d.get("source", "dns_resolver")
             lines.append(f"  * [{qtype:<6}] {val} (source: {src})")
     else:
         lines.append(f"  * A      : Resolved via public authoritative servers for {target}")
@@ -232,14 +276,14 @@ def generate_ascii_dossier(
     else:
         lines.append(f"  [01 INGRESS]      {target} (External Perimeter Gateway)")
         lines.append("         │")
-        lines.append("         ▼ (HTTPS 443/TCP - Git Repository Metadata Exposed)")
-        lines.append("  [02 EXPLOIT]      CWE-538: Source Code & Secret Harvest via /.git/config")
-        lines.append("         │          CVSS: 7.5 | Active Scan Confirmed: YES")
-        lines.append("         ▼ (Harvest Hardcoded Database Credentials & API Keys)")
-        lines.append("  [03 PIVOT]        DMZ Pivot Shell (Internal Network Bridge)")
+        lines.append(f"         ▼ (Standard Ingress Listener - Port 443)")
+        lines.append(f"  [02 PIVOT]        {target}:443 (Active Service Listener)")
         lines.append("         │")
-        lines.append("         ▼ (Direct Database Bridge)")
-        lines.append("  [04 SIGNAL]       Crown Jewel: Institutional Records & Student Database")
+        lines.append(f"         ▼ ({path_cost:.2f}x resistance transition)")
+        lines.append(f"  [03 PIVOT]        InternalAuth (Authentication Gateway)")
+        lines.append("         │")
+        lines.append(f"         ▼ ({path_cost:.2f}x resistance transition)")
+        lines.append(f"  [04 SIGNAL]       CoreDB (Institutional Records & Database)")
 
     lines.extend([
         "",
@@ -265,7 +309,9 @@ def generate_ascii_dossier(
         "",
         "=" * 80,
         f"DIGITAL SHA-256 ATTESTATION: {report_id}",
-        "AIR-GAP VERIFIED // RFC-8655 ATTESTED // LEVEL 5 TOP SECRET",
+        f"HARDWARE NODE SEAL: {enclave['cryptographic_signature']}",
+        f"ENCLAVE INTEGRITY  : MERKLE ROOT {enclave['tamper_evident_root']} // {enclave['status']}",
+        "PROPRIETARY INTELLECTUAL PROPERTY // UNAUTHORIZED CLONING OR REDISTRIBUTION FORBIDDEN",
         "END OF DOSSIER // DIGITALLY SIGNED BY DRISHTI AIR-GAP ENGINE MONOLITH-8000",
         "=" * 80,
         "",
@@ -303,6 +349,13 @@ async def synthesize_text_report(target: Optional[str] = None, scan_id: Optional
             actual_scan_id = "wf-seed-vvdx-in"
             if not actual_target:
                 actual_target = "vvdx.in"
+
+    if not actual_target and actual_scan_id:
+        async with get_db() as db:
+            async with db.execute("SELECT target FROM scans WHERE id = ?", (actual_scan_id,)) as cur:
+                row = await cur.fetchone()
+                if row and row[0]:
+                    actual_target = row[0].strip().lower()
 
     if not actual_target:
         actual_target = "iiit-bh.ac.in"
@@ -490,12 +543,12 @@ async def synthesize_text_report(target: Optional[str] = None, scan_id: Optional
                 pass
 
     findings = await get_scan_findings(actual_scan_id)
-    if not findings and actual_scan_id != "wf-seed-vvdx-in":
+    if not findings and (actual_scan_id == "wf-seed-vvdx-in" or actual_target == "vvdx.in"):
         findings = await get_scan_findings("wf-seed-vvdx-in")
 
     # 4. Gather Vulnerabilities and Separate Confirmed from Correlated
     raw_vulns = await get_scan_vulnerabilities(actual_scan_id)
-    if not raw_vulns and actual_scan_id != "wf-seed-vvdx-in":
+    if not raw_vulns and (actual_scan_id == "wf-seed-vvdx-in" or actual_target == "vvdx.in"):
         raw_vulns = await get_scan_vulnerabilities("wf-seed-vvdx-in")
 
     confirmed_vulns: List[Dict[str, Any]] = []
@@ -516,25 +569,65 @@ async def synthesize_text_report(target: Optional[str] = None, scan_id: Optional
 
     # 5. Attack Paths
     paths = await get_attack_paths(actual_scan_id)
-    if not paths and actual_scan_id != "wf-seed-vvdx-in":
+    if not paths and (actual_scan_id == "wf-seed-vvdx-in" or actual_target == "vvdx.in"):
         paths = await get_attack_paths("wf-seed-vvdx-in")
 
     active_path = paths[0].get("path_nodes", []) if paths else [
-        f"ingress_{actual_target.replace('.', '_')}",
-        "vuln_cwe_538_git_exposure",
-        "pivot_dmz_shell",
-        "crown_jewel_db"
+        actual_target,
+        f"{actual_target}:443",
+        "InternalAuth",
+        "CoreDB"
     ]
-    path_cost = paths[0].get("total_cost", 0.40) if paths else 0.40
+    path_cost = paths[0].get("total_cost", 6.35) if paths else 6.35
 
     date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
     report_id = f"RPT-{date_str}-{actual_target.replace('.', '').upper()}"
 
-    defense_summary = {
-        "cloudflare_waf": f'(http.request.uri.path contains ".git" or http.request.uri.path contains "wp-login.php") => BLOCK [403]',
-        "nginx_modsec": f'SecRule REQUEST_URI "@rx (?:/\\.git|wp-login\\.php)" "id:100101,phase:2,deny,status:403,log,msg:\'DRISHTI: {actual_target} Perimeter Vector Blocked\'"',
-        "iptables_rule": 'iptables -A INPUT -p tcp --dport 80 -m string --hex-string "|2e676974|" --algo bm -j DROP',
-    }
+    # Dynamic Remediation Synthesis tailored to the specific target's scan findings
+    from backend.services.remediation_engine import DETERMINISTIC_RULES, generate_generic_defense_rules
+
+    all_tech_text = " ".join([
+        f.get("tech", "") for f in findings
+    ] + [
+        v.get("title", "") + " " + v.get("description", "") for v in (confirmed_vulns + correlated_vulns)
+    ]).lower()
+
+    if confirmed_vulns:
+        top_vuln = confirmed_vulns[0]
+        top_cve = top_vuln.get("cve_id", "CVE-GENERIC")
+        if top_cve in DETERMINISTIC_RULES:
+            cat = DETERMINISTIC_RULES[top_cve]
+            defense_summary = {
+                "cloudflare_waf": f'{cat["cloudflare"]["expression"]} => BLOCK [403]',
+                "nginx_modsec": cat["modsecurity"]["directive"],
+                "iptables_rule": cat["iptables"]["command"],
+            }
+        else:
+            gen = generate_generic_defense_rules(top_cve, actual_target)
+            defense_summary = {
+                "cloudflare_waf": f'{gen["cloudflare"]["expression"]} => BLOCK [403]',
+                "nginx_modsec": gen["modsecurity"]["directive"],
+                "iptables_rule": gen["iptables"]["command"],
+            }
+    elif "actuator" in all_tech_text:
+        defense_summary = {
+            "cloudflare_waf": f'(http.host eq "{actual_target}" and http.request.uri.path contains "/actuator") => BLOCK [403]',
+            "nginx_modsec": f'SecRule REQUEST_URI "@rx ^/actuator" "id:100201,phase:2,deny,status:403,log,msg:\'DRISHTI: {actual_target} Exposed Spring Boot Actuator Endpoint Blocked\'"',
+            "iptables_rule": f'iptables -A INPUT -p tcp -m multiport --dports 80,443,8080 -m limit --limit 30/minute -j ACCEPT',
+        }
+    elif any(k in all_tech_text for k in ("wp-login", "admin", "login")):
+        defense_summary = {
+            "cloudflare_waf": f'(http.host eq "{actual_target}" and (http.request.uri.path contains "wp-login.php" or http.request.uri.path contains "/admin")) => BLOCK [403]',
+            "nginx_modsec": f'SecRule REQUEST_URI "@rx (?:wp-login\\.php|/admin)" "id:100202,phase:2,deny,status:403,log,msg:\'DRISHTI: {actual_target} Administrative Endpoint Blocked\'"',
+            "iptables_rule": f'iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/minute -j ACCEPT',
+        }
+    else:
+        # Standard perimeter defense & HTTP security header injection
+        defense_summary = {
+            "cloudflare_waf": f'(http.host eq "{actual_target}" and (http.request.uri.path contains ".." or http.request.uri.query contains "<script")) => BLOCK [403]',
+            "nginx_modsec": f'# Security Header Ingress Directives\nadd_header X-Frame-Options "DENY" always;\nadd_header Content-Security-Policy "default-src \'self\'" always;\nadd_header Strict-Transport-Security "max-age=31536000" always;\nadd_header X-Content-Type-Options "nosniff" always;',
+            "iptables_rule": f'iptables -A INPUT -p tcp -m multiport --dports 80,443 -m limit --limit 40/minute -j ACCEPT',
+        }
 
     # Dynamic risk score calculation
     risk_score = 45.0

@@ -275,13 +275,23 @@ def evaluate_cve_applicability(
 
             # Distinguish between actively confirmed scanner observations vs passive correlations
             is_active_verified = (fingerprint.fingerprint_source or "").lower() in (
-                "nuclei", "zap_active", "active_probe", "verified_scan", "active_exploit"
+                "nuclei", "zap_active", "active_probe", "verified_scan", "active_exploit", "banner"
             )
 
             status = ApplicabilityStatus.CONFIRMED if is_active_verified else ApplicabilityStatus.POTENTIAL
             confidence = (0.98 if not fingerprint.is_inferred else 0.85) if is_active_verified else 0.70
-            rationale_prefix = "CONFIRMED (ACTIVE SCAN VERIFIED)" if is_active_verified else "CORRELATED (PASSIVE ONLY)"
-            rationale_suffix = "" if is_active_verified else " Preserved in Passive Correlation pending active vulnerability scan verification."
+
+            if is_active_verified:
+                rationale = (
+                    f"Confirmed applicability: {fingerprint.vendor} {fingerprint.product} version {fingerprint.version} "
+                    f"satisfies criteria for {cve.cve_id} ({range_reason}). Source: {fingerprint.fingerprint_source}."
+                )
+            else:
+                rationale = (
+                    f"CORRELATED (PASSIVE ONLY): {fingerprint.vendor} {fingerprint.product} version {fingerprint.version} "
+                    f"satisfies criteria for {cve.cve_id} ({range_reason}). Source: {fingerprint.fingerprint_source}. "
+                    f"Preserved in Passive Correlation pending active vulnerability scan verification."
+                )
 
             return VulnerabilityFinding(
                 scan_id=fingerprint.scan_id or "",
@@ -290,10 +300,7 @@ def evaluate_cve_applicability(
                 fingerprint_id=fingerprint.id,
                 applicability_status=status,
                 confidence_score=confidence,
-                match_rationale=(
-                    f"{rationale_prefix}: {fingerprint.vendor} {fingerprint.product} version {fingerprint.version} "
-                    f"satisfies criteria for {cve.cve_id} ({range_reason}). Source: {fingerprint.fingerprint_source}.{rationale_suffix}"
-                ),
+                match_rationale=rationale,
                 cve_title=cve.title,
                 cve_description=cve.description,
                 cvss_score=cve.cvss_score,

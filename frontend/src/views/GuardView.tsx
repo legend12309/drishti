@@ -152,7 +152,7 @@ export const GuardView: React.FC<GuardViewProps> = ({ onNavigate, showToast }) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-signalGreen font-extrabold text-sm">06 //</span>
+              <span className="text-signalGreen font-extrabold text-sm">05 //</span>
               <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
                 AI PROMPT GUARD & ADVERSARIAL DEFENSE SHIELD
               </h1>

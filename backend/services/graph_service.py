@@ -140,6 +140,9 @@ async def get_attack_paths(scan_id: str, target_node: Optional[str] = None) -> L
     if target_node:
         query += " AND target_node = ?"
         params.append(target_node)
+    else:
+        # Exclude intermediate lateral pivot paths so callers receive complete Crown Jewel objectives
+        query += " AND target_node != 'InternalAuth'"
     query += " ORDER BY priority_score DESC, total_cost ASC"
 
     async with get_db() as db:

@@ -307,15 +307,16 @@ class AttackGraphBuilder:
         ]
 
         for ct in targets_to_add:
+            is_pivot = ct["id"] == "InternalAuth"
             ct_node = GraphNode(
                 id=ct["id"],
                 label=ct["label"],
-                node_type=NodeType.CRITICAL_TARGET,
+                node_type=NodeType.PIVOT if is_pivot else NodeType.CRITICAL_TARGET,
                 provenance=ProvenanceClassification.DERIVED,
-                risk_score=9.5,
+                risk_score=8.5 if is_pivot else 9.5,
                 criticality=ct["criticality"],
                 confidence=0.85,
-                metadata={"description": ct["desc"], "is_target_objective": True},
+                metadata={"description": ct["desc"], "is_target_objective": not is_pivot},
             )
             self.add_node(ct_node)
 

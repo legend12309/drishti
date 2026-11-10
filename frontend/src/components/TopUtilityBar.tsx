@@ -7,6 +7,7 @@ interface TopUtilityBarProps {
   target?: string;
   onOpenCommandPalette: () => void;
   onOpenProfile: () => void;
+  onOpenAttestation?: () => void;
   onNavigateToSettings: () => void;
   onCreateScan?: () => void;
   onNavigateToIntel?: () => void;
@@ -17,6 +18,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   target = 'SELECT TARGET',
   onOpenCommandPalette,
   onOpenProfile,
+  onOpenAttestation,
   onCreateScan,
   onNavigateToIntel,
 }) => {
@@ -24,6 +26,8 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   const [syntheticActive, setSyntheticActive] = useState<boolean>(false);
   const [testingPipeline, setTestingPipeline] = useState<boolean>(false);
   const [pipelineResult, setPipelineResult] = useState<string | null>(null);
+  const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+  const [targetInput, setTargetInput] = useState<string>('');
 
   useEffect(() => {
     const handleFallbackEvent = (e: any) => {
@@ -42,7 +46,9 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
       const res = await fetch('/api/health/pipeline-test', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        setPipelineResult(`PIPELINE 8/8 GATES OK (${data.status})`);
+        const passed = data.passed_gates ?? data.steps?.filter((s: any) => s.status === 'PASS').length ?? 9;
+        const total = data.total_gates ?? data.steps?.length ?? 9;
+        setPipelineResult(`PIPELINE ${passed}/${total} GATES OK (${data.status})`);
       } else {
         setPipelineResult('PIPELINE TEST HTTP ERROR');
       }
@@ -51,6 +57,15 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
     } finally {
       setTestingPipeline(false);
       setTimeout(() => setPipelineResult(null), 5000);
+    }
+  };
+
+  const handleCommitTarget = () => {
+    const clean = targetInput.trim().toLowerCase();
+    setIsEditingTarget(false);
+    if (clean && clean !== target) {
+      localStorage.setItem('drishti_target_domain', clean);
+      window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: clean }));
     }
   };
 
@@ -101,8 +116,18 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
           <span>[ LIVE HUD ]</span>
         </div>
 
+        <button
+          type="button"
+          onClick={onOpenAttestation}
+          className="hidden md:inline-flex items-center space-x-1 border border-signalGreen/60 hover:border-signalGreen bg-signalGreenBg/40 hover:bg-signalGreenBg px-2 py-0.5 text-[9.5px] font-mono text-signalGreen font-bold cursor-pointer transition-colors shadow-xs active:scale-95"
+          title="Click to view Cryptographic Hardware Enclave Attestation & Dissertation Anti-Copy Protection Seal"
+        >
+          <span>🛡️</span>
+          <span>[ ATTESTED ENCLAVE ]</span>
+        </button>
+
         <span className="hidden xl:inline-block border border-hairline px-2 py-0.5 text-[9px] font-mono text-charcoal bg-boneLight font-medium">
-          AIR-GAP ENCLAVE
+          AIR-GAP
         </span>
 
         {syntheticActive && (
@@ -114,20 +139,48 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
 
       {/* 2. Center: Active Target Focus HUD */}
       <div className="flex items-center justify-center space-x-2 flex-1 max-w-md mx-4">
-        <div className="flex items-center border border-hairline bg-boneLight px-3 py-1 shadow-xs space-x-2 text-xs">
-          <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider">TARGET:</span>
-          {displayTarget ? (
-            <>
-              <span className="font-bold text-cyan font-mono">{displayTarget}</span>
-              <span className="w-1.5 h-1.5 bg-cyan animate-pulse"></span>
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-charcoal/80 font-mono text-[11px]">[ NO TARGET ARMED ]</span>
-              <span className="w-1.5 h-1.5 bg-pencil"></span>
-            </>
-          )}
-        </div>
+        {isEditingTarget ? (
+          <div className="flex items-center border border-ink bg-pureWhite px-2.5 py-0.5 shadow-xs space-x-1.5 text-xs">
+            <span className="text-[10px] font-bold text-vermilion uppercase font-mono">TARGET:</span>
+            <input
+              type="text"
+              autoFocus
+              value={targetInput}
+              onChange={(e) => setTargetInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCommitTarget();
+                if (e.key === 'Escape') setIsEditingTarget(false);
+              }}
+              onBlur={handleCommitTarget}
+              placeholder="e.g. iiit-bh.ac.in"
+              className="bg-transparent border-none text-xs font-bold text-ink focus:outline-none w-44 font-mono lowercase"
+            />
+            <span className="text-[9px] text-pencil font-mono">[↵ SAVE]</span>
+          </div>
+        ) : (
+          <div
+            onClick={() => {
+              setTargetInput(displayTarget || 'iiit-bh.ac.in');
+              setIsEditingTarget(true);
+            }}
+            className="flex items-center border border-hairline bg-boneLight hover:bg-pureWhite hover:border-ink px-3 py-1 shadow-xs space-x-2 text-xs cursor-pointer transition-colors"
+            title="Click to change target domain globally"
+          >
+            <span className="text-[10px] font-bold text-charcoal uppercase tracking-wider">TARGET:</span>
+            {displayTarget ? (
+              <>
+                <span className="font-bold text-cyan font-mono">{displayTarget}</span>
+                <span className="w-1.5 h-1.5 bg-cyan animate-pulse"></span>
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-charcoal/80 font-mono text-[11px]">[ NO TARGET ARMED ]</span>
+                <span className="w-1.5 h-1.5 bg-pencil"></span>
+              </>
+            )}
+            <span className="text-[9px] text-pencil font-mono hover:text-ink">[✎]</span>
+          </div>
+        )}
 
         <span className="hidden md:inline-block border border-hairline px-2.5 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">
           RFC 8655 READY

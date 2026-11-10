@@ -292,7 +292,10 @@ async def test_workflow_cancellation():
     # Use a subdomain of company.com which is in SANDBOX_ALLOWLIST
     clean_target = f"test-{uuid.uuid4().hex[:8]}.company.com"
 
-    with patch.object(scanner_registry.get_adapter("httpx"), "check_availability") as m_h:
+    from backend.services.scanner_registry import ScannerCapability
+    fake_cap = ScannerCapability(scanner_id="httpx", display_name="httpx", is_available=True, version="1.6.8", supported_target_types=[], supported_profiles=[])
+    with patch.object(scanner_registry, "get_capability", return_value=fake_cap), \
+         patch.object(scanner_registry.get_adapter("httpx"), "check_availability") as m_h:
         m_h.return_value = ScannerHealth("ProjectDiscovery httpx", True, "1.6.8")
 
         # Slow execution mock

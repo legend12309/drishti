@@ -111,3 +111,35 @@ async def executive_brief_endpoint(payload: ExecutiveBriefRequest):
         target_domain=payload.target_domain,
         provider_override=payload.provider_override,
     )
+
+
+class SetApiKeyRequest(BaseModel):
+    provider: str
+    api_key: str
+
+
+@router.post("/set-key")
+async def set_provider_api_key(payload: SetApiKeyRequest):
+    """Dynamically updates an AI provider's API key for live cloud reasoning."""
+    import os
+    p_lower = payload.provider.lower().strip()
+    key = payload.api_key.strip()
+    if p_lower == "gemini":
+        os.environ["GEMINI_API_KEY"] = key
+    elif p_lower == "groq":
+        os.environ["GROQ_API_KEY"] = key
+    elif p_lower == "nvidia":
+        os.environ["NVIDIA_API_KEY"] = key
+    elif p_lower in ("huggingface", "hf"):
+        os.environ["HUGGINGFACE_API_KEY"] = key
+        os.environ["HF_TOKEN"] = key
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported provider: {payload.provider}")
+
+    is_live = bool(key and "test" not in key.lower())
+    return {
+        "status": "success",
+        "provider": p_lower,
+        "is_live": is_live,
+        "message": f"{p_lower.upper()} API key successfully updated." if is_live else f"{p_lower.upper()} reset to offline mode."
+    }

@@ -52,7 +52,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-vermilion font-extrabold text-sm">11 //</span>
+              <span className="text-vermilion font-extrabold text-sm">10 //</span>
               <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
                 OPERATOR IDENTITY & CLEARANCE CREDENTIALS
               </h1>

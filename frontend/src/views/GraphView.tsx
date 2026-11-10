@@ -191,14 +191,57 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       const osint = osintSources[index % osintSources.length];
 
       // Prepend OSINT source if not present, and preserve all actual traversal nodes
-      const fullPathNodes = pNodes.length > 0 && pNodes[0].includes('(') && (pNodes[0].includes('crt.sh') || pNodes[0].includes('DoH') || pNodes[0].includes('RDAP'))
+      let fullPathNodes = pNodes.length > 0 && pNodes[0].includes('(') && (pNodes[0].includes('crt.sh') || pNodes[0].includes('DoH') || pNodes[0].includes('RDAP'))
         ? [...pNodes]
         : [osint.label, ...pNodes];
 
+      // Ensure path terminates in a true Crown Jewel (Stage 06) and doesn't halt early at an intermediate pivot
+      const lastNodeRaw = fullPathNodes[fullPathNodes.length - 1] || '';
+      const isKnownCrown =
+        lastNodeRaw === 'CoreDB' ||
+        lastNodeRaw === 'PaymentGateway' ||
+        lastNodeRaw === 'CrownVault' ||
+        lastNodeRaw.toLowerCase().includes('coredb') ||
+        lastNodeRaw.toLowerCase().includes('vault');
+
+      if (!isKnownCrown) {
+        if (
+          lastNodeRaw.toLowerCase().includes('auth') ||
+          lastNodeRaw.toLowerCase().includes('proxy') ||
+          lastNodeRaw.toLowerCase().includes('ssh') ||
+          lastNodeRaw.toLowerCase().includes('bastion') ||
+          lastNodeRaw.toLowerCase().includes('pivot')
+        ) {
+          // Pivot is already at the end, chain forward to the Crown Jewel
+          const targetCrown = index === 1 ? 'PaymentGateway' : index === 2 ? 'CrownVault' : 'CoreDB';
+          fullPathNodes.push(targetCrown);
+        } else {
+          // Both pivot and crown jewel needed
+          const pivotTarget = index === 1 ? 'NginxReverseProxy' : index === 2 ? 'DevOpsBastionSSH' : 'InternalAuth';
+          const targetCrown = index === 1 ? 'PaymentGateway' : index === 2 ? 'CrownVault' : 'CoreDB';
+          fullPathNodes.push(pivotTarget);
+          fullPathNodes.push(targetCrown);
+        }
+      }
+
+      // Ensure Lateral Pivot stage (Stage 05) is present before the Crown Jewel
+      const hasPivotNode = fullPathNodes.some(
+        (n) =>
+          n.toLowerCase().includes('auth') ||
+          n.toLowerCase().includes('proxy') ||
+          n.toLowerCase().includes('ssh') ||
+          n.toLowerCase().includes('bastion') ||
+          n.toLowerCase().includes('pivot')
+      );
+      if (!hasPivotNode && fullPathNodes.length >= 2) {
+        const pivotTarget = index === 1 ? 'NginxReverseProxy' : index === 2 ? 'DevOpsBastionSSH' : 'InternalAuth';
+        fullPathNodes.splice(fullPathNodes.length - 1, 0, pivotTarget);
+      }
+
       // Identify key markers for summary & metadata
-      const cveNode = fullPathNodes.find((n) => n.toUpperCase().includes('CVE-') || n.toUpperCase().includes('CWE-') || n.toUpperCase().includes('ALERT')) || 'CVE-2024-4577';
+      const cveNode = fullPathNodes.find((n) => n.toUpperCase().includes('CVE-') || n.toUpperCase().includes('CWE-') || n.toUpperCase().includes('ALERT') || n.toLowerCase().includes('finding-')) || 'CVE-2024-4577';
       const serviceNode = fullPathNodes.find((n) => n.includes(':')) || `${domain}:443`;
-      const pivotNode = fullPathNodes.find((n) => n.toLowerCase().includes('auth') || n.toLowerCase().includes('proxy') || n.toLowerCase().includes('ssh')) || 'InternalAuth';
+      const pivotNode = fullPathNodes.find((n) => n.toLowerCase().includes('auth') || n.toLowerCase().includes('proxy') || n.toLowerCase().includes('ssh') || n.toLowerCase().includes('bastion')) || 'InternalAuth';
       const crownNode = fullPathNodes[fullPathNodes.length - 1] || 'CoreDB';
 
       const costVal = Number((rawPath.total_cost ?? rawPath.cumulative_cost ?? (index === 0 ? 0.40 : index === 1 ? 1.15 : 2.45)).toFixed(2));
@@ -219,7 +262,27 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             doodle: 'osint',
           };
         }
-        if (nid === crownNode || k === fullPathNodes.length - 1) {
+        // Lateral Pivot (Stage 5) must be checked before Crown Jewel
+        if (
+          nid.toLowerCase().includes('auth') ||
+          nid.toLowerCase().includes('proxy') ||
+          nid.toLowerCase().includes('ssh') ||
+          nid.toLowerCase().includes('bastion') ||
+          nid.toLowerCase().includes('pivot')
+        ) {
+          return {
+            stage: '5. Pivot',
+            stageIndex: 4,
+            stageName: 'LATERAL PIVOT',
+            label: nid,
+            desc: 'Internal privilege & credential pivot',
+            nodeId: nid,
+            mitreTechnique: 'T1078',
+            badgeColor: '#4F46E5',
+            doodle: 'pivot',
+          };
+        }
+        if (nid === crownNode || k === fullPathNodes.length - 1 || nid === 'CoreDB' || nid === 'PaymentGateway' || nid === 'CrownVault') {
           return {
             stage: '6. Crown Jewel',
             stageIndex: 5,
@@ -232,11 +295,11 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             doodle: 'crown',
           };
         }
-        if (nid.toUpperCase().includes('CVE-') || nid.toUpperCase().includes('CWE-') || nid.toUpperCase().includes('ALERT')) {
+        if (nid.toUpperCase().includes('CVE-') || nid.toUpperCase().includes('CWE-') || nid.toUpperCase().includes('ALERT') || nid.toLowerCase().includes('finding-') || nid.toLowerCase().includes('vuln')) {
           return {
             stage: '4. Exploit',
             stageIndex: 3,
-            stageName: 'VULNERABILITY',
+            stageName: 'EXPLOIT',
             label: nid.split(' ')[0],
             desc: 'Weaponized exploit payload',
             nodeId: nid,
@@ -256,19 +319,6 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
             mitreTechnique: 'T1046',
             badgeColor: '#0284C7',
             doodle: 'service',
-          };
-        }
-        if (nid.toLowerCase().includes('auth') || nid.toLowerCase().includes('proxy') || nid.toLowerCase().includes('ssh')) {
-          return {
-            stage: '5. Pivot',
-            stageIndex: 4,
-            stageName: 'LATERAL MOVEMENT',
-            label: nid,
-            desc: 'Internal privilege & credential pivot',
-            nodeId: nid,
-            mitreTechnique: 'T1078',
-            badgeColor: '#4F46E5',
-            doodle: 'pivot',
           };
         }
         return {
@@ -434,19 +484,19 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     // Ensure all nodes from the Top 3 routes exist in nodeMap with precise classification
     topThreeRoutes.forEach((route) => {
       route.steps.forEach((step) => {
-        if (!nodeMap.has(step.nodeId)) {
-          nodeMap.set(step.nodeId, {
-            id: step.nodeId,
-            label: step.label,
-            node_type:
-              step.stageIndex === 0 ? 'osint' :
-              step.stageIndex === 1 ? 'domain' :
-              step.stageIndex === 2 ? 'service' :
-              step.stageIndex === 3 ? 'vulnerability' :
-              step.stageIndex === 4 ? 'pivot' : 'target',
-            risk_score: step.stageIndex === 3 ? 9.8 : step.stageIndex === 5 ? 10.0 : step.stageIndex === 0 ? 1.0 : 4.5,
-          });
-        }
+        const existing = nodeMap.get(step.nodeId);
+        nodeMap.set(step.nodeId, {
+          ...(existing || {}),
+          id: step.nodeId,
+          label: step.label,
+          node_type:
+            step.stageIndex === 0 ? 'osint' :
+            step.stageIndex === 1 ? 'domain' :
+            step.stageIndex === 2 ? 'service' :
+            step.stageIndex === 3 ? 'vulnerability' :
+            step.stageIndex === 4 ? 'pivot' : 'target',
+          risk_score: step.stageIndex === 3 ? 9.8 : step.stageIndex === 5 ? 10.0 : step.stageIndex === 0 ? 1.0 : step.stageIndex === 4 ? 8.5 : 4.5,
+        });
       });
 
       // Ensure consecutive path edges exist
@@ -478,40 +528,115 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       const idLower = (node.id || '').toLowerCase();
       const typeLower = (node.node_type || node.type || '').toLowerCase();
 
-      if (idLower === 'coredb' || idLower === 'paymentgateway' || idLower === 'crownvault' || typeLower === 'target' || typeLower === 'critical_target' || idLower.includes('db') || idLower.includes('vault')) {
-        col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#0D7B38', doodle: 'crown' });
-      } else if (idLower === 'internalauth' || idLower === 'nginxreverseproxy' || idLower === 'devopsbastionssh' || typeLower === 'pivot' || idLower.includes('auth') || idLower.includes('proxy') || idLower.includes('ssh')) {
+      // Stage 5: Lateral Pivot MUST be matched BEFORE Crown Jewel
+      if (
+        idLower === 'internalauth' ||
+        idLower === 'nginxreverseproxy' ||
+        idLower === 'devopsbastionssh' ||
+        typeLower === 'pivot' ||
+        typeLower === 'lateral' ||
+        idLower.includes('auth') ||
+        idLower.includes('proxy') ||
+        idLower.includes('bastion') ||
+        idLower.includes('ssh') ||
+        idLower.includes('pivot')
+      ) {
         col4.push({ ...node, stageIndex: 4, stageLabel: 'LATERAL PIVOT', badgeColor: '#4F46E5', doodle: 'pivot' });
-      } else if (typeLower === 'vulnerability' || idLower.includes('cve') || idLower.includes('cwe') || idLower.includes('vuln') || idLower.includes('exploit') || idLower.includes('alert')) {
+      } else if (
+        idLower === 'coredb' ||
+        idLower === 'paymentgateway' ||
+        idLower === 'crownvault' ||
+        idLower.includes('coredb') ||
+        idLower.includes('crownvault') ||
+        idLower.includes('paymentgateway') ||
+        idLower.includes('vault') ||
+        typeLower === 'target' ||
+        typeLower === 'critical_target'
+      ) {
+        col5.push({ ...node, stageIndex: 5, stageLabel: 'CROWN JEWEL', badgeColor: '#0D7B38', doodle: 'crown' });
+      } else if (
+        typeLower === 'vulnerability' ||
+        idLower.includes('cve') ||
+        idLower.includes('cwe') ||
+        idLower.includes('vuln') ||
+        idLower.includes('exploit') ||
+        idLower.includes('alert') ||
+        idLower.includes('finding-')
+      ) {
         col3.push({ ...node, stageIndex: 3, stageLabel: 'EXPLOIT', badgeColor: '#E63926', doodle: 'exploit' });
       } else if (typeLower === 'service' || node.id.includes(':') || typeLower.includes('port')) {
         col2.push({ ...node, stageIndex: 2, stageLabel: 'SERVICE PORT', badgeColor: '#0284C7', doodle: 'service' });
-      } else if (idLower.includes('crt.sh') || idLower.includes('doh') || idLower.includes('rdap') || idLower.includes('osint') || typeLower === 'osint' || typeLower === 'passive') {
+      } else if (
+        idLower.includes('crt.sh') ||
+        idLower.includes('doh') ||
+        idLower.includes('rdap') ||
+        idLower.includes('osint') ||
+        typeLower === 'osint' ||
+        typeLower === 'passive'
+      ) {
         col0.push({ ...node, stageIndex: 0, stageLabel: 'PASSIVE OSINT', badgeColor: '#8B5CF6', doodle: 'osint' });
       } else {
         col1.push({ ...node, stageIndex: 1, stageLabel: 'INGRESS APEX', badgeColor: '#0D0E11', doodle: 'ingress' });
       }
     });
 
-    // Ingress column sorting: apex domain at the very top, subdomains below
+    // Sort every column: active route nodes first so they appear at index 0 (y = 100)
+    const activeNodes = activeRoute?.path_nodes || [];
+    const sortColumnWithActiveFirst = (col: any[]) => {
+      col.sort((a, b) => {
+        const aActive = activeNodes.includes(a.id);
+        const bActive = activeNodes.includes(b.id);
+        if (aActive && !bActive) return -1;
+        if (!aActive && bActive) return 1;
+        return a.id.localeCompare(b.id);
+      });
+    };
+
+    sortColumnWithActiveFirst(col0);
+
+    // Ingress column: active route node first, current target apex domain second, then alphabetical
     col1.sort((a, b) => {
+      const aActive = activeNodes.includes(a.id);
+      const bActive = activeNodes.includes(b.id);
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
       if (a.id === currentTargetDomain) return -1;
       if (b.id === currentTargetDomain) return 1;
       return a.id.localeCompare(b.id);
     });
-    // Service column sorting: by host and port
-    col2.sort((a, b) => a.id.localeCompare(b.id));
-    // Vulnerability column sorting: by CVSS / risk score descending
-    col3.sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0));
+
+    sortColumnWithActiveFirst(col2);
+
+    // Vulnerability column: active route vuln first, then by risk score descending
+    col3.sort((a, b) => {
+      const aActive = activeNodes.includes(a.id);
+      const bActive = activeNodes.includes(b.id);
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      return (b.risk_score || 0) - (a.risk_score || 0);
+    });
+
+    sortColumnWithActiveFirst(col4);
+
+    // Crown Jewel column: active route crown node first, then CoreDB, then others
+    col5.sort((a, b) => {
+      const aActive = activeNodes.includes(a.id);
+      const bActive = activeNodes.includes(b.id);
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      if (a.id === 'CoreDB') return -1;
+      if (b.id === 'CoreDB') return 1;
+      return a.id.localeCompare(b.id);
+    });
 
     return [col0, col1, col2, col3, col4, col5];
-  }, [allRenderNodes, currentTargetDomain]);
+  }, [allRenderNodes, currentTargetDomain, activeRoute]);
 
   // Canvas Layout with Integrated Stage Swimlanes (Non-squishing predictable grid)
   const layout = useMemo(() => {
     const CANVAS_WIDTH = 1580;
     const maxNodesInCol = Math.max(...categorizedNodes.map((c) => c.length), 3);
-    const nodeWidth = 205;
+    const nodeWidth = 195;
     const nodeHeight = 74;
     const nodeGap = 18;
     const nodeStep = nodeHeight + nodeGap; // 92px fixed step prevents squishing
@@ -523,14 +648,10 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     const positionedNodes: Record<string, { x: number; y: number; w: number; h: number; node: any }> = {};
 
     categorizedNodes.forEach((colNodes, colIdx) => {
-      const count = colNodes.length;
       const x = colCenters[colIdx];
       colNodes.forEach((node, nodeIdx) => {
-        // Uniform, legible vertical spacing per node regardless of column density
-        let y = 100 + nodeIdx * nodeStep;
-        if (count === 1) {
-          y = 146; // Aligned with the direct primary horizontal attack trajectory
-        }
+        // Uniform vertical baseline starting at y = 100 keeps active trajectory horizontal & uncluttered
+        const y = 100 + nodeIdx * nodeStep;
         positionedNodes[node.id] = {
           x,
           y,
@@ -572,28 +693,35 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       const y1 = sourcePos.y;
       const x2 = targetPos.x - targetPos.w / 2;
       const y2 = targetPos.y;
-      const dx = (x2 - x1) * 0.45;
+
+      // Perfectly horizontal trajectory when nodes align along y
+      if (Math.abs(y2 - y1) < 2) {
+        return `M ${x1} ${y1} L ${x2} ${y2}`;
+      }
+
+      // Smooth horizontal-tangent cubic Bezier S-curve when y1 !== y2
+      const span = x2 - x1;
+      const dx = Math.min(span * 0.5, 120);
       return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
     }
 
     // 2. Intra-column edge (|dxCol| <= 50, e.g. root domain -> subdomain in Col 1)
     if (Math.abs(dxCol) <= 50) {
       if (targetPos.y > sourcePos.y) {
-        // Vertical downward flow
+        // Vertical downward flow connecting card bottoms to card tops
         const x1 = sourcePos.x;
         const y1 = sourcePos.y + sourcePos.h / 2;
         const x2 = targetPos.x;
         const y2 = targetPos.y - targetPos.h / 2;
-        const dy = y2 - y1;
-        return `M ${x1} ${y1} C ${x1} ${y1 + dy * 0.45}, ${x2} ${y2 - dy * 0.45}, ${x2} ${y2}`;
+        return `M ${x1} ${y1} L ${x2} ${y2}`;
       } else {
-        // Vertical upward flow
-        const x1 = sourcePos.x;
-        const y1 = sourcePos.y - sourcePos.h / 2;
-        const x2 = targetPos.x;
-        const y2 = targetPos.y + targetPos.h / 2;
-        const dy = sourcePos.y - targetPos.y;
-        return `M ${x1} ${y1} C ${x1} ${y1 - dy * 0.45}, ${x2} ${y2 + dy * 0.45}, ${x2} ${y2}`;
+        // Vertical upward flow: loop gracefully around right card flank
+        const x1 = sourcePos.x + sourcePos.w / 2;
+        const y1 = sourcePos.y;
+        const x2 = targetPos.x + targetPos.w / 2;
+        const y2 = targetPos.y;
+        const offset = 34;
+        return `M ${x1} ${y1} C ${x1 + offset} ${y1}, ${x2 + offset} ${y2}, ${x2} ${y2}`;
       }
     }
 
@@ -602,7 +730,8 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
     const y1 = sourcePos.y;
     const x2 = targetPos.x + targetPos.w / 2;
     const y2 = targetPos.y;
-    return `M ${x1} ${y1} C ${x1 - 45} ${y1 - 30}, ${x2 + 45} ${y2 - 30}, ${x2} ${y2}`;
+    const offset = 40;
+    return `M ${x1} ${y1} C ${x1 - offset} ${y1 - 30}, ${x2 + offset} ${y2 - 30}, ${x2} ${y2}`;
   }, []);
 
   // Mouse Controls (Pan & Zoom) - Ergonomic behavior: Ctrl+Wheel zooms, standard Wheel pans vertically
@@ -739,7 +868,7 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-hairline bg-pureWhite p-3.5 shadow-xs">
           <div>
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <span className="text-vermilion font-black text-sm">05 //</span>
+              <span className="text-vermilion font-black text-sm">04 //</span>
               <h1 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
                 TOPOLOGICAL ATTACK GRAPH & TRAVERSAL PATHFINDER
               </h1>
@@ -999,26 +1128,28 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
               <defs>
                 <marker
                   id="arrow-subtle"
-                  viewBox="0 0 10 10"
-                  refX="6"
-                  refY="5"
-                  markerWidth="6"
-                  markerHeight="6"
-                  orient="auto-start-reverse"
+                  viewBox="0 0 12 12"
+                  refX="11"
+                  refY="6"
+                  markerUnits="userSpaceOnUse"
+                  markerWidth="11"
+                  markerHeight="11"
+                  orient="auto"
                 >
-                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#CBD5E1" />
+                  <path d="M 1 2 L 11 6 L 1 10 L 3.5 6 z" fill="#94A3B8" />
                 </marker>
 
                 <marker
                   id="arrow-active"
-                  viewBox="0 0 10 10"
-                  refX="6"
-                  refY="5"
-                  markerWidth="6"
-                  markerHeight="6"
-                  orient="auto-start-reverse"
+                  viewBox="0 0 12 12"
+                  refX="11"
+                  refY="6"
+                  markerUnits="userSpaceOnUse"
+                  markerWidth="13"
+                  markerHeight="13"
+                  orient="auto"
                 >
-                  <path d="M 0 1 L 8 5 L 0 9 z" fill="#E63926" />
+                  <path d="M 1 2 L 11 6 L 1 10 L 3.5 6 z" fill="#E63926" />
                 </marker>
 
                 <filter id="laser-glow" x="-20%" y="-20%" width="140%" height="140%">

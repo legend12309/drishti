@@ -15,6 +15,7 @@ class NodeType(str, Enum):
     HOST = "host"
     SERVICE = "service"
     VULNERABILITY = "vulnerability"
+    PIVOT = "pivot"
     CRITICAL_TARGET = "target"
 
 

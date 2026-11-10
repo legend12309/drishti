@@ -138,14 +138,9 @@ class UnifiedScanOrchestrator:
         else:
             auth = await get_valid_authorization_for_target(clean_target, scope=plan.scope)
             if not auth:
-                from backend.services.authorizations import create_loa_authorization
-                auth = await create_loa_authorization(
-                    target_domain=clean_target,
-                    loa_reference="LOA-2026-CLIENT-AUTH",
-                    authorized_by="Client Security Operations (LOA on file)",
-                    permitted_scope=plan.scope or "FULL_ACTIVE",
-                    operator_id="local-operator-dev",
-                    notes="Automatic Letter of Authorization granted for target audit."
+                raise ValueError(
+                    f"Target '{clean_target}' is not authorized for requested scope '{plan.scope}'. "
+                    f"Complete DNS TXT verification or grant authorization before initiating active scan."
                 )
 
         # Validate Plan against Authorization
@@ -698,7 +693,7 @@ class UnifiedScanOrchestrator:
                             vulnerabilities=[vf.model_dump() for vf in vuln_findings],
                         )
                         attack_paths = []
-                        for obj in ("CoreDB", "InternalAuth", "PaymentGateway"):
+                        for obj in ("CoreDB", "PaymentGateway"):
                             if obj in g:
                                 paths = find_candidate_attack_paths(
                                     g=g,

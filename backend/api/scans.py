@@ -86,12 +86,28 @@ async def start_scan(payload: CreateScanRequest):
 
 
 @router.get("")
-async def list_scans(limit: int = Query(20, ge=1, le=100)):
-    """Lists recent scans in chronological order."""
+async def list_scans(
+    limit: int = Query(20, ge=1, le=100),
+    target: Optional[str] = Query(None, description="Optional target domain filter, e.g. iiit-bh.ac.in")
+):
+    """Lists recent scans in chronological order with optional target domain filtering."""
     async with get_db() as db:
-        async with db.execute("SELECT * FROM scans ORDER BY created_at DESC LIMIT ?", (limit,)) as cursor:
-            rows = await cursor.fetchall()
-            return {"status": "success", "scans": [dict(r) for r in rows]}
+        if target and target.strip():
+            clean = target.strip().lower()
+            clean_bare = clean.replace("www.", "")
+            query = """
+                SELECT * FROM scans 
+                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ?)
+                ORDER BY created_at DESC LIMIT ?
+            """
+            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%", limit)
+            async with db.execute(query, params) as cursor:
+                rows = await cursor.fetchall()
+                return {"status": "success", "scans": [dict(r) for r in rows]}
+        else:
+            async with db.execute("SELECT * FROM scans ORDER BY created_at DESC LIMIT ?", (limit,)) as cursor:
+                rows = await cursor.fetchall()
+                return {"status": "success", "scans": [dict(r) for r in rows]}
 
 
 @router.get("/findings/all")

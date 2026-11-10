@@ -106,8 +106,10 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
   const [msfCatalogFilter, setMsfCatalogFilter] = useState<'ALL' | 'EXCELLENT' | 'CISA_KEV' | 'RANSOMWARE' | 'WINDOWS' | 'LINUX'>('ALL');
 
   // Metasploit Arsenal Interactive Controls State
-  const [msfTargetHost, setMsfTargetHost] = useState<string>('');
-  const [msfTargetPort, setMsfTargetPort] = useState<number>(445);
+  const [msfTargetHost, setMsfTargetHost] = useState<string>(
+    () => localStorage.getItem('drishti_target') || localStorage.getItem('drishti_target_domain') || 'www.iiit-bh.ac.in'
+  );
+  const [msfTargetPort, setMsfTargetPort] = useState<number>(443);
   const [msfLhost, setMsfLhost] = useState<string>('127.0.0.1');
   const [msfLport, setMsfLport] = useState<number>(4444);
   const [msfTargetUri, setMsfTargetUri] = useState<string>('/');
@@ -121,6 +123,10 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
   const [aiCopilotLoading, setAiCopilotLoading] = useState<boolean>(false);
   const [aiCopilotMeta, setAiCopilotMeta] = useState<{ provider?: string; latency?: number; model?: string } | null>(null);
   const [llmProviders, setLlmProviders] = useState<any[]>([]);
+  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
+  const [apiKeyProvider, setApiKeyProvider] = useState<string>('gemini');
+  const [apiKeyValue, setApiKeyValue] = useState<string>('');
+  const [savingApiKey, setSavingApiKey] = useState<boolean>(false);
 
   // AI Advisory State (Per-CVE)
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
@@ -214,7 +220,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Exploit simulation failed');
-      setSimResult(data.simulation);
+      setSimResult(data.simulation || data);
       if (showToast) {
         showToast('info', 'Exploit Feasibility Simulated', `Assessment completed for ${cve.id}`);
       }
@@ -249,13 +255,41 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
     fetch('/api/metasploit/modules')
       .then((r) => r.json())
       .then((data) => {
-        if (data && data.modules) {
+        if (data && data.modules && data.modules.length > 0) {
           setMsfModules(data.modules);
-          if (data.modules.length > 0 && !msfSelectedModule) {
-            setMsfSelectedModule(data.modules[0]);
-            setMsfTargetPort(data.modules[0].default_port || 445);
-            setMsfTargetUri(data.modules[0].target_uri || '/');
-          }
+          const defaultMod = data.modules.find((m: any) => m.cve_id === 'CWE-538') || data.modules[0];
+          setMsfSelectedModule(defaultMod);
+          setMsfTargetPort(defaultMod.default_port || 443);
+          setMsfTargetUri(defaultMod.target_uri || '/');
+
+          // Auto-compile .rc script on launch so terminal is immediately populated
+          const host = localStorage.getItem('drishti_target') || localStorage.getItem('drishti_target_domain') || 'www.iiit-bh.ac.in';
+          fetch('/api/metasploit/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cve_id: defaultMod.cve_id,
+              target_host: host,
+              target_port: defaultMod.default_port || 443,
+              lhost: '127.0.0.1',
+              lport: 4444,
+              target_uri: defaultMod.target_uri || '/',
+              safe_check_only: true,
+            }),
+          })
+            .then((r) => r.json())
+            .then((gData) => {
+              if (gData && (gData.resource_script || gData.rc_script)) {
+                setMsfScript({
+                  rc_script: gData.resource_script || gData.rc_script,
+                  msf_command: gData.safe_check_command || gData.cli_command,
+                  safe_check_command: gData.safe_check_command,
+                  notes: gData.notes,
+                  module: defaultMod.module_path,
+                });
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch((err) => console.error('Failed to load MSF catalog:', err));
@@ -277,7 +311,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
     }
   }, [targetScanInfo]);
 
-  // Handle module selection from Arsenal list
+  // Handle module selection from Arsenal list with instant script generation
   const handleSelectMsfModule = (mod: any) => {
     setMsfSelectedModule(mod);
     if (mod.default_port) setMsfTargetPort(mod.default_port);
@@ -286,6 +320,65 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
       setMsfPayloadChoice(mod.supported_payloads[0]);
     } else {
       setMsfPayloadChoice(mod.payload_default || '');
+    }
+
+    // Auto-generate script on selection
+    const host = msfTargetHost || targetScanInfo?.target || 'www.iiit-bh.ac.in';
+    const port = Number(mod.default_port) || 80;
+    fetch('/api/metasploit/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cve_id: mod.cve_id,
+        target_host: host,
+        target_port: port,
+        lhost: msfLhost || '127.0.0.1',
+        lport: Number(msfLport) || 4444,
+        target_uri: mod.target_uri || '/',
+        safe_check_only: msfSafeAuditOnly,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && (data.resource_script || data.rc_script)) {
+          setMsfScript({
+            rc_script: data.resource_script || data.rc_script,
+            msf_command: msfSafeAuditOnly ? (data.safe_check_command || data.msf_command) : data.cli_command,
+            safe_check_command: data.safe_check_command,
+            notes: data.notes,
+            module: mod.module_path,
+          });
+        }
+      })
+      .catch(() => {});
+  };
+
+  // Configure custom Cloud AI provider API keys dynamically
+  const handleSaveApiKey = async () => {
+    if (!apiKeyValue.trim()) return;
+    setSavingApiKey(true);
+    try {
+      const res = await fetch('/api/llm/set-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: apiKeyProvider,
+          api_key: apiKeyValue.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to update API key');
+      if (showToast) showToast('success', 'API Key Configured', data.message);
+      setShowApiKeyModal(false);
+      setApiKeyValue('');
+      // Refresh providers
+      const pRes = await fetch('/api/llm/providers');
+      const pData = await pRes.json();
+      if (pData && pData.providers) setLlmProviders(pData.providers);
+    } catch (e: any) {
+      if (showToast) showToast('error', 'Configuration Failed', e.message);
+    } finally {
+      setSavingApiKey(false);
     }
   };
 
@@ -394,7 +487,7 @@ export const IntelView: React.FC<IntelViewProps> = ({ onNavigate, showToast }) =
   };
 
   // AI Copilot Actions
-  const runAiCopilotAction = async (actionType: 'EXECUTIVE_BRIEF' | 'REMEDIATION_PLAN' | 'SURFACE_AUDIT' | 'ZERO_DAY_HARDENING', customPrompt?: string) => {
+  const runAiCopilotAction = async (actionType: 'EXECUTIVE_BRIEF' | 'REMEDIATION_PLAN' | 'SURFACE_AUDIT' | 'ZERO_DAY_HARDENING' | 'CUSTOM', customPrompt?: string) => {
     setAiCopilotLoading(true);
     setAiCopilotResponse(null);
     try {
@@ -432,12 +525,14 @@ ${(data.immediate_actions || []).map((a: string) => `1. ${a}`).join('\n')}`;
       }
 
       let promptText = customPrompt || '';
-      if (actionType === 'REMEDIATION_PLAN') {
-        promptText = `Provide an emergency tactical remediation roadmap for target ${targetScanInfo?.target || 'perimeter'}. Outline specific firewall rules (iptables/UFW), web server hardening configs (Nginx/Apache), and patch priorities for open listeners.`;
-      } else if (actionType === 'SURFACE_AUDIT') {
-        promptText = `Perform a comprehensive perimeter exposure audit for domain ${targetScanInfo?.target || 'target'}. Evaluate TLS/SSL posture, HTTP security headers (HSTS, CSP), and recommend zero-trust ingress filtering.`;
-      } else if (actionType === 'ZERO_DAY_HARDENING') {
-        promptText = `Generate a zero-day defensive hardening playbook for network services running on ${targetScanInfo?.target || 'network gateway'}. Emphasize defense-in-depth, least privilege service isolation, and anomaly telemetry.`;
+      if (!customPrompt) {
+        if (actionType === 'REMEDIATION_PLAN') {
+          promptText = `Provide an emergency tactical remediation roadmap for target ${targetScanInfo?.target || 'perimeter'}. Outline specific firewall rules (iptables/UFW), web server hardening configs (Nginx/Apache), and patch priorities for open listeners.`;
+        } else if (actionType === 'SURFACE_AUDIT') {
+          promptText = `Perform a comprehensive perimeter exposure audit for domain ${targetScanInfo?.target || 'target'}. Evaluate TLS/SSL posture, HTTP security headers (HSTS, CSP), and recommend zero-trust ingress filtering.`;
+        } else if (actionType === 'ZERO_DAY_HARDENING') {
+          promptText = `Generate a zero-day defensive hardening playbook for network services running on ${targetScanInfo?.target || 'network gateway'}. Emphasize defense-in-depth, least privilege service isolation, and anomaly telemetry.`;
+        }
       }
 
       const res = await fetch('/api/llm/generate', {
@@ -577,7 +672,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
       }
 
       const activeScan = scanList.find((s) => s.id === targetScanId) || (scanList.length > 0 ? scanList[0] : null);
-      setTargetScanInfo(activeScan || { id: 'wf-seed-vvdx-in', target: 'vvdx.in', status: 'completed', created_at: new Date().toISOString() });
+      setTargetScanInfo(activeScan || { id: 'wf-seed-iiit-bh-ac-in', target: savedTarget || 'iiit-bh.ac.in', status: 'completed', created_at: new Date().toISOString() });
 
       if (intelMode === 'TARGET_ALONE') {
         // Fetch findings and vulnerabilities for the target
@@ -609,7 +704,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
               fix: sv.remediation_notes || 'Apply vendor security patch.',
               vector: sv.cvss_vector || 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
               description: sv.description || 'Observed vulnerability matching software banner on scanned target.',
-              affectedAsset: sv.asset_id || (activeScan?.target ? `${activeScan.target}:${sv.port || 80}` : `vvdx.in:${sv.port || 80}`),
+              affectedAsset: sv.asset_id || (activeScan?.target ? `${activeScan.target}:${sv.port || 80}` : `${savedTarget || 'iiit-bh.ac.in'}:${sv.port || 80}`),
               confidence: sv.confidence_score,
               matchRationale: sv.match_rationale || 'Banner matching on exposed HTTP/SSH service.',
               references: sv.references || [],
@@ -813,7 +908,7 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-vermilion font-extrabold text-sm">04 //</span>
+                <span className="text-vermilion font-extrabold text-sm">03 //</span>
                 <h1 className="text-sm font-grotesk font-bold uppercase tracking-wider text-ink">
                   TACTICAL CYBER DEFENSE & THREAT ORCHESTRATION
                 </h1>
@@ -2219,6 +2314,13 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   {p.name?.toUpperCase()} {p.available ? '● LIVE' : '○'}
                 </span>
               ))}
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className="px-2 py-0.5 text-[9px] font-bold border border-ink bg-pureWhite hover:bg-ink hover:text-white transition-colors cursor-pointer font-mono ml-1"
+                title="Configure custom cloud API keys (Gemini, Groq, NVIDIA)"
+              >
+                [ ⚙️ API KEYS ]
+              </button>
             </div>
           </div>
 
@@ -2275,11 +2377,17 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                 rows={2}
                 value={aiPromptInput}
                 onChange={(e) => setAiPromptInput(e.target.value)}
-                placeholder="Ask DRISHTI AI Copilot about vulnerabilities, exploit mechanics, perimeter hardening, firewall rules..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && aiPromptInput.trim() && !aiCopilotLoading) {
+                    e.preventDefault();
+                    runAiCopilotAction('CUSTOM', aiPromptInput);
+                  }
+                }}
+                placeholder="Ask DRISHTI AI Copilot about vulnerabilities, exploit mechanics, perimeter hardening, firewall rules... (Press Enter to query)"
                 className="flex-1 bg-boneLight border border-hairline p-2.5 text-xs text-ink font-mono outline-none resize-none focus:border-ink"
               />
               <button
-                onClick={() => runAiCopilotAction('REMEDIATION_PLAN', aiPromptInput)}
+                onClick={() => runAiCopilotAction('CUSTOM', aiPromptInput)}
                 disabled={aiCopilotLoading || !aiPromptInput.trim()}
                 className="px-4 bg-signalGreen hover:bg-emerald-400 text-ink font-mono font-black text-xs border border-signalGreen cursor-pointer transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
               >
@@ -2547,6 +2655,81 @@ The vulnerability stems from improper boundary checking and parsing logic in ${c
                   className="bg-pureWhite border border-hairline hover:bg-boneDark text-ink px-4 py-1.5 font-mono font-bold text-xs transition-colors cursor-pointer"
                 >
                   [ CLOSE ARSENAL ]
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cloud AI Provider API Key Configuration Modal */}
+        {showApiKeyModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-pureWhite border-2 border-ink max-w-lg w-full p-5 space-y-4 shadow-2xl font-mono text-xs animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-hairline pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-signalGreen" />
+                  <h3 className="text-sm font-bold text-ink uppercase tracking-wider font-grotesk">
+                    CONFIGURE CLOUD AI REASONING ENGINES
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowApiKeyModal(false)}
+                  className="text-charcoal hover:text-ink font-bold cursor-pointer"
+                >
+                  [ ✕ ]
+                </button>
+              </div>
+
+              <p className="text-[10px] text-charcoal leading-relaxed">
+                Connect external LLM providers for live, multi-turn cloud security intelligence. If no key is provided, DRISHTI runs in 100% sovereign air-gapped deterministic mode with zero data leakage.
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-charcoal mb-1">SELECT AI PROVIDER:</label>
+                  <select
+                    value={apiKeyProvider}
+                    onChange={(e) => setApiKeyProvider(e.target.value)}
+                    className="w-full bg-boneLight border border-hairline p-2 text-xs text-ink outline-none"
+                  >
+                    <option value="gemini">Google Gemini 2.0 Flash (Recommended / Free Tier)</option>
+                    <option value="groq">Groq (Llama 3.3 70B Versatile / Ultra-Fast)</option>
+                    <option value="nvidia">NVIDIA Nemotron 70B (Enterprise SecOps)</option>
+                    <option value="huggingface">HuggingFace Inference (Meta-Llama 3 8B)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-charcoal mb-1">
+                    ENTER API KEY FOR {apiKeyProvider.toUpperCase()}:
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKeyValue}
+                    onChange={(e) => setApiKeyValue(e.target.value)}
+                    placeholder={apiKeyProvider === 'gemini' ? 'AIzaSy...' : apiKeyProvider === 'groq' ? 'gsk_...' : 'nvapi-...'}
+                    className="w-full bg-boneLight border border-hairline p-2 text-xs text-ink outline-none focus:border-ink font-mono"
+                  />
+                  <span className="text-[9px] text-pencil mt-1 block">
+                    Keys are kept in ephemeral runtime memory and never saved to public storage.
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-hairline pt-3">
+                <button
+                  onClick={() => setShowApiKeyModal(false)}
+                  className="px-3 py-1.5 bg-pureWhite border border-hairline hover:bg-boneDark text-ink text-xs font-bold cursor-pointer"
+                >
+                  [ CANCEL ]
+                </button>
+
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={savingApiKey || !apiKeyValue.trim()}
+                  className="px-4 py-1.5 bg-signalGreen hover:bg-emerald-400 text-ink font-black text-xs border border-signalGreen cursor-pointer disabled:opacity-50"
+                >
+                  {savingApiKey ? '[ VALIDATING... ]' : '[ 💾 ACTIVATE PROVIDER KEY ]'}
                 </button>
               </div>
             </div>

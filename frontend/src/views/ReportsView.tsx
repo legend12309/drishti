@@ -185,7 +185,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onNavigate, showToast 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hairline pb-3 bg-pureWhite p-3 shadow-xs print:hidden">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-vermilion font-extrabold text-sm">08 //</span>
+              <span className="text-vermilion font-extrabold text-sm">07 //</span>
               <h1 className="text-sm font-grotesk font-black uppercase tracking-wider text-ink">
                 TACTICAL ASSESSMENT REPORTS // RECON & VULNERABILITY DOSSIER
               </h1>

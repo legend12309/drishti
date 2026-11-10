@@ -58,7 +58,7 @@ async def validate_scan_consent(target_domain: str, token_payload: Optional[Dict
         logger.warning(f"[DEV_MODE ACTIVE] Bypassing authorization check for target: {target_domain}")
         return True
 
-    # Check if target is authorized in database via Letter of Authorization (LOA)
+    # Check if target is authorized in database via Letter of Authorization (LOA) or verified challenge
     try:
         from backend.services.authorizations import get_valid_authorization_for_target
         auth = await get_valid_authorization_for_target(target_domain, scope="FULL_ACTIVE")
@@ -67,5 +67,7 @@ async def validate_scan_consent(target_domain: str, token_payload: Optional[Dict
     except Exception as ex:
         logger.warning(f"Authorization validation note for {target_domain}: {ex}")
 
-    # Seamless fallback for authorized enterprise engagements
-    return True
+    raise HTTPException(
+        status_code=403,
+        detail=f"Consent verification failed for '{target_domain}'. Active authorization challenge required."
+    )

@@ -558,55 +558,41 @@ async def get_operational_readiness_score(scan_id: Optional[str] = None):
         "verdict": "OPTIMAL" if final_ors >= 85 else ("MODERATE_RISK" if final_ors >= 60 else "CRITICAL_EXPOSURE")
     }
 # -------------------------------------------------------------
+# OASIS STIX 2.1 Threat Sharing & TAXII Integration
+# -------------------------------------------------------------
+from pydantic import BaseModel
+
+class StixBundleRequest(BaseModel):
+    target: Optional[str] = None
+    scan_id: Optional[str] = None
+
 @router.get("/stix/bundle")
-async def get_stix_bundle(scan_id: Optional[str] = None):
+@router.post("/stix/bundle")
+@router.get("/scans/{scan_id}/stix")
+async def get_stix_bundle(
+    scan_id: Optional[str] = None,
+    target: Optional[str] = Query(None, description="Target domain, e.g. iiit-bh.ac.in"),
+    req: Optional[StixBundleRequest] = None
+):
     """Generates a dynamic OASIS STIX 2.1 Threat Intelligence Bundle from live scan findings."""
-    import uuid
-    from datetime import datetime, timezone
-    from backend.services.scanner import get_latest_scan_for_target, get_scan_findings
-    from backend.services.vulnerability_service import get_scan_vulnerabilities
+    from backend.services.stix_service import generate_stix_bundle
+    resolved_target = (req.target if req and req.target else target)
+    resolved_scan_id = (req.scan_id if req and req.scan_id else scan_id)
+    return await generate_stix_bundle(target=resolved_target, scan_id=resolved_scan_id)
 
-    target_scan_id = scan_id
-    if not target_scan_id:
-        latest = await get_latest_scan_for_target(None)
-        if latest:
-            target_scan_id = latest["id"]
-
-    objects = [
-        {
-            "type": "attack-pattern",
-            "id": f"attack-pattern--{uuid.uuid4()}",
-            "name": "Exploitation of Remote Services",
-            "description": "Adversaries may exploit remote services to gain initial unauthorized access.",
-            "kill_chain_phases": [{"kill_chain_name": "mitre-attack", "phase_name": "initial-access"}]
-        }
-    ]
-
-    if target_scan_id:
-        findings = await get_scan_findings(target_scan_id)
-        for f in findings:
-            if f.get("ip"):
-                objects.append({
-                    "type": "indicator",
-                    "id": f"indicator--{uuid.uuid4()}",
-                    "name": f"Exposed Asset {f.get('host')}",
-                    "pattern": f"[ipv4-addr:value = '{f.get('ip')}']",
-                    "pattern_type": "stix",
-                    "valid_from": datetime.now(timezone.utc).isoformat(),
-                })
-        vulns = await get_scan_vulnerabilities(target_scan_id)
-        for v in vulns:
-            objects.append({
-                "type": "vulnerability",
-                "id": f"vulnerability--{uuid.uuid4()}",
-                "name": v.get("cve_id", "CVE-UNKNOWN"),
-                "description": v.get("title") or v.get("description", "Vulnerability observed in target scope"),
-            })
-
+# -------------------------------------------------------------
+# Cryptographic Hardware Attestation & Intellectual Property Protection
+# -------------------------------------------------------------
+@router.get("/system/attestation", tags=["Security & Compliance"])
+async def get_system_attestation():
+    """Returns the cryptographic hardware enclave fingerprint and registered dissertation authorship attestation."""
+    from backend.services.attestation_service import get_hardware_enclave_fingerprint, verify_codebase_integrity
+    enclave = get_hardware_enclave_fingerprint()
+    integrity = verify_codebase_integrity()
     return {
-        "type": "bundle",
-        "id": f"bundle--{uuid.uuid4()}",
-        "spec_version": "2.1",
-        "created": datetime.now(timezone.utc).isoformat(),
-        "objects": objects
+        "status": "ATTESTED & IMMUTABLE",
+        "platform": "DRISHTI Sovereign Cyber Intelligence & Attack Graph Defense Platform",
+        "version": "v1.0.0-rc1",
+        "attestation": enclave,
+        "codebase_integrity": integrity,
     }

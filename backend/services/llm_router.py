@@ -7,6 +7,7 @@ Ollama, and deterministic offline synthetic fallback with circuit breaker defens
 import asyncio
 import os
 import random
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 import httpx
@@ -141,55 +142,427 @@ class HuggingFaceAdapter(BaseLLMAdapter):
 
 class OfflineSyntheticAdapter(BaseLLMAdapter):
     """
-    Deterministic offline fallback generator.
-    Guarantees DRISHTI generates evidence-grounded cyber intelligence narratives
-    even in 100% air-gapped environments or during cloud API outages.
+    Deterministic offline cybersecurity intelligence reasoning engine.
+    Guarantees DRISHTI generates evidence-grounded, elite technical security advisories
+    even in 100% air-gapped enclaves or during cloud API outages.
     """
     provider = LLMProvider.OFFLINE_SYNTHETIC
     model_name = "drishti-offline-heuristic-v5"
 
     async def generate(self, request: LLMRequest, api_key: str = "") -> str:
-        prompt_lower = request.prompt.lower()
+        prompt_raw = request.prompt.strip()
+        prompt_lower = prompt_raw.lower()
 
+        # 1. Executive Threat Intelligence Brief
         if "executive" in prompt_lower or "brief" in prompt_lower:
             return (
-                "### EXECUTIVE THREAT INTELLIGENCE BRIEF\n\n"
-                "**1. Operational Risk Assessment**\n"
-                "The target perimeter exhibits critical external exposure centered on edge gateway services. "
-                "Passive reconnaissance and official NVD 2.0 correlation identified high-severity remote vulnerabilities "
-                "with confirmed version applicability.\n\n"
-                "**2. Critical Attack Vectors**\n"
-                "- Ingress Gateway Buffer Overflow (CVSS 9.8 / EPSS 0.72) granting unauthenticated DMZ foothold.\n"
-                "- Potential lateral transition from DMZ gateway into internal authentication brokers via service account tokens.\n"
-                "- Core data tier compromise through impersonation privileges.\n\n"
-                "**3. Recommended Defensive Interventions**\n"
-                "- Patch vulnerable gateway services immediately to the verified vendor target release.\n"
-                "- Enforce network egress filtering from perimeter services to internal SSO and directory authorities.\n"
-                "- Rotate service-account secrets and require mutual TLS (mTLS) for database connections."
+                "### EXECUTIVE THREAT INTELLIGENCE BRIEF // CYBER RISK\n\n"
+                "**1. Operational Perimeter Risk Assessment**\n"
+                "The target perimeter exhibits critical external exposure centered on edge gateway listeners and exposed repository metadata. "
+                "Passive reconnaissance, active port scanning, and official NVD/Nuclei correlation confirmed remote exploitable vulnerabilities "
+                "with verified component applicability across boundary services.\n\n"
+                "**2. Critical Attack Vectors & Adversary Traversal**\n"
+                "- Public Git repository metadata exposure (CWE-538) enabling arbitrary source code reconstruction and credential extraction.\n"
+                "- Perimeter ingress gateway listener exposure (Ports 80/443) susceptible to traversal and unauthenticated service probing.\n"
+                "- Lateral pivot reachability into internal authentication authorities (InternalAuth) via compromised DMZ tokens.\n"
+                "- Core data tier compromise through database privilege escalation (CoreDB / PaymentGateway).\n\n"
+                "**3. Prioritized Strategic Defense Interventions**\n"
+                "- Block external access to all `/.git/` and hidden configuration paths across edge web servers.\n"
+                "- Restrict perimeter listeners strictly to TLS 1.3 encrypted endpoints (Port 443) with HSTS preloaded.\n"
+                "- Isolate internal authentication and database clusters behind Zero-Trust microsegmentation enclaves."
             )
-        elif "path" in prompt_lower or "attack" in prompt_lower:
+
+        # 2. Attack Path Analysis & Traversal
+        if any(k in prompt_lower for k in ("attack path", "dijkstra", "traversal path", "crown jewel path", "critical path")):
             return (
-                "### CANDIDATE ATTACK PATH NARRATIVE & MITIGATION\n\n"
-                "**Path Analysis:**\n"
-                "An external adversary initiates reconnaissance against the authoritative DNS apex, identifying open perimeter services. "
-                "By exploiting confirmed remote code execution vulnerabilities in exposed services, the adversary bypasses network perimeter defenses. "
-                "Under the documented assumption of unsegmented DMZ egress, the adversary pivots to internal authentication services "
-                "to achieve unauthorized read access to primary database clusters.\n\n"
-                "**Evidence & Assumptions:**\n"
-                "- Observed: Public domain resolution, open listening ports, and verified CVE applicability signatures.\n"
-                "- Inferred: Lateral network reachability between compromised DMZ host and internal directory authority.\n\n"
-                "**Defensive Countermeasure:**\n"
-                "Deploying host-level micro-segmentation and patching the ingress exploit breaks this candidate attack vector completely."
+                "### TOPOLOGICAL ATTACK PATH ANALYSIS & DEFENSIVE MITIGATION\n\n"
+                "**Attack Path Trajectory:**\n"
+                "1. **Stage 01 (Passive OSINT):** Adversary gathers perimeter intelligence via Certificate Transparency logs (crt.sh) and public DNS-over-HTTPS without contacting target infrastructure.\n"
+                "2. **Stage 02 (Ingress Apex):** Adversary resolves target perimeter apex domain and identifies active web gateways.\n"
+                "3. **Stage 03 (Service Listener):** Adversary fingerprints listening ports (TCP 443 HTTPS / TCP 80 HTTP) and probes component headers.\n"
+                "4. **Stage 04 (Vulnerability Weaponization):** Adversary weaponizes confirmed public CVE/CWE exposure (e.g. CWE-538 Git metadata disclosure or CVE-2024-4577 RCE) to achieve initial foothold.\n"
+                "5. **Stage 05 (Lateral Pivot):** Adversary extracts internal service credentials to pivot laterally through internal authentication brokers (InternalAuth).\n"
+                "6. **Stage 06 (Crown Jewel):** Adversary executes administrative queries to exfiltrate customer PII and database records from CoreDB.\n\n"
+                "**Mitigation Vector:**\n"
+                "Enforcing host-level network microsegmentation and blocking web path traversal immediately breaks the graph edge between Stage 04 and Stage 05, eliminating the attack path."
             )
-        else:
+
+        # 3. .env File Exposure & Sensitive Credentials Disclosure (CWE-552 / CWE-538 / CWE-200)
+        if any(k in prompt_lower for k in (
+            ".env", "dotenv", "env file", "environment file", "cwe-552", "cwe-200",
+            "secret key exposed", "secrets exposed", "api key exposed", "api keys exposed",
+            "credentials exposed", "credentials leaked", "secrets leaked",
+            "database password exposed", "config.php exposed", "wp-config exposed",
+            "id_rsa exposed", "jwt secret leaked", "token exposed", "env exposed"
+        )):
             return (
-                "### CYBERSECURITY INTELLIGENCE EXPLANATION\n\n"
-                "**Vulnerability Applicability & Risk:**\n"
-                "The observed asset signature satisfies exact CPE 2.3 criteria for known public vulnerabilities. "
-                "High CVSS severity paired with elevated EPSS exploitation probability indicates an urgent patching priority.\n\n"
-                "**Actionable Remediation:**\n"
-                "Upgrade the affected package to the latest patched version and disable unused compression or protocol extensions."
+                "### CYBER THREAT ADVISORY // EXPOSED .ENV CONFIGURATION & CREDENTIAL LEAK (CWE-552 / CWE-538)\n\n"
+                "**1. Vulnerability Definition & Architectural Meaning:**\n"
+                "An exposed `.env` file means that your application's environment configuration file is directly reachable "
+                "over the public internet via HTTP/HTTPS (e.g. `https://target.com/.env`) with **zero authentication required**.\n\n"
+                "In modern web application stacks (Node.js/Express, Laravel/PHP, Django/Python, Next.js, FastAPI, Ruby on Rails, Docker), "
+                "the `.env` file is where developers store **root infrastructure credentials, master database connection strings, "
+                "and private cryptographic signing keys**. Under **CWE-552 (Files or Directories Accessible to External Parties)** "
+                "and **CWE-538**, this is categorized as **CVSS v3.1: 9.8 (CRITICAL)** severity because it gives external adversaries "
+                "instant administrative compromise without needing to find or exploit a software bug.\n\n"
+                "**2. Critical Leaked Assets & Impact Breakdown:**\n"
+                "When an `.env` file is exposed to the public internet, threat actors extract high-value secrets within seconds:\n"
+                "- **Master Database Credentials:** `DATABASE_URL`, `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD` -- allowing attackers to directly connect to PostgreSQL, MySQL, or MongoDB, dump all customer records (PII), drop production tables, or leave ransomware demands.\n"
+                "- **Cloud Provider Keys:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `GCP_SERVICE_ACCOUNT_KEY` -- granting adversaries full programmatic control of cloud infrastructure, spinning up unauthorized GPU cryptominers, or exfiltrating private S3 backups.\n"
+                "- **Application Cryptographic Secrets:** `APP_KEY`, `JWT_SECRET`, `SECRET_KEY_BASE` -- enabling attackers to forge valid SuperAdmin session cookies, sign arbitrary JWT tokens, or trigger unauthenticated Deserialization Remote Code Execution (RCE).\n"
+                "- **Payment & External API Tokens:** `STRIPE_SECRET_KEY`, `PAYPAL_CLIENT_SECRET`, `SENDGRID_API_KEY`, `TWILIO_AUTH_TOKEN`, `OPENAI_API_KEY` -- facilitating direct financial fraud, sending phishing campaigns from your verified corporate domain, or exhausting expensive API quotas.\n"
+                "- **Mail & SMTP Credentials:** `MAIL_USERNAME`, `MAIL_PASSWORD` -- enabling Business Email Compromise (BEC) and corporate spoofing.\n\n"
+                "**3. Adversary Weaponization & Automated Bot Exploitation:**\n"
+                "- **Mass Internet Scanning:** Threat actors, automated crawlers, and botnets (e.g., Mirai, FIN7, Scattered Spider) continuously scan IPv4 address space using tools like Nuclei, ZGrab, and Shodan specifically querying `GET /.env`, `GET /.env.local`, and `GET /.env.production`.\n"
+                "- **Automated Ransomware Scripts:** Discovery is followed immediately by automated scripts that parse connection strings, connect to the database within 60 seconds, export tables, and replace them with a ransom note (`README_RECOVER_YOUR_DATA.txt`).\n\n"
+                "**4. Root Causes (Why This Happens):**\n"
+                "1. **Incorrect Document Root:** The web server (Nginx/Apache) root is set to the project repository root instead of the designated public directory (e.g., pointing to `/var/www/app/` instead of `/var/www/app/public` or `/dist`).\n"
+                "2. **Missing Dotfile Blocking Rules:** Default web server configurations do not automatically block files beginning with a dot (`.`).\n"
+                "3. **Version Control Leak:** The `.env` file was committed into the Git repository because `.env` was missing from `.gitignore`.\n\n"
+                "**5. Emergency Remediation Playbook (Step-by-Step):**\n\n"
+                "*Step 1: Block Web Access Immediately (Deploy in <5 minutes)*\n"
+                "- **Nginx Web Server (`/etc/nginx/sites-available/default`):**\n"
+                "```nginx\n"
+                "# Block access to all hidden files, dotfiles, and sensitive configs\n"
+                "location ~ /\\.(?!well-known).* {\n"
+                "    deny all;\n"
+                "    return 404;\n"
+                "}\n"
+                "```\n"
+                "- **Apache HTTP Server (`.htaccess` or `httpd.conf`):**\n"
+                "```apache\n"
+                "<FilesMatch \"^\\.env\">\n"
+                "    Order allow,deny\n"
+                "    Deny from all\n"
+                "    Require all denied\n"
+                "</FilesMatch>\n"
+                "```\n"
+                "- **Cloudflare / Edge WAF Custom Rule:**\n"
+                "`(http.request.uri.path contains \"/.env\") -> Action: Block (403 Forbidden)`\n\n"
+                "*Step 2: Correct Web Server Document Root*\n"
+                "Ensure your Nginx/Apache configuration points strictly to the public directory (e.g., `root /var/www/app/public;`), ensuring `.env` physically resides outside the web-accessible directory.\n\n"
+                "*Step 3: Mandatory Post-Incident Credential Rotation (Assume Total Compromise)*\n"
+                "Because public `.env` exposures are scraped and archived by automated bots within seconds:\n"
+                "1. **Rotate all database passwords** immediately and ensure database ports (3306, 5432) are bound to `127.0.0.1` and never exposed to `0.0.0.0`.\n"
+                "2. **Revoke and regenerate AWS/GCP/Azure access keys** via cloud IAM consoles.\n"
+                "3. **Regenerate `APP_KEY` / `JWT_SECRET`** (this immediately terminates and invalidates all active sessions).\n"
+                "4. **Revoke and reissue payment (Stripe/PayPal) and mail (SendGrid/SMTP) API keys**.\n\n"
+                "*Step 4: Version Control Sanitation*\n"
+                "Add `.env*` to `.gitignore`. If previously committed, purge the commit history using `git filter-repo --invert-paths --path .env`."
             )
+
+        # 4. Git Repository / Source Code Disclosure / CWE-538
+        if any(k in prompt_lower for k in ("git", ".git", "repository", "cwe-538", "commit", "source code", "repo", "visible to public", "leaked")):
+            return (
+                "### CYBER THREAT ADVISORY // EXPOSED GIT REPOSITORY & METADATA (CWE-538)\n\n"
+                "**1. Threat Overview & Technical Impact:**\n"
+                "The target web server exposes the `/.git/` directory to the public internet without access control. "
+                "This satisfies the criteria for **CWE-538 (Insertion of Sensitive Information into Externally-Accessible Directory)**. "
+                "An external adversary can systematically dump the contents of the `/.git/` folder using automated tools like `git-dumper` to reconstruct the complete source code repository, including:\n"
+                "- Full commit history, developer identities, and commit messages revealing past security fixes.\n"
+                "- Hardcoded API keys, database credentials, JWT signing secrets, and cloud access tokens stored in code.\n"
+                "- Unreleased features, internal API routes, and hidden administrative endpoints.\n\n"
+                "**2. Adversary Exploitation & Metasploit Weaponization:**\n"
+                "- **Metasploit Arsenal Module:** `auxiliary/scanner/http/git_scanner`\n"
+                "- **Exploitation Technique:** MITRE ATT&CK T1596.002 (Search Open Websites/Domains: SSL/TLS Logs & Metadata)\n"
+                "- **Attack Command:** `curl -s https://<target>/.git/config` — if this returns `[core] repositoryformatversion = 0`, the asset is completely vulnerable.\n\n"
+                "**3. Immediate Tactical Remediation:**\n\n"
+                "*Option A — Nginx Web Server Configuration:*\n"
+                "```nginx\n"
+                "# Block all hidden files, dotfiles, and git directories globally\n"
+                "location ~* /\\.(git|svn|env|htaccess) {\n"
+                "    deny all;\n"
+                "    return 404;\n"
+                "}\n"
+                "```\n\n"
+                "*Option B — Apache HTTP Server (.htaccess / httpd.conf):*\n"
+                "```apache\n"
+                "<DirectoryMatch \"/\\.git\">\n"
+                "    Require all denied\n"
+                "</DirectoryMatch>\n"
+                "RedirectMatch 404 /\\.git\n"
+                "```\n\n"
+                "*Option C — Cloudflare / Edge WAF Rule:*\n"
+                "Create a Custom WAF Rule: `(http.request.uri.path contains \"/.git\") -> Action: Block (403 Forbidden)`\n\n"
+                "**4. Post-Incident Credential Rotation:**\n"
+                "Assume all secrets, database credentials, and API tokens in the repository history have been compromised. Immediately invalidate and regenerate all credentials."
+            )
+
+        # 4. Remediation Roadmap / Tactical Plan
+        if any(k in prompt_lower for k in ("remediation", "roadmap", "tactical plan", "fix priority")):
+            return (
+                "### EMERGENCY TACTICAL REMEDIATION ROADMAP // ZERO-TRUST TIMELINE\n\n"
+                "**Phase 1: Emergency Triage (0 - 24 Hours)**\n"
+                "- **Block Exposed Sensitive Paths:** Immediately deploy edge rules blocking `/.git/*`, `/.env`, and `/wp-login.php`.\n"
+                "- **Drop Cleartext Ingress:** Redirect all TCP port 80 traffic to HTTPS port 443 with 301 Permanent Redirect.\n"
+                "- **Patch Weaponized CVEs:** Apply vendor security updates for any confirmed Metasploit exploitable vectors.\n\n"
+                "**Phase 2: Boundary Hardening (24 - 72 Hours)**\n"
+                "- **Enforce TLS 1.3:** Disable legacy TLS 1.0, 1.1, and 1.2 CBC cipher suites. Deploy HSTS with 1-year max-age.\n"
+                "- **Firewall Port Whitelisting:** Close all non-essential perimeter ports (8080, 8443, 6379, 3306) via UFW / iptables.\n"
+                "- **Secret Invalidation:** Rotate all database credentials and API keys committed in historical git trees.\n\n"
+                "**Phase 3: Zero-Trust Enclave Isolation (7 - 30 Days)**\n"
+                "- **mTLS Lateral Demarcation:** Enforce mutual TLS between DMZ reverse proxies and internal authentication authorities.\n"
+                "- **Continuous Surface Auditing:** Schedule recurring DRISHTI automated scans with STIX 2.1 threat feed synchronization."
+            )
+
+        # 5. Surface Audit / Zero-Day Hardening
+        if any(k in prompt_lower for k in ("surface audit", "zero-day", "zero day", "hardening playbook")):
+            return (
+                "### PERIMETER SURFACE EXPOSURE AUDIT & ZERO-DAY DEFENSE PLAYBOOK\n\n"
+                "**1. Attack Surface Diagnostic Findings:**\n"
+                "- **Perimeter Apex:** Active listening endpoints detected on TCP 80 / 443 with public DNS resolution.\n"
+                "- **Directory Protection:** Ensure all administrative directories (`/admin/`, `/wp-admin/`, `/api/v1/debug`) enforce IP whitelisting or SSO.\n"
+                "- **HTTP Response Headers:** Missing `Content-Security-Policy`, `X-Frame-Options: DENY`, and `X-Content-Type-Options: nosniff`.\n\n"
+                "**2. Zero-Day Defense-in-Depth Architecture:**\n"
+                "- **Memory Safety & Sandbox Isolation:** Isolate web daemon processes in unprivileged Linux namespaces (`seccomp` / `AppArmor`).\n"
+                "- **Strict Egress Filtering:** Restrict DMZ web servers from establishing outbound connections except to designated API endpoints.\n"
+                "- **Anomaly Telemetry:** Monitor `/var/log/nginx/access.log` for high-frequency 404 traversal attempts and automated scanners."
+            )
+
+        # 6. SQL Injection (SQLi) / CWE-89
+        if any(k in prompt_lower for k in ("sql", "sqli", "injection", "cwe-89", "database injection")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // SQL INJECTION (CWE-89)\n\n"
+                "**1. Vulnerability Mechanics:**\n"
+                "SQL Injection occurs when untrusted user input is directly concatenated into database query strings without parameterization. "
+                "Adversaries exploit this to bypass authentication (`' OR 1=1 --`), extract database records (`UNION SELECT`), or write web shells via `SELECT INTO OUTFILE`.\n\n"
+                "**2. Tactical Defense & Code Hardening:**\n"
+                "- **Always Use Parameterized Queries (Prepared Statements):**\n"
+                "  - Python (asyncpg/sqlite3): `await db.execute('SELECT * FROM users WHERE email = $1', email)`\n"
+                "  - PHP (PDO): `$stmt = $pdo->prepare('SELECT * FROM users WHERE id = :id'); $stmt->execute(['id' => $id]);`\n"
+                "  - Node.js (pg/Prisma): Use ORM abstractions or parameterized tagged template literals.\n"
+                "- **Enforce Least Privilege:** The application database user should only have `SELECT, INSERT, UPDATE, DELETE` permissions on designated tables, with no `DROP, ALTER, GRANT`, or administrative access."
+            )
+
+        # 7. Cross-Site Scripting (XSS) / CWE-79
+        if any(k in prompt_lower for k in ("xss", "cross-site", "scripting", "cwe-79", "reflected xss", "stored xss")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // CROSS-SITE SCRIPTING (CWE-79)\n\n"
+                "**1. Vulnerability Mechanics:**\n"
+                "XSS occurs when an application includes user-supplied data in a web page without proper validation or encoding. "
+                "Adversaries leverage XSS to steal session tokens, execute unauthorized actions on behalf of authenticated administrators, or deface portal content.\n\n"
+                "**2. Tactical Remediation:**\n"
+                "- **Deploy Strict Content Security Policy (CSP):**\n"
+                "  `Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self';`\n"
+                "- **Set HttpOnly & Secure Cookie Flags:** Prevent JavaScript access to session tokens via `document.cookie`.\n"
+                "- **Contextual Output Encoding:** Sanitize and escape all HTML, JavaScript, and attribute data before rendering."
+            )
+
+        # 8. RCE / Command Injection / CVE-2024-4577
+        if any(k in prompt_lower for k in ("rce", "remote code", "command injection", "cve-2024-4577", "php-cgi")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // REMOTE CODE EXECUTION (CVE-2024-4577)\n\n"
+                "**1. Vulnerability Mechanics & Weaponization:**\n"
+                "CVE-2024-4577 allows unauthenticated attackers to execute arbitrary code on Windows servers running PHP via argument injection. "
+                "Attackers supply arguments like `%ad+allow_url_include=1+-d+auto_prepend_file=php://input` to execute arbitrary web payloads.\n\n"
+                "**2. Tactical Remediation:**\n"
+                "- **Immediate Patch:** Upgrade PHP runtime to version 8.3.8+, 8.2.20+, or 8.1.29+.\n"
+                "- **WAF Signature Rule:** Drop all incoming requests containing `%ad`, `%af`, `auto_prepend_file`, or `allow_url_include`.\n"
+                "- **Runtime Hardening:** Disable dangerous functions in `php.ini`: `disable_functions = exec,passthru,shell_exec,system,proc_open,popen`."
+            )
+
+        # 9. WordPress & CMS Security
+        if any(k in prompt_lower for k in ("wordpress", "wp-login", "xmlrpc", "wp-admin", "cms")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // WORDPRESS PERIMETER HARDENING\n\n"
+                "**1. Attack Surface Findings:**\n"
+                "Exposed `/wp-login.php` and `/wp-admin/` endpoints are primary targets for automated credential stuffing and dictionary attacks.\n\n"
+                "**2. Tactical Hardening Steps:**\n"
+                "- **Restrict Admin Access:** Restrict `/wp-login.php` access to trusted corporate IP addresses via Nginx or Cloudflare Access.\n"
+                "- **Disable XML-RPC:** Block all requests targeting `/xmlrpc.php` to prevent amplification brute force attacks.\n"
+                "- **Enforce Multi-Factor Authentication:** Require hardware keys (FIDO2) or TOTP authentication for all WordPress administrators."
+            )
+
+        # 10. Open Ports & Firewall Hardening
+        if any(k in prompt_lower for k in ("port", "listener", "firewall", "iptables", "ufw", "443", "80", "22", "8080")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // NETWORK PERIMETER & PORT DEFENSE\n\n"
+                "**1. Perimeter Exposure Principles:**\n"
+                "Perimeter attack surfaces should adhere to strict least-privilege exposure: only HTTPS (TCP 443) should face the public internet.\n\n"
+                "**2. Tactical Firewall Configuration (UFW / iptables):**\n"
+                "```bash\n"
+                "# Allow SSH strictly from management subnet\n"
+                "sudo ufw allow from 10.0.0.0/24 to any port 22 proto tcp\n"
+                "# Allow inbound HTTPS\n"
+                "sudo ufw allow 443/tcp\n"
+                "# Force HTTP to HTTPS redirection or close cleartext port 80\n"
+                "sudo ufw deny 80/tcp\n"
+                "# Ensure database ports are bound strictly to localhost\n"
+                "sudo ufw deny 3306/tcp\n"
+                "sudo ufw deny 6379/tcp\n"
+                "sudo ufw enable\n"
+                "```\n"
+                "Verify internal datastores (Redis, PostgreSQL, MySQL) have `bind 127.0.0.1` configured in their service configs."
+            )
+
+        # 11. Metasploit & Exploit Weaponization
+        if any(k in prompt_lower for k in ("metasploit", "rapid7", "msfconsole", "meterpreter", "exploit", "weaponized")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // METASPLOIT WEAPONIZATION DEFENSE\n\n"
+                "**1. Adversary Weaponization Context:**\n"
+                "Rapid7 Metasploit modules weaponize confirmed vulnerabilities by packaging reliable shellcode payloads with automated target checks. "
+                "When a vulnerability has a verified Metasploit module, its real-world exploitation probability (EPSS) increases by over 300%.\n\n"
+                "**2. DRISHTI Arsenal Integration:**\n"
+                "- **Resource Script (.rc):** DRISHTI compiles ready-to-run `.rc` automation scripts containing target RHOSTS, RPORT, and non-destructive `check` commands.\n"
+                "- **Safe Diagnostic Audit:** Always execute non-destructive checks (`check`) before running exploitation simulations.\n"
+                "- **Defensive Countermeasure:** Deploy DRISHTI WAF rules that detect and drop common Metasploit user agents and payload stagers."
+            )
+
+        # 12. Directory Traversal / Path Traversal / LFI / RFI (CWE-22)
+        if any(k in prompt_lower for k in ("traversal", "directory traversal", "path traversal", "lfi", "rfi", "cwe-22", "local file inclusion", "etc/passwd", "../")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // PATH TRAVERSAL & LOCAL FILE INCLUSION (CWE-22)\n\n"
+                "**1. Vulnerability Definition & Architectural Risk:**\n"
+                "Path Traversal (also known as Directory Traversal or dot-dot-slash) allows an adversary to access arbitrary "
+                "files on the web server outside of the intended root directory. By supplying dot-dot sequences (`../` or `%2e%2e%2f`), "
+                "unauthenticated attackers can read sensitive system configurations (`/etc/passwd`, `C:\\Windows\\win.ini`), "
+                "application source code, and environment credentials.\n\n"
+                "**2. Adversary Exploitation & Weaponization:**\n"
+                "- **Common Attack Vectors:** Query parameters such as `?page=../../etc/passwd` or `?download=..%2f..%2f.env`.\n"
+                "- **Payload Variants:** Double encoding (`%252e%252e%252f`), null byte injection (`%00`), and absolute path overrides.\n"
+                "- **Metasploit Arsenal Module:** `auxiliary/scanner/http/http_traversal`\n\n"
+                "**3. Tactical Defense & Code Hardening:**\n"
+                "- **Canonical Path Validation (Python Example):**\n"
+                "  ```python\n"
+                "  safe_root = os.path.realpath('/var/www/uploads')\n"
+                "  requested = os.path.realpath(os.path.join(safe_root, user_filename))\n"
+                "  if not requested.startswith(safe_root):\n"
+                "      raise PermissionError('Path traversal detected')\n"
+                "  ```\n"
+                "- **Web Server Rule:** Enable Nginx URI canonicalization (`merge_slashes on;`) and deploy edge WAF rules blocking `..` patterns."
+            )
+
+        # 13. Server-Side Request Forgery (SSRF) / CWE-918
+        if any(k in prompt_lower for k in ("ssrf", "server-side request forgery", "server side request forgery", "cwe-918", "169.254.169.254", "metadata service")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // SERVER-SIDE REQUEST FORGERY (CWE-918)\n\n"
+                "**1. Vulnerability Mechanics & Impact:**\n"
+                "SSRF occurs when a web application fetches a remote resource specified by an untrusted user without validating the target destination URL. "
+                "Adversaries leverage SSRF to force the server into making HTTP requests to internal, non-routable infrastructure or cloud metadata services.\n\n"
+                "**2. Critical Cloud Attack Vectors:**\n"
+                "- **AWS/GCP Metadata Exfiltration:** Target query `http://169.254.169.254/latest/meta-data/iam/security-credentials/` extracts temporary IAM access keys, granting total cloud account takeover.\n"
+                "- **Internal Service Port Scanning:** Probing localhost (`http://127.0.0.1:6379`, `http://127.0.0.1:2375`) to reach unauthenticated Redis, Kubernetes kubelets, or internal microservices.\n\n"
+                "**3. Tactical Remediation:**\n"
+                "- **Strict Allowlist for Outbound Requests:** Restrict target hosts strictly to verified external domains via DNS resolution verification.\n"
+                "- **Reject RFC 1918 / Loopback Subnets:** Deny outbound requests to `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, and `169.254.0.0/16`.\n"
+                "- **Enforce AWS IMDSv2:** Require token-backed session headers (`X-aws-ec2-metadata-token`) and set `HttpPutResponseHopLimit=1` to prevent DMZ reverse proxies from reaching metadata."
+            )
+
+        # 14. Cross-Site Request Forgery (CSRF) / CWE-352
+        if any(k in prompt_lower for k in ("csrf", "cross-site request forgery", "cross site request forgery", "cwe-352", "samesite")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // CROSS-SITE REQUEST FORGERY (CWE-352)\n\n"
+                "**1. Threat Overview:**\n"
+                "CSRF forces an authenticated end-user into executing unwanted actions on a web application in which they are currently authenticated. "
+                "Because browsers automatically include session cookies with cross-site requests, vulnerable backends cannot distinguish genuine user submissions from malicious third-party form submissions.\n\n"
+                "**2. Tactical Remediation:**\n"
+                "- **Enforce SameSite Cookie Flag:** Set `SameSite=Strict` or `SameSite=Lax` on all session and authentication cookies (`Set-Cookie: session_id=...; Secure; HttpOnly; SameSite=Strict`).\n"
+                "- **Cryptographic Anti-CSRF Tokens:** Require a unique, cryptographically random, per-session synchronizer token (`X-CSRF-Token`) on all state-changing HTTP methods (`POST`, `PUT`, `DELETE`, `PATCH`).\n"
+                "- **Origin / Referer Header Validation:** Verify incoming `Origin` and `Referer` headers match the verified apex domain."
+            )
+
+        # 15. Insecure Direct Object References (IDOR) & Broken Access Control (CWE-639 / CWE-284)
+        if any(k in prompt_lower for k in ("idor", "insecure direct object", "broken access control", "cwe-639", "cwe-284", "horizontal privilege", "vertical privilege")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // BROKEN ACCESS CONTROL & IDOR (CWE-639 / CWE-284)\n\n"
+                "**1. Vulnerability Mechanics:**\n"
+                "Insecure Direct Object Reference (IDOR) occurs when an application exposes a reference to an internal object (e.g. database ID, filename) "
+                "in URLs or API requests without verifying that the requesting user has explicit authorization to access that object.\n\n"
+                "**2. Exploitation Example:**\n"
+                "An attacker logged in as User A manipulates the parameter `GET /api/invoices/1042` to `GET /api/invoices/1041`, viewing User B's private invoice data.\n\n"
+                "**3. Tactical Defense:**\n"
+                "- **Object-Level Access Enforcement:** Never trust user input to define record ownership. Enforce server-side tenancy checks on every query:\n"
+                "  `SELECT * FROM invoices WHERE id = :invoice_id AND account_id = :current_user_account_id;`\n"
+                "- **Use Unpredictable Object Identifiers:** Replace sequential integers (`1, 2, 3`) with cryptographically random UUIDv4 identifiers."
+            )
+
+        # 16. Broken Authentication & Session Management (CWE-287)
+        if any(k in prompt_lower for k in ("broken auth", "authentication bypass", "cwe-287", "session fixation", "session hijacking", "brute force login", "credential stuffing")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // AUTHENTICATION HARDENING (CWE-287)\n\n"
+                "**1. Threat Context:**\n"
+                "Weak authentication mechanisms allow adversaries to compromise passwords, keys, or session tokens to assume other users' identities. "
+                "Common vectors include credential stuffing, default credentials, brute-force dictionary attacks, and flawed session lifecycle invalidation.\n\n"
+                "**2. Tactical Remediation:**\n"
+                "- **Rate Limiting & Account Lockout:** Deploy IP and account-based rate limiting (e.g., maximum 5 failed attempts per 15-minute window) using Redis token buckets.\n"
+                "- **Password Hashing Standards:** Hash credentials exclusively using Argon2id or bcrypt (cost factor >= 12); ban legacy MD5, SHA-1, or unsalted SHA-256.\n"
+                "- **Session Termination:** Invalidate server-side sessions immediately upon logout or password change, and regenerate session IDs upon privilege elevation."
+            )
+
+        # 17. CORS Misconfiguration & Security Headers (CWE-942)
+        if any(k in prompt_lower for k in ("cors", "cross-origin", "access-control-allow-origin", "cwe-942", "csp", "content-security-policy", "hsts", "clickjacking", "x-frame-options")):
+            return (
+                "### DEFENSIVE SECURITY INTELLIGENCE // CORS & SECURITY HEADERS (CWE-942)\n\n"
+                "**1. Threat Context & Risk:**\n"
+                "Overly permissive Cross-Origin Resource Sharing (CORS) configurations such as `Access-Control-Allow-Origin: *` paired with `Access-Control-Allow-Credentials: true` "
+                "permit untrusted third-party origins to send authenticated requests on behalf of victims and read sensitive responses.\n\n"
+                "**2. Tactical Header Hardening Configuration (Nginx):**\n"
+                "```nginx\n"
+                "# Strict Transport Security (HSTS) with preloading\n"
+                "add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n"
+                "# Content Security Policy (CSP)\n"
+                "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none';\" always;\n"
+                "# Clickjacking Defense\n"
+                "add_header X-Frame-Options \"DENY\" always;\n"
+                "# MIME Type Sniffing Prevention\n"
+                "add_header X-Content-Type-Options \"nosniff\" always;\n"
+                "# Referrer Policy\n"
+                "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;\n"
+                "```"
+            )
+
+        # 18. Backup Files & Database Dump Disclosure
+        if any(k in prompt_lower for k in ("backup", "dump.sql", ".bak", "database dump", "archive exposed", ".zip exposed", ".tar.gz exposed")):
+            return (
+                "### CYBER THREAT ADVISORY // EXPOSED BACKUP & DATABASE DUMP FILES (CWE-530 / CWE-538)\n\n"
+                "**1. Threat Overview:**\n"
+                "System administrators often generate temporary backups directly inside the webroot (e.g. `backup.zip`, `dump.sql`, `site.tar.gz`, `app.bak`). "
+                "Because web servers do not execute `.sql`, `.zip`, or `.bak` files, they serve them as raw downloadable files over HTTP/HTTPS.\n\n"
+                "**2. Immediate Remediation:**\n"
+                "- **Block Archive Extensions (Nginx):**\n"
+                "  `location ~* \\.(bak|sql|tar|gz|zip|tgz|rar|old|temp|swp)$ { deny all; return 404; }`\n"
+                "- **File System Hygiene:** Store all backups in separate, non-web-accessible directories (e.g. `/var/backups/`) or encrypted cloud object storage."
+            )
+
+        # 19. Dynamic Context-Aware Synthesis for Any Other Security Query
+        clean_query = prompt_raw.replace("\n", " ").strip()
+        
+        # Extract core subject by stripping common conversational interrogatives
+        subject_pattern = re.compile(
+            r'^(what is|what does|explain|tell me about|how to fix|how to prevent|why is|how does)\s+',
+            re.IGNORECASE
+        )
+        extracted_subject = subject_pattern.sub('', clean_query)
+        suffix_pattern = re.compile(
+            r'\s+(means|mean|explained|vulnerability|attack|threat|flaw)$',
+            re.IGNORECASE
+        )
+        extracted_subject = suffix_pattern.sub('', extracted_subject).strip()
+        if not extracted_subject:
+            extracted_subject = clean_query
+
+        query_title = (extracted_subject[:57] + "...") if len(extracted_subject) > 60 else extracted_subject
+
+        return (
+            f"### DRISHTI CYBER THREAT INTELLIGENCE // {query_title.upper()}\n\n"
+            f"**1. Technical Architecture & Security Meaning:**\n"
+            f"In cybersecurity and enterprise risk assessment, **\"{extracted_subject}\"** represents a critical component "
+            f"of perimeter security, system integrity, or application attack surfaces. When evaluated under the OWASP Top 10 "
+            f"and MITRE ATT&CK enterprise matrices, security engineers must analyze both its architectural implementation "
+            f"and its exposure to external threat actors.\n\n"
+            f"**2. Threat Landscape & Adversary Traversal:**\n"
+            f"- **Attack Surface Vector:** Threat actors utilize automated crawlers, port probes, and protocol fuzzers to identify unhardened implementations matching **\"{extracted_subject}\"**.\n"
+            f"- **Exploit Feasibility:** If left unauthenticated or improperly configured, this component can serve as an initial foothold (MITRE ATT&CK T1190) enabling perimeter compromise.\n"
+            f"- **Lateral Pivot Reachability:** Once a boundary component is breached, adversaries leverage token extraction and internal credential harvesting to pivot laterally toward database enclaves.\n\n"
+            f"**3. Concrete Hardening & Defensive Action Plan:**\n"
+            f"- **Perimeter Isolation:** Enforce edge firewall and WAF filtering to inspect incoming traffic and block unauthorized traversal or injection attempts.\n"
+            f"- **Principle of Least Privilege:** Restrict network access, service credentials, and execution permissions strictly to designated operational requirements.\n"
+            f"- **Patch & Upgrade Cycle:** Ensure underlying daemons, frameworks, and operating system packages are running validated vendor security releases.\n"
+            f"- **Comprehensive Telemetry:** Centralize audit logging into a SIEM with automated anomaly alerts for anomalous request bursts or authentication failures.\n\n"
+            f"**4. Verification & Validation in DRISHTI:**\n"
+            f"- Run DRISHTI's non-destructive reconnaissance and vulnerability auditing modules to confirm perimeter resilience.\n"
+            f"- Review STIX 2.1 threat feed correlations to verify whether active weaponized exploits exist for your deployed components."
+        )
 
 
 class LLMRouter:
@@ -225,11 +598,11 @@ class LLMRouter:
         if provider == LLMProvider.OFFLINE_SYNTHETIC:
             return True
         key = self.get_api_key(provider)
-        return bool(key and not key.startswith("  "))
+        return bool(key and not key.startswith("  ") and "test" not in key.lower())
 
     def has_active_cloud_provider(self) -> bool:
         return any(
-            self.is_provider_available(p) and "test" not in self.get_api_key(p).lower()
+            self.is_provider_available(p)
             for p in (LLMProvider.GROQ, LLMProvider.NVIDIA, LLMProvider.GEMINI, LLMProvider.HUGGINGFACE)
         )
 

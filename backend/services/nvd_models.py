@@ -45,9 +45,9 @@ class VulnerabilityRecord(BaseModel):
     description: str = ""
     published_at: Optional[str] = None
     last_modified_at: Optional[str] = None
-    cvss_version: str = "3.1"
+    cvss_version: Optional[str] = "3.1"
     cvss_score: float = 0.0
-    cvss_severity: str = "UNKNOWN"
+    cvss_severity: Optional[str] = "UNKNOWN"
     cvss_vector: Optional[str] = None
     epss_score: Optional[float] = None
     epss_percentile: Optional[float] = None

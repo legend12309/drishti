@@ -90,9 +90,9 @@ async def build_attack_graph(payload: GraphBuildRequest):
         vulnerabilities=vulnerabilities,
     )
 
-    # 4. Find candidate attack paths to objectives
+    # 4. Find candidate attack paths to objectives (Crown Jewels)
     all_paths = []
-    objectives = ["CoreDB", "InternalAuth", "PaymentGateway"]
+    objectives = ["CoreDB", "PaymentGateway"]
     for obj in objectives:
         if obj in g:
             paths = find_candidate_attack_paths(
@@ -201,7 +201,7 @@ async def get_scan_risk_summary(scan_id: str):
 @router.get("/{scan_id}/paths")
 async def get_scan_attack_paths(
     scan_id: str,
-    target: Optional[str] = Query(None, description="Target objective node, e.g. CoreDB, InternalAuth"),
+    target: Optional[str] = Query(None, description="Target objective node, e.g. CoreDB, PaymentGateway"),
     source: Optional[str] = Query(None, description="Starting node, e.g. company.com"),
     target_domain: Optional[str] = Query(None, description="Target perimeter domain, e.g. iiit-bh.ac.in"),
 ):

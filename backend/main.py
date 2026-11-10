@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 import time
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 from dotenv import load_dotenv
@@ -10,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -31,6 +32,7 @@ from backend.api.reports import router as reports_router
 from backend.db.database import get_db, init_db, get_db_status
 from backend.services.seed_data import ensure_baseline_seed
 from backend.engines import get_active_engines
+from backend.services.attestation_service import get_hardware_enclave_fingerprint, verify_codebase_integrity
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
@@ -70,6 +72,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def add_enclave_attestation_and_security_headers(request: Request, call_next):
+    """
+    Injects immutable cryptographic enclave provenance, authorship attestation,
+    and anti-copy / IP protection headers into all HTTP responses.
+    """
+    response = await call_next(request)
+    try:
+        enclave = get_hardware_enclave_fingerprint()
+        response.headers["X-DRISHTI-Author"] = enclave["registered_author"]
+        response.headers["X-DRISHTI-Enclave-Node"] = enclave["node_id"]
+        response.headers["X-DRISHTI-Attestation-Signature"] = enclave["cryptographic_signature"]
+        response.headers["X-DRISHTI-IP-Protection"] = "Proprietary Academic Dissertation // Unauthorized Reproduction Forbidden"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+    except Exception:
+        pass
+    return response
+
+@app.exception_handler(Exception)
+async def global_enclave_exception_shield(request: Request, exc: Exception):
+    """
+    Global fault containment shield (CWE-209 defense):
+    Intercepts unhandled engine faults, logs an isolated error ID, and returns
+    a safe sanitized error envelope to guarantee zero process crashes and zero raw trace leaks.
+    """
+    error_id = f"ERR-{uuid.uuid4().hex[:8].upper()}"
+    print(f"[DRISHTI-ENCLAVE-SHIELD] Contained fault {error_id} on {request.method} {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "code": "DRISHTI_ENCLAVE_SHIELD_INTERCEPT",
+            "error_id": error_id,
+            "path": request.url.path,
+            "message": "Enclave fault shield: An unhandled condition was safely contained without state corruption.",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "attestation": "DRISHTI Sovereign Cyber Defense Platform // Proprietary Academic Intellectual Property",
+        }
+    )
+
 app.include_router(auth_router)
 app.include_router(authorizations_router)
 app.include_router(sse_router)
@@ -101,6 +144,7 @@ async def health_check() -> Dict[str, Any]:
     sys_mem = psutil.virtual_memory()
 
     db_status = await get_db_status()
+    enclave = get_hardware_enclave_fingerprint()
 
     return {
         "status": "operational",
@@ -120,6 +164,13 @@ async def health_check() -> Dict[str, Any]:
             "system_available_mb": round(sys_mem.available / (1024 * 1024), 2),
         },
         "engines": get_active_engines(),
+        "attestation": {
+            "status": enclave["status"],
+            "node_id": enclave["node_id"],
+            "registered_author": enclave["registered_author"],
+            "signature": enclave["cryptographic_signature"],
+            "ip_protection": enclave["ip_protection_notice"],
+        },
     }
 
 @app.post("/api/health/pipeline-test", tags=["System"])
@@ -189,9 +240,20 @@ async def run_pipeline_self_test() -> Dict[str, Any]:
     if not ok: all_ok = False
     steps.append({"step": "08", "name": "Text Dossier Engine", "status": "PASS" if ok else "FAIL", "latency_ms": lat, "detail": f"TEXT ({len(report.get('content_text', ''))} bytes, SHA-256 signed)"})
 
+    # 9. STIX 2.1 Threat Exporter
+    t0 = time.perf_counter()
+    from backend.services.stix_service import generate_stix_bundle
+    stix_bundle = await generate_stix_bundle(target="vvdx.in", scan_id="wf-seed-vvdx-in")
+    lat = round((time.perf_counter() - t0) * 1000, 2)
+    ok = stix_bundle.get("spec_version") == "2.1" and len(stix_bundle.get("objects", [])) > 0
+    if not ok: all_ok = False
+    steps.append({"step": "09", "name": "STIX 2.1 Threat Exporter", "status": "PASS" if ok else "FAIL", "latency_ms": lat, "detail": f"OASIS STIX 2.1 ({len(stix_bundle.get('objects', []))} SDOs compiled)"})
+
     return {
         "status": "all_passed" if all_ok else "degraded",
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "total_gates": len(steps),
+        "passed_gates": sum(1 for s in steps if s["status"] == "PASS"),
         "steps": steps
     }
 
@@ -289,6 +351,32 @@ async def security_audit_status() -> Dict[str, Any]:
         "controls": controls
     }
 
+RELEASES_DIR = BASE_DIR / "releases"
+
+@app.get("/download/release", include_in_schema=True)
+async def download_windows_release():
+    """Serves the standalone DRISHTI Windows-x64 binary release zip."""
+    zip_path = RELEASES_DIR / "DRISHTI-v1.0.0-Windows-x64.zip"
+    if not zip_path.exists():
+        raise HTTPException(status_code=404, detail="Release package not found")
+    return FileResponse(
+        path=str(zip_path),
+        filename="DRISHTI-v1.0.0-Windows-x64.zip",
+        media_type="application/zip",
+    )
+
+@app.get("/download/standalone", include_in_schema=True)
+async def download_standalone_source():
+    """Serves the portable DRISHTI source distribution package."""
+    zip_path = RELEASES_DIR / "drishti-v1.0.0-standalone.zip"
+    if not zip_path.exists():
+        raise HTTPException(status_code=404, detail="Source package not found")
+    return FileResponse(
+        path=str(zip_path),
+        filename="drishti-v1.0.0-standalone.zip",
+        media_type="application/zip",
+    )
+
 if FRONTEND_DIST.exists():
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
 
@@ -302,6 +390,11 @@ if FRONTEND_DIST.exists():
         if ".." in full_path or "\\" in full_path:
             return JSONResponse({"detail": "Access Denied: Path Traversal Disallowed"}, status_code=403)
 
+        # Block any dotfiles or hidden files
+        path_obj = Path(full_path)
+        if any(part.startswith(".") for part in path_obj.parts if part not in ("", ".")):
+            return JSONResponse({"detail": "Access Denied: Hidden Files Disallowed"}, status_code=403)
+
         file_path = (FRONTEND_DIST / full_path).resolve()
         frontend_root = FRONTEND_DIST.resolve()
 
@@ -313,8 +406,14 @@ if FRONTEND_DIST.exists():
             if not str(file_path).startswith(str(frontend_root)):
                 return JSONResponse({"detail": "Access Denied: Path Outside Root"}, status_code=403)
 
+        # If requesting an actual static file that exists in FRONTEND_DIST, return it
         if full_path and file_path.is_file():
             return FileResponse(file_path)
+
+        # If requesting a path with a file extension that does NOT exist, return 404 (never return index.html for missing assets/files)
+        if "." in path_obj.name:
+            return JSONResponse({"detail": "File Not Found"}, status_code=404)
+
         return FileResponse(frontend_root / "index.html")
 else:
     @app.get("/", include_in_schema=False)

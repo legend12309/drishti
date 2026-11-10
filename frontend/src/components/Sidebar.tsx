@@ -26,7 +26,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'guard', index: '05_', label: 'GUARD' },
   { id: 'stix', index: '06_', label: 'STIX' },
   { id: 'reports', index: '07_', label: 'REPORTS' },
-  { id: 'settings', index: '08_', label: 'CONFIG' },
+  { id: 'audit', index: '08_', label: 'AUDIT' },
+  { id: 'settings', index: '09_', label: 'CONFIG' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
