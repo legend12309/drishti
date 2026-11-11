@@ -80,6 +80,7 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
   const [loaConfirmed, setLoaConfirmed] = useState(true);
   const [grantingLoa, setGrantingLoa] = useState(false);
   const [loaError, setLoaError] = useState<string | null>(null);
+  const [expandedStageIndex, setExpandedStageIndex] = useState<number | null>(null);
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -1163,46 +1164,71 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
               </div>
             ) : orchestratorWorkflow && orchestratorWorkflow.stages && orchestratorWorkflow.stages.length > 0 ? (
               <div className="space-y-2">
-                {orchestratorWorkflow.stages.map((st: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 bg-boneLight border border-hairline flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-ink transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 bg-boneDark border border-hairline text-ink flex items-center justify-center font-bold text-[11px] shrink-0 font-mono">
-                        {idx + 1}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-ink uppercase font-grotesk">
-                            {st.scanner_name}
-                          </span>
-                          <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase border ${
-                            st.status === 'completed'
-                              ? 'bg-signalGreenBg text-signalGreen border-signalGreen'
-                              : st.status === 'running'
-                              ? 'bg-vermilion text-white border-vermilion animate-pulse'
-                              : st.status === 'skipped' || st.status === 'not_applicable'
-                              ? 'bg-boneDark text-charcoal border-hairline'
-                              : st.status === 'failed'
-                              ? 'bg-white text-vermilion border-vermilion'
-                              : 'bg-pureWhite text-charcoal border-hairline'
-                          }`}>
-                            [{st.status}]
-                          </span>
+                {orchestratorWorkflow.stages.map((st: any, idx: number) => {
+                  const isExpanded = expandedStageIndex === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-boneLight border border-hairline hover:border-ink transition-colors"
+                    >
+                      <div className="p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-boneDark border border-hairline text-ink flex items-center justify-center font-bold text-[11px] shrink-0 font-mono">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-ink uppercase font-grotesk">
+                                {st.scanner_name}
+                              </span>
+                              <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase border ${
+                                st.status === 'completed'
+                                  ? 'bg-signalGreenBg text-signalGreen border-signalGreen'
+                                  : st.status === 'running'
+                                  ? 'bg-vermilion text-white border-vermilion animate-pulse'
+                                  : st.status === 'skipped' || st.status === 'not_applicable'
+                                  ? 'bg-boneDark text-charcoal border-hairline'
+                                  : st.status === 'failed'
+                                  ? 'bg-white text-vermilion border-vermilion'
+                                  : 'bg-pureWhite text-charcoal border-hairline'
+                              }`}>
+                                [{st.status}]
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-charcoal mt-0.5 font-mono">
+                              {st.error_message || st.desc || (st.status === 'completed' ? `Executed in ${st.duration_seconds || 0}s` : 'Pipeline stage')}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-charcoal mt-0.5 font-mono">
-                          {st.error_message || st.desc || 'Pipeline stage'}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-4 text-[10px] font-mono text-charcoal shrink-0">
-                      <span>FINDINGS: <strong className="text-ink">{st.findings_count ?? 0}</strong></span>
-                      <span>PROGRESS: <strong className="text-vermilion">{st.progress ?? 0}%</strong></span>
+                        <div className="flex items-center gap-4 text-[10px] font-mono text-charcoal shrink-0">
+                          <span>FINDINGS: <strong className="text-ink">{st.findings_count ?? 0}</strong></span>
+                          <span>PROGRESS: <strong className="text-vermilion">{st.progress ?? 0}%</strong></span>
+                          {st.raw_output && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedStageIndex(isExpanded ? null : idx)}
+                              className="px-2 py-1 bg-pureWhite hover:bg-boneDark border border-hairline text-ink font-mono text-[9px] font-bold cursor-pointer transition-colors shadow-xs"
+                            >
+                              {isExpanded ? '[ HIDE LOGS ▲ ]' : '[ VIEW OUTPUT ➔ ]'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expandable Monospace Raw Output Terminal Box */}
+                      {isExpanded && st.raw_output && (
+                        <div className="border-t border-hairline bg-[#11161B] text-[#00FF66] p-3.5 text-[11px] font-mono overflow-x-auto whitespace-pre-wrap select-text leading-relaxed">
+                          <div className="text-[9px] text-[#8892B0] border-b border-[#233554] pb-1.5 mb-2 flex items-center justify-between">
+                            <span>// DIAGNOSTIC SCANNER OUTPUT — {st.scanner_name.toUpperCase()} (STAGE {idx + 1})</span>
+                            <span>DURATION: {st.duration_seconds}s</span>
+                          </div>
+                          {st.raw_output}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="py-12 text-center text-charcoal text-[11px] font-mono bg-[#FAF8F5] border border-dashed border-hairline p-6">

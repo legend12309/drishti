@@ -76,6 +76,7 @@ class ScannerStageSummary(BaseModel):
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
     error_message: Optional[str] = None
+    raw_output: Optional[str] = None
 
 
 class UnifiedWorkflowStatusResponse(BaseModel):

@@ -498,6 +498,11 @@ class ProjectDiscoveryNucleiAdapter(BaseScannerAdapter):
         import httpx
         norm_target = normalize_domain(target)
         target_urls = [f"https://{norm_target}", f"http://{norm_target}"]
+        if not norm_target.startswith("www."):
+            target_urls.extend([f"https://www.{norm_target}", f"http://www.{norm_target}"])
+        else:
+            stripped = norm_target.replace("www.", "")
+            target_urls.extend([f"https://{stripped}", f"http://{stripped}"])
         findings: List[NucleiFindingObservation] = []
         raw_output_lines = [f"[*] DRISHTI Pure-Async Nuclei Engine targeting {norm_target}"]
 

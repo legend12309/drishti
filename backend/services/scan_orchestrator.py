@@ -511,13 +511,15 @@ class UnifiedScanOrchestrator:
                                 status=StageExecutionState.COMPLETED,
                                 duration=stage_duration,
                                 findings=findings_count,
+                                raw_output=res.raw_output,
                             )
                             await broadcast_workflow_event(workflow_id, "stage_completed", {
                                 "scanner": sid,
                                 "findings_count": findings_count,
                                 "duration_seconds": stage_duration,
                                 "progress": current_overall_progress,
-                                "step": f"Completed {display_name}"
+                                "step": f"Completed {display_name}",
+                                "raw_output": res.raw_output,
                             })
                         elif res.status == ScannerExecutionState.CANCELLED:
                             stage_status_map[sid] = StageExecutionState.CANCELLED
@@ -529,6 +531,7 @@ class UnifiedScanOrchestrator:
                                 duration=stage_duration,
                                 findings=0,
                                 err="Operator cancelled execution",
+                                raw_output=res.raw_output,
                             )
                             break
                         elif res.status in (ScannerExecutionState.SKIPPED, ScannerExecutionState.SCANNER_UNAVAILABLE):
@@ -545,12 +548,14 @@ class UnifiedScanOrchestrator:
                                 duration=stage_duration,
                                 findings=0,
                                 err=res.error_message,
+                                raw_output=res.raw_output,
                             )
                             await broadcast_workflow_event(workflow_id, "stage_skipped", {
                                 "scanner": sid,
                                 "reason": res.error_message,
                                 "progress": current_overall_progress,
-                                "step": f"Skipped {display_name}"
+                                "step": f"Skipped {display_name}",
+                                "raw_output": res.raw_output,
                             })
                         elif res.status == ScannerExecutionState.NOT_APPLICABLE:
                             stage_status_map[sid] = StageExecutionState.NOT_APPLICABLE
@@ -566,12 +571,14 @@ class UnifiedScanOrchestrator:
                                 duration=stage_duration,
                                 findings=0,
                                 err=res.error_message,
+                                raw_output=res.raw_output,
                             )
                             await broadcast_workflow_event(workflow_id, "stage_skipped", {
                                 "scanner": sid,
                                 "reason": res.error_message,
                                 "progress": current_overall_progress,
-                                "step": f"Not Applicable: {display_name}"
+                                "step": f"Not Applicable: {display_name}",
+                                "raw_output": res.raw_output,
                             })
                         else:
                             stage_status_map[sid] = StageExecutionState.FAILED
@@ -587,12 +594,14 @@ class UnifiedScanOrchestrator:
                                 duration=stage_duration,
                                 findings=0,
                                 err=res.error_message,
+                                raw_output=res.raw_output,
                             )
                             await broadcast_workflow_event(workflow_id, "stage_failed", {
                                 "scanner": sid,
                                 "error": res.error_message,
                                 "progress": current_overall_progress,
-                                "step": f"Failed {display_name}"
+                                "step": f"Failed {display_name}",
+                                "raw_output": res.raw_output,
                             })
                             if not plan.allow_partial_completion:
                                 break
@@ -676,40 +685,52 @@ class UnifiedScanOrchestrator:
                     )
 
                     all_findings = await get_scan_findings(workflow_id)
-                    if all_findings:
-                        fingerprints = await normalize_and_persist_fingerprints(workflow_id, all_findings)
-                        vuln_findings = await evaluate_scan_vulnerabilities(workflow_id, fingerprints)
-                        
-                        builder = AttackGraphBuilder(scan_id=workflow_id)
-                        g = builder.build_from_evidence(
-                            target_domain=target,
-                            findings=all_findings,
-                            vulnerabilities=[vf.model_dump() for vf in vuln_findings],
+                    if not all_findings:
+                        # Ensure root perimeter target is recorded as a baseline finding so all downstream engines correlate
+                        primary_ip = resolved_ips[0] if (resolved_ips and len(resolved_ips) > 0) else "127.0.0.1"
+                        await db_queue.execute_write(
+                            """
+                            INSERT INTO scan_findings (
+                                scan_id, host, ip, tech, status, risk, score, ports, created_at
+                            ) VALUES (?, ?, ?, 'Perimeter Apex Endpoint', 'Active', 'INFO', '1.0', '[]', CURRENT_TIMESTAMP)
+                            """,
+                            (workflow_id, target, primary_ip)
                         )
-                        graph_dict = builder.to_dict()
-                        assessment = compute_composite_risk_assessment(
-                            scan_id=workflow_id,
-                            snapshot_id=builder.snapshot_id,
-                            nodes=graph_dict["nodes"],
-                            vulnerabilities=[vf.model_dump() for vf in vuln_findings],
-                        )
-                        attack_paths = []
-                        for obj in ("CoreDB", "PaymentGateway"):
-                            if obj in g:
-                                paths = find_candidate_attack_paths(
-                                    g=g,
-                                    source_node=target,
-                                    target_node=obj,
-                                    scan_id=workflow_id,
-                                    snapshot_id=builder.snapshot_id,
-                                    k=2,
-                                )
-                                attack_paths.extend(paths)
+                        all_findings = await get_scan_findings(workflow_id)
 
-                        await persist_graph_snapshot(builder.snapshot_id, workflow_id, graph_dict)
-                        await persist_risk_assessment(assessment)
-                        if attack_paths:
-                            await persist_attack_paths(attack_paths)
+                    fingerprints = await normalize_and_persist_fingerprints(workflow_id, all_findings)
+                    vuln_findings = await evaluate_scan_vulnerabilities(workflow_id, fingerprints)
+                    
+                    builder = AttackGraphBuilder(scan_id=workflow_id)
+                    g = builder.build_from_evidence(
+                        target_domain=target,
+                        findings=all_findings,
+                        vulnerabilities=[vf.model_dump() for vf in vuln_findings],
+                    )
+                    graph_dict = builder.to_dict()
+                    assessment = compute_composite_risk_assessment(
+                        scan_id=workflow_id,
+                        snapshot_id=builder.snapshot_id,
+                        nodes=graph_dict["nodes"],
+                        vulnerabilities=[vf.model_dump() for vf in vuln_findings],
+                    )
+                    attack_paths = []
+                    for obj in ("CoreDB", "PaymentGateway"):
+                        if obj in g:
+                            paths = find_candidate_attack_paths(
+                                g=g,
+                                source_node=target,
+                                target_node=obj,
+                                scan_id=workflow_id,
+                                snapshot_id=builder.snapshot_id,
+                                k=2,
+                            )
+                            attack_paths.extend(paths)
+
+                    await persist_graph_snapshot(builder.snapshot_id, workflow_id, graph_dict)
+                    await persist_risk_assessment(assessment)
+                    if attack_paths:
+                        await persist_attack_paths(attack_paths)
                 except Exception as enrich_ex:
                     logger.warning(f"Workflow enrichment note on {workflow_id}: {enrich_ex}")
 
@@ -790,6 +811,7 @@ class UnifiedScanOrchestrator:
                 timeout_seconds=timeout,
                 cancel_event=cancel_event,
                 authorized_domain=auth_domain,
+                resolved_ips=resolved_ips,
             )
         elif scanner_id == "zap":
             return await adapter.execute_scan(
@@ -799,6 +821,7 @@ class UnifiedScanOrchestrator:
                 timeout_seconds=timeout,
                 cancel_event=cancel_event,
                 authorized_domain=auth_domain,
+                resolved_ips=resolved_ips,
             )
         elif scanner_id == "trivy":
             return await adapter.execute_scan(
@@ -950,10 +973,14 @@ class UnifiedScanOrchestrator:
         """Persists stage findings to database and correlates into unified finding index."""
         if scanner_id == "nmap":
             await persist_active_port_observations(res)
-            return await correlate_nmap_observations_to_fingerprints(res)
+            cpe_count = await correlate_nmap_observations_to_fingerprints(res)
+            open_ports = sum(len(h.ports) for h in res.hosts) if res.hosts else 0
+            return max(cpe_count, open_ports)
         elif scanner_id == "httpx":
             await persist_http_service_observations(res)
-            return await correlate_httpx_observations_to_fingerprints(res)
+            cpe_count = await correlate_httpx_observations_to_fingerprints(res)
+            svc_count = len(res.http_services) if res.http_services else 0
+            return max(cpe_count, svc_count)
         elif scanner_id == "zap":
             await persist_zap_alert_observations(res)
             return await correlate_zap_alerts_to_scan_findings(res)
@@ -983,16 +1010,17 @@ class UnifiedScanOrchestrator:
         status: StageExecutionState,
         duration: float,
         findings: int,
-        err: Optional[str] = None
+        err: Optional[str] = None,
+        raw_output: Optional[str] = None,
     ):
         await db_queue.execute_write(
             """
             UPDATE scan_stages
             SET status = ?, duration_seconds = ?, findings_count = ?, error_message = ?,
-                completed_at = CURRENT_TIMESTAMP, progress = 100
+                stage_metadata = ?, completed_at = CURRENT_TIMESTAMP, progress = 100
             WHERE scan_id = ? AND stage_name = ?
             """,
-            (status.value, duration, findings, err, workflow_id, scanner_id)
+            (status.value, duration, findings, err, raw_output, workflow_id, scanner_id)
         )
 
     async def get_workflow_status(self, workflow_id: str) -> Optional[UnifiedWorkflowStatusResponse]:
@@ -1022,6 +1050,7 @@ class UnifiedScanOrchestrator:
                         started_at=str(r["started_at"]) if r["started_at"] else None,
                         completed_at=str(r["completed_at"]) if r["completed_at"] else None,
                         error_message=r["error_message"],
+                        raw_output=r["stage_metadata"],
                     )
                     for r in stage_rows
                 ]

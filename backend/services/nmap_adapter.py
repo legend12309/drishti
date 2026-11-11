@@ -196,7 +196,26 @@ class NmapAdapter(BaseScannerAdapter):
             # Ensures zero-dummy live discovery across commodity environments
             try:
                 norm_target = normalize_domain(target)
-                resolved_ip = socket.gethostbyname(norm_target)
+                if resolved_ips and len(resolved_ips) > 0:
+                    resolved_ip = resolved_ips[0]
+                else:
+                    resolved_ip = None
+                    candidates = [norm_target]
+                    if not norm_target.startswith("www."):
+                        candidates.append(f"www.{norm_target}")
+                    else:
+                        candidates.append(norm_target.replace("www.", ""))
+                    for cand in candidates:
+                        try:
+                            resolved_ip = socket.gethostbyname(cand)
+                            norm_target = cand
+                            break
+                        except socket.gaierror:
+                            continue
+
+                if not resolved_ip:
+                    raise socket.gaierror(f"Cannot resolve host {norm_target}")
+
                 is_valid, ip_err = validate_destination_ip(resolved_ip)
                 if not is_valid:
                     return ScannerResult(
@@ -219,8 +238,8 @@ class NmapAdapter(BaseScannerAdapter):
                     if cancel_event and cancel_event.is_set():
                         return None
                     try:
-                        conn = asyncio.open_connection(norm_target, port)
-                        reader, writer = await asyncio.wait_for(conn, timeout=1.2)
+                        conn = asyncio.open_connection(resolved_ip, port)
+                        reader, writer = await asyncio.wait_for(conn, timeout=1.5)
                         writer.close()
                         await writer.wait_closed()
                         return port

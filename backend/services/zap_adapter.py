@@ -184,7 +184,11 @@ class OwaspZapAdapter(BaseScannerAdapter):
                 error_message=None,
             )
 
-    def _resolve_and_validate_target(self, target: str) -> Tuple[bool, Optional[str], Optional[str]]:
+    def _resolve_and_validate_target(
+        self,
+        target: str,
+        resolved_ips: Optional[List[str]] = None
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
         """
         Resolves hostname and verifies destination IP against SSRF & scope boundaries.
         Returns: (is_valid, resolved_ip, error_message)
@@ -194,11 +198,26 @@ class OwaspZapAdapter(BaseScannerAdapter):
         except ValueError as ve:
             return False, None, f"Invalid target domain: {str(ve)}"
 
-        try:
-            resolved_ip = socket.gethostbyname(clean_host)
-        except socket.gaierror:
-            # Fall back to a default indicator if offline test or unresolvable
-            resolved_ip = "192.0.2.1"
+        resolved_ip = None
+
+        if resolved_ips and len(resolved_ips) > 0:
+            resolved_ip = resolved_ips[0]
+        else:
+            candidates = [clean_host]
+            if not clean_host.startswith("www."):
+                candidates.append(f"www.{clean_host}")
+            else:
+                candidates.append(clean_host.replace("www.", ""))
+
+            for cand in candidates:
+                try:
+                    resolved_ip = socket.gethostbyname(cand)
+                    break
+                except socket.gaierror:
+                    continue
+
+        if not resolved_ip:
+            return False, None, f"DNS resolution failed for {clean_host} and candidate hostnames."
 
         valid, err = validate_destination_ip(resolved_ip)
         if not valid:
@@ -214,6 +233,7 @@ class OwaspZapAdapter(BaseScannerAdapter):
         timeout_seconds: int = 120,
         cancel_event: Optional[Any] = None,
         authorized_domain: Optional[str] = None,
+        resolved_ips: Optional[List[str]] = None,
     ) -> ScannerResult:
         """
         Executes an OWASP ZAP assessment against an authorized target.
@@ -237,7 +257,7 @@ class OwaspZapAdapter(BaseScannerAdapter):
             )
 
         # 2. SSRF Pre-flight Validation
-        valid_ip, resolved_ip, ip_err = self._resolve_and_validate_target(target)
+        valid_ip, resolved_ip, ip_err = self._resolve_and_validate_target(target, resolved_ips)
         if not valid_ip:
             return ScannerResult(
                 scan_id=scan_id,
@@ -453,6 +473,11 @@ class OwaspZapAdapter(BaseScannerAdapter):
         """
         norm_target = normalize_domain(target)
         target_urls = [f"https://{norm_target}", f"http://{norm_target}"]
+        if not norm_target.startswith("www."):
+            target_urls.extend([f"https://www.{norm_target}", f"http://www.{norm_target}"])
+        else:
+            stripped = norm_target.replace("www.", "")
+            target_urls.extend([f"https://{stripped}", f"http://{stripped}"])
         zap_alerts: List[ZapAlertObservation] = []
         raw_output_lines = [f"[*] DRISHTI Pure-Async DAST Engine targeting {norm_target}"]
 

@@ -179,6 +179,7 @@ class ProjectDiscoveryHttpxAdapter(BaseScannerAdapter):
         timeout_seconds: int = 120,
         cancel_event: Optional[asyncio.Event] = None,
         authorized_domain: Optional[str] = None,
+        resolved_ips: Optional[List[str]] = None,
     ) -> ScannerResult:
         """
         Executes ProjectDiscovery httpx with strict argument allowlisting,
@@ -202,7 +203,26 @@ class ProjectDiscoveryHttpxAdapter(BaseScannerAdapter):
             # Fallback to pure-async Python HTTPX client when ProjectDiscovery httpx CLI binary is absent
             try:
                 norm_target = normalize_domain(target)
-                resolved_ip = socket.gethostbyname(norm_target)
+                if resolved_ips and len(resolved_ips) > 0:
+                    resolved_ip = resolved_ips[0]
+                else:
+                    resolved_ip = None
+                    candidates = [norm_target]
+                    if not norm_target.startswith("www."):
+                        candidates.append(f"www.{norm_target}")
+                    else:
+                        candidates.append(norm_target.replace("www.", ""))
+                    for cand in candidates:
+                        try:
+                            resolved_ip = socket.gethostbyname(cand)
+                            norm_target = cand
+                            break
+                        except socket.gaierror:
+                            continue
+
+                if not resolved_ip:
+                    raise socket.gaierror(f"Cannot resolve host {norm_target}")
+
                 is_valid, ip_err = validate_destination_ip(resolved_ip)
                 if not is_valid:
                     return ScannerResult(
@@ -220,36 +240,45 @@ class ProjectDiscoveryHttpxAdapter(BaseScannerAdapter):
                 import httpx as py_httpx
                 services = []
                 transport = py_httpx.AsyncHTTPTransport(retries=0)
-                client_timeout = py_httpx.Timeout(connect=1.5, read=2.0, write=1.5, pool=1.5)
+                client_timeout = py_httpx.Timeout(connect=2.0, read=2.5, write=2.0, pool=2.0)
 
-                for scheme, p in [("http", 80), ("https", 443), ("http", 8080)]:
-                    if cancel_event and cancel_event.is_set():
-                        break
-                    url = f"{scheme}://{norm_target}:{p}" if p not in (80, 443) else f"{scheme}://{norm_target}"
-                    try:
-                        async with py_httpx.AsyncClient(transport=transport, timeout=client_timeout, follow_redirects=True, headers={"User-Agent": "DRISHTI-Service-Probe/1.0"}) as client:
-                            resp = await client.get(url)
-                            title = ""
-                            if "<title>" in resp.text:
-                                title = resp.text.split("<title>")[1].split("</title>")[0].strip()[:80]
-                            server_h = resp.headers.get("server", "")
-                            techs = [server_h] if server_h else []
-                            services.append(
-                                HttpServiceObservation(
-                                    url=url,
-                                    host=norm_target,
-                                    port=p,
-                                    scheme=scheme,
-                                    status_code=resp.status_code,
-                                    title=title,
-                                    webserver=server_h,
-                                    technologies=techs,
-                                    content_length=len(resp.content),
-                                    observed_at=datetime.now(timezone.utc),
+                target_hosts = [norm_target]
+                if not norm_target.startswith("www."):
+                    target_hosts.append(f"www.{norm_target}")
+                else:
+                    target_hosts.append(norm_target.replace("www.", ""))
+
+                for th in target_hosts:
+                    for scheme, p in [("https", 443), ("http", 80), ("http", 8080)]:
+                        if cancel_event and cancel_event.is_set():
+                            break
+                        url = f"{scheme}://{th}:{p}" if p not in (80, 443) else f"{scheme}://{th}"
+                        try:
+                            async with py_httpx.AsyncClient(transport=transport, timeout=client_timeout, follow_redirects=True, headers={"User-Agent": "DRISHTI-Service-Probe/1.0"}) as client:
+                                resp = await client.get(url)
+                                title = ""
+                                if "<title>" in resp.text:
+                                    title = resp.text.split("<title>")[1].split("</title>")[0].strip()[:80]
+                                server_h = resp.headers.get("server", "")
+                                techs = [server_h] if server_h else []
+                                services.append(
+                                    HttpServiceObservation(
+                                        url=url,
+                                        host=th,
+                                        port=p,
+                                        scheme=scheme,
+                                        status_code=resp.status_code,
+                                        title=title,
+                                        webserver=server_h,
+                                        technologies=techs,
+                                        content_length=len(resp.content),
+                                        observed_at=datetime.now(timezone.utc),
+                                    )
                                 )
-                            )
-                    except Exception:
-                        pass
+                        except Exception:
+                            pass
+                    if len(services) > 0:
+                        break
 
                 return ScannerResult(
                     scan_id=scan_id,
