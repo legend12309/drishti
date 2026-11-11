@@ -52,6 +52,8 @@ class ScannerExecutionState(str, Enum):
     CANCELLED = "cancelled"
     TIMED_OUT = "timed_out"
     SCANNER_UNAVAILABLE = "scanner_unavailable"
+    SKIPPED = "skipped"
+    NOT_APPLICABLE = "not_applicable"
 
 
 @dataclass

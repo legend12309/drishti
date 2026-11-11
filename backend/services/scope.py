@@ -172,6 +172,9 @@ def is_in_scope(target: str, authorized_domain: str) -> bool:
     if norm_target == norm_auth:
         return True
 
+    if norm_target.replace("www.", "") == norm_auth.replace("www.", ""):
+        return True
+
     # Proper subdomain check: target must end with '.<authorized_domain>'
     if norm_target.endswith(f".{norm_auth}"):
         return True

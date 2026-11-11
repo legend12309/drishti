@@ -21,6 +21,7 @@ from backend.db.database import get_db, db_queue
 from backend.services.authorizations import (
     get_authorization,
     get_valid_authorization_for_target,
+    create_loa_authorization,
     log_audit_event,
 )
 from backend.services.scope import normalize_domain, is_in_scope, is_sandbox_target, is_scope_authorized
@@ -530,7 +531,7 @@ class UnifiedScanOrchestrator:
                                 err="Operator cancelled execution",
                             )
                             break
-                        elif res.status == ScannerExecutionState.SKIPPED:
+                        elif res.status in (ScannerExecutionState.SKIPPED, ScannerExecutionState.SCANNER_UNAVAILABLE):
                             stage_status_map[sid] = StageExecutionState.SKIPPED
                             await db_queue.execute_write(
                                 "UPDATE scans SET progress = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
@@ -876,7 +877,36 @@ class UnifiedScanOrchestrator:
                         logger.warning(f"Resolved IP {ip} failed SSRF validation: {ip_err}")
             except (socket.gaierror, asyncio.TimeoutError, Exception) as e:
                 logger.warning(f"DNS resolution failed or timed out for {norm_target}: {e}")
-        
+
+        if not resolved_ips:
+            candidates = []
+            if not norm_target.startswith("www."):
+                candidates.append(f"www.{norm_target}")
+            else:
+                candidates.append(norm_target.replace("www.", ""))
+            for cand in candidates:
+                try:
+                    infos = await asyncio.wait_for(
+                        asyncio.to_thread(socket.getaddrinfo, cand, None, socket.AF_INET),
+                        timeout=3.0
+                    )
+                    for info in infos:
+                        ip = info[4][0]
+                        is_valid, ip_err = validate_destination_ip(ip)
+                        if is_valid and ip not in resolved_ips:
+                            resolved_ips.append(ip)
+                except Exception:
+                    pass
+
+        if not resolved_ips:
+            try:
+                fallback_ip = await asyncio.to_thread(socket.gethostbyname, norm_target)
+                is_valid, ip_err = validate_destination_ip(fallback_ip)
+                if is_valid and fallback_ip not in resolved_ips:
+                    resolved_ips.append(fallback_ip)
+            except Exception:
+                pass
+
         return resolved_ips
 
     async def _check_trivy_eligibility(self, target: str, resolved_ips: List[str], plan: CreateUnifiedScanPlanRequest) -> Tuple[bool, str]:
