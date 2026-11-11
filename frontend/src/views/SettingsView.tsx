@@ -247,6 +247,120 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigate, showToas
           </div>
         </div>
 
+        {/* Offline Desktop System & Package Distribution Panel */}
+        <div className="bg-pureWhite border border-hairline p-6 shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-hairline bg-boneDark -mx-6 -mt-6 p-4">
+            <div className="flex items-center space-x-2">
+              <DoodleIcon name="download" size={14} className="text-signalGreen" />
+              <span className="text-[10px] font-bold text-ink uppercase tracking-wider">
+                STANDALONE SYSTEM DOWNLOADS & OFFLINE DISTRIBUTION ENCLAVE
+              </span>
+            </div>
+            <span className="text-[9px] text-signalGreen font-bold font-mono">
+              [ 100% AIR-GAP COMPATIBLE ]
+            </span>
+          </div>
+
+          <p className="text-[11px] text-charcoal font-mono leading-relaxed">
+            DRISHTI is engineered as a zero-dependency, self-contained cyber intelligence suite. You can download and deploy it directly on any Windows workstation, SOC terminal, or isolated laboratory network without internet access.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Package 1: Standalone Windows App */}
+            <div className="border border-hairline bg-boneLight p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold font-grotesk uppercase text-ink">
+                    1. STANDALONE WINDOWS APP (.EXE)
+                  </span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-signalGreenBg text-signalGreen border border-signalGreen">
+                    NO PYTHON REQUIRED
+                  </span>
+                </div>
+                <p className="text-[10px] text-charcoal font-mono mt-1.5">
+                  Packaged PyInstaller binary distribution with embedded Python runtime, compiled Web UI, and full SQLite engine. Extract and run <strong className="text-ink">DRISHTI.exe</strong> directly.
+                </p>
+                <div className="text-[9px] font-mono text-pencil mt-2 space-y-0.5">
+                  <div>• Package: DRISHTI-v1.0.0-Windows-x64.zip (~65.6 MB)</div>
+                  <div>• Target: Windows 10 / 11 / Server 2019+ (x86_64)</div>
+                </div>
+              </div>
+
+              <a
+                href="/download/release"
+                download="DRISHTI-v1.0.0-Windows-x64.zip"
+                className="w-full bg-signalGreen hover:bg-forestGreen text-white px-3 py-2 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center no-underline"
+              >
+                <DoodleIcon name="download" size={12} className="text-white" />
+                <span>[ DOWNLOAD STANDALONE APP (.ZIP) ]</span>
+              </a>
+            </div>
+
+            {/* Package 2: Full Source Distribution */}
+            <div className="border border-hairline bg-boneLight p-4 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold font-grotesk uppercase text-ink">
+                    2. COMPLETE SOURCE PACKAGE & SCRIPTS
+                  </span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 bg-pureWhite text-charcoal border border-hairline">
+                    1-CLICK INSTALL BATCH
+                  </span>
+                </div>
+                <p className="text-[10px] text-charcoal font-mono mt-1.5">
+                  Full production repository with automated setup scripts (<strong className="text-ink">install.bat</strong>), desktop window launcher (<strong className="text-ink">start_desktop_app.bat</strong>), and backend API.
+                </p>
+                <div className="text-[9px] font-mono text-pencil mt-2 space-y-0.5">
+                  <div>• Package: drishti-v1.0.0-standalone.zip (~150 MB)</div>
+                  <div>• Includes: Frontend bundle, Python venv, SQLite schema</div>
+                </div>
+              </div>
+
+              <a
+                href="/download/standalone"
+                download="drishti-v1.0.0-standalone.zip"
+                className="w-full bg-ink hover:bg-charcoal text-white px-3 py-2 text-xs font-mono font-bold border border-hairline shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center no-underline"
+              >
+                <DoodleIcon name="download" size={12} className="text-white" />
+                <span>[ DOWNLOAD SOURCE PACKAGE (.ZIP) ]</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Launch Instructions */}
+          <div className="border border-hairline bg-pureWhite p-4 text-[10.5px] font-mono space-y-2">
+            <div className="font-bold uppercase tracking-wider text-ink flex items-center space-x-2">
+              <DoodleIcon name="terminal" size={12} className="text-ink" />
+              <span>OFFLINE DESKTOP LAUNCH OPTIONS (LOCAL WORKSTATION):</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+              <div className="p-2.5 bg-boneLight border border-hairline">
+                <strong className="text-ink block mb-1">MODE A: Standalone .EXE</strong>
+                <span className="text-charcoal block text-[9.5px]">
+                  1. Unzip DRISHTI-v1.0.0-Windows-x64.zip<br />
+                  2. Double-click <strong>DRISHTI.exe</strong><br />
+                  3. Browser opens automatically to HUD.
+                </span>
+              </div>
+              <div className="p-2.5 bg-boneLight border border-hairline">
+                <strong className="text-ink block mb-1">MODE B: Desktop App Window</strong>
+                <span className="text-charcoal block text-[9.5px]">
+                  1. Run <strong>start_desktop_app.bat</strong><br />
+                  2. Opens as borderless native desktop app (Edge/Chrome App Mode).
+                </span>
+              </div>
+              <div className="p-2.5 bg-boneLight border border-hairline">
+                <strong className="text-ink block mb-1">MODE C: 1-Click Installer</strong>
+                <span className="text-charcoal block text-[9.5px]">
+                  1. Double-click <strong>install.bat</strong><br />
+                  2. Auto-builds virtualenv & dependencies<br />
+                  3. Double-click <strong>start_drishti.bat</strong>.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
