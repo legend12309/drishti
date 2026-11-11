@@ -183,7 +183,7 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
         )}
 
         <span className="hidden md:inline-block border border-hairline px-2.5 py-1 text-[10px] text-charcoal bg-pureWhite font-medium">
-          RFC 8655 READY
+          DNS SCOPE READY
         </span>
       </div>
 

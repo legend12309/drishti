@@ -87,58 +87,6 @@ async def broadcast_event(scan_id: str, event_type: str, data: Dict[str, Any]):
             await q.put(payload)
 
 
-def generate_mock_findings(target: str) -> List[Dict[str, Any]]:
-    """Generates realistic findings for a given target domain."""
-    clean = target.strip().lower()
-    return [
-        {
-            "host": f"vpn.{clean}",
-            "ip": "198.51.100.8",
-            "tech": "OpenVPN 2.5, OpenSSL 1.1.1",
-            "status": "Filtered",
-            "risk": "CRITICAL",
-            "score": "9.8",
-            "ports": [443, 1194, 500],
-        },
-        {
-            "host": f"api.{clean}",
-            "ip": "104.21.48.12",
-            "tech": "Cloudflare Edge, Nginx 1.24",
-            "status": "200 OK",
-            "risk": "HIGH",
-            "score": "7.8",
-            "ports": [80, 443, 8443],
-        },
-        {
-            "host": f"dev.{clean}",
-            "ip": "198.51.100.15",
-            "tech": "Next.js 14, AWS S3 Ingress",
-            "status": "403 Forbidden",
-            "risk": "MEDIUM",
-            "score": "5.2",
-            "ports": [3000, 8080],
-        },
-        {
-            "host": f"auth.{clean}",
-            "ip": "104.21.48.19",
-            "tech": "OAuth2 / OIDC, Node.js 20",
-            "status": "200 OK",
-            "risk": "LOW",
-            "score": "2.4",
-            "ports": [443],
-        },
-        {
-            "host": f"mail.{clean}",
-            "ip": "198.51.100.25",
-            "tech": "Postfix 3.6, Dovecot",
-            "status": "200 OK",
-            "risk": "LOW",
-            "score": "1.9",
-            "ports": [25, 587],
-        },
-    ]
-
-
 async def _run_scan_worker(
     scan_id: str,
     target: str,

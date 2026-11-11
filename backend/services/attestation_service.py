@@ -1,7 +1,7 @@
 """
-DRISHTI — Sovereign Cryptographic Enclave Attestation & Anti-Tamper Service
-Enforces strict intellectual property protection, hardware node fingerprinting,
-tamper-evident Merkle provenance, and copyright watermarking across all exports.
+DRISHTI — Host Integrity, Merkle Provenance & Tamper-Evident Attestation Service
+Computes host system fingerprint digests, validates codebase file integrity,
+and signs reports with HMAC-SHA256 digital seals.
 """
 
 import hashlib
@@ -13,16 +13,16 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-# Master Sovereign Secret Salt (Bound to the project dissertation authorship)
+# Master Attestation Secret Salt (Configurable via environment)
 _DISSERTATION_AUTH_SALT = os.getenv("DRISHTI_ATTESTATION_SALT", "DRISHTI-SOVEREIGN-ACADEMIC-IP-2026-DISSERTATION-LEGAL-PROTECTION")
-_REGISTERED_AUTHOR = "Alex Morgan // Candidate Author & SecOps Lead"
-_INSTITUTION_ENCLAVE = "Cyber Intelligence & National Defense Lab (Air-Gap Monolith)"
+_REGISTERED_AUTHOR = os.getenv("DRISHTI_AUTHOR", "DRISHTI Core Engineering Team")
+_INSTITUTION_ENCLAVE = os.getenv("DRISHTI_ORGANIZATION", "Cyber Intelligence & Defense Lab")
 
 
 def get_hardware_enclave_fingerprint() -> Dict[str, Any]:
     """
-    Computes a deterministic, hardware-bound cryptographic enclave fingerprint.
-    Binds the installation to the current host architecture and prevents unauthorized cloning.
+    Computes a deterministic host system fingerprint and HMAC signature.
+    Captures platform architecture and verifies runtime node identity.
     """
     hostname = socket.gethostname()
     os_name = platform.system()

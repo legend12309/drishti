@@ -12,13 +12,17 @@ Comprehensive automated testing across 7 critical dimensions:
 
 import asyncio
 import os
+from pathlib import Path
 import sqlite3
 import time
 from typing import Any, Dict, List
 import httpx
 
-BASE_URL = "http://127.0.0.1:8000"
-DB_PATH = "D:/drishti/data/drishti.db"
+BASE_URL = os.environ.get("DRISHTI_BASE_URL", "http://127.0.0.1:8000")
+ROOT_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = os.environ.get("DRISHTI_DB_PATH") or str(ROOT_DIR / "data" / "drishti.db")
+if not os.path.exists(DB_PATH) and os.path.exists(str(ROOT_DIR / "drishti.db")):
+    DB_PATH = str(ROOT_DIR / "drishti.db")
 
 results = {
     "total": 0,

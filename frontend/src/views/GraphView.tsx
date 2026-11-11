@@ -53,6 +53,7 @@ interface AttackRoute {
   steps: AttackRouteStep[];
   preconditions?: string[];
   recommendations?: string[];
+  isSynthetic?: boolean;
 }
 
 // 6 Canonical Topological Stages
@@ -455,17 +456,18 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
       ],
     };
 
-    if (rawPaths && rawPaths.length >= 3) {
-      return rawPaths.slice(0, 3).map((rp, i) => buildFromRawPath(rp, i));
-    }
-    if (rawPaths && rawPaths.length === 2) {
-      return [buildFromRawPath(rawPaths[0], 0), buildFromRawPath(rawPaths[1], 1), r3Fallback];
-    }
-    if (rawPaths && rawPaths.length === 1) {
-      return [buildFromRawPath(rawPaths[0], 0), r2Fallback, r3Fallback];
+    if (rawPaths && rawPaths.length > 0) {
+      return rawPaths.slice(0, 3).map((rp, i) => ({
+        ...buildFromRawPath(rp, i),
+        isSynthetic: false,
+      }));
     }
 
-    return [r1Fallback, r2Fallback, r3Fallback];
+    return [
+      { ...r1Fallback, isSynthetic: true },
+      { ...r2Fallback, isSynthetic: true },
+      { ...r3Fallback, isSynthetic: true },
+    ];
   }, [rawPaths, currentTargetDomain]);
 
   // Active selected route
@@ -971,9 +973,16 @@ export const GraphView: React.FC<GraphViewProps> = ({ onNavigate, showToast }) =
                       <DoodleIcon name={idx === 0 ? 'spark' : idx === 1 ? 'warning' : 'shield'} className="w-3.5 h-3.5 shrink-0" />
                       <span>{idx === 0 ? 'ROUTE #1 (CRITICAL)' : idx === 1 ? 'ROUTE #2 (SECONDARY)' : 'ROUTE #3 (LATERAL)'}</span>
                     </span>
-                    <span className={`px-2 py-0.5 text-[9.5px] font-black border uppercase ${badgeStyle}`}>
-                      {route.badge} // {route.timeEstimate}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {route.isSynthetic && (
+                        <span className="px-1.5 py-0.5 text-[8.5px] font-bold bg-amber-50 text-amber-800 border border-amber-300 uppercase">
+                          SIMULATED
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 text-[9.5px] font-black border uppercase ${badgeStyle}`}>
+                        {route.badge} // {route.timeEstimate}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="text-[11px] font-bold text-ink line-clamp-1">

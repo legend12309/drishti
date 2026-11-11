@@ -13,12 +13,12 @@
 
 ### Core Value Proposition
 - **Self-Contained Pure-Python Architecture:** Replaced heavy, brittle external scanner containers (ZAP, Trivy, Nuclei, Nmap) with native, high-performance, asynchronous Python engines.
-- **Dual-Layer Reconnaissance:** Combines passive zero-traffic discovery (CT certificate logs via crt.sh, DNS zone enumeration) with fast asynchronous active TCP port/header probing under RFC 8655 scope authorization.
+- **Dual-Layer Reconnaissance:** Combines passive zero-traffic discovery (CT certificate logs via crt.sh, DNS zone enumeration) with fast asynchronous active TCP port/header probing under verified DNS TXT scope authorization (RFC 8555 challenge pattern).
 - **Topological Attack Graphing with Dijkstra Pathfinding:** Moves past flat CVE lists by running **Dijkstra’s shortest path algorithm** over a directed multigraph $G = (V, E)$, calculating the exact lateral pivot path from public ingress to the organization's "Crown Jewels" (core databases and secrets vaults).
 - **Metasploit Weaponization Intelligence Correlation:** Accurately correlates discovered CVEs against known Metasploit framework modules and CISA Known Exploited Vulnerabilities (KEV). Automatically reduces Dijkstra traversal edge friction by 60% ($0.40\times$), elevating weaponized attack paths to the #1 primary adversary vector without launching crash-prone payloads against production systems.
 - **1-Click Autonomous Multi-Layer Defense & Verification:** Closes the vulnerability-to-remediation loop by synthesizing ready-to-deploy Cloudflare WAF expression rules, Nginx / ModSecurity directives, Linux iptables commands, and code-level patch diffs. Features a non-destructive **Diagnostic Verification Micro-Probe** that tests the target endpoint and confirms HTTP 403 Forbidden blocking at the network perimeter.
-- **Multi-Model AI Consensus (Groq + Gemini + NVIDIA NIM):** Combines sub-150ms LPU telemetry triage (Groq), 2M-token whole-surface contextual exploit chaining (Google Gemini), and environment-specific exploitability filtering (NVIDIA NIM) with zero-hallucination guardrails (`temperature: 0.2`).
-- **Cryptographic Scope Guardrails:** Enforces legal authorization boundaries via DNS TXT challenge tokens (`drishti-verify=...`) and hardware-level anti-SSRF protections against private subnets (RFC1918) and cloud metadata services (`169.254.169.254`).
+- **Sequential Multi-Provider LLM Gateway with Circuit Breakers:** Provides an intelligent advisory copilot routing through high-performance providers (Groq, NVIDIA NIM, Google Gemini, Hugging Face) with automatic circuit breakers and offline deterministic rule-based heuristic fallback.
+- **Cryptographic Scope Guardrails:** Enforces legal authorization boundaries via DNS TXT challenge tokens (`drishti-verify=...`) and software-level anti-SSRF protections against private subnets (RFC 1918) and cloud metadata services (`169.254.169.254`).
 
 ---
 
@@ -51,13 +51,13 @@
 | **Attack Graph** | NetworkX Graph Engine | Directed Weighted Multigraph | Calculates Dijkstra minimum-friction traversal paths from DMZ to Crown Jewels. |
 | **Exploit Intel**| Metasploit Correlation Engine | NVD 2.0, EPSS, CISA KEV, MSF Registry | Injects weaponization metadata and applies 0.40x traversal cost multiplier. |
 | **Remediation** | Autonomous Defense Synthesizer | Deterministic Corpus + LLM Mesh | 1-Click Cloudflare WAF, ModSecurity, iptables, patch diffs, and verification probes. |
-| **AI Gateway** | Custom Circuit-Breaker Router | Groq, Gemini, NVIDIA, HF | Tri-provider consensus with deterministic offline synthetic fallback. |
+| **AI Gateway** | Custom Circuit-Breaker Router | Groq, Gemini, NVIDIA, HF | Sequential multi-provider gateway with deterministic offline synthetic fallback. |
 
 ---
 
 ## 3. Comprehensive Frontend Page-by-Page Specification
 
-The DRISHTI frontend (`frontend/src/`) is organized into **11 specialized operational views**, accessible via the persistent tactical sidebar, top command bar, or global keyboard command palette (`⌘K`).
+The DRISHTI frontend (`frontend/src/`) is organized into **7 canonical operational engines** (streamlined from legacy experimental prototypes), accessible via the persistent tactical sidebar, top command bar, or global keyboard command palette (`⌘K`).
 
 ---
 
