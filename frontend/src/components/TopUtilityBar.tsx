@@ -61,7 +61,8 @@ export const TopUtilityBar: React.FC<TopUtilityBarProps> = ({
   };
 
   const handleCommitTarget = () => {
-    const clean = targetInput.trim().toLowerCase();
+    let clean = targetInput.trim().toLowerCase();
+    clean = clean.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/:\d+$/, '');
     setIsEditingTarget(false);
     if (clean && clean !== target) {
       localStorage.setItem('drishti_target_domain', clean);

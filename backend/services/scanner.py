@@ -759,17 +759,18 @@ async def get_latest_scan_for_target(target: Optional[str] = None) -> Optional[D
     """Retrieves the most recent scan and its findings (for page refresh persistence)."""
     async with get_db() as db:
         if target and target.strip():
-            clean = target.strip().lower()
+            raw = target.strip().lower()
+            clean = re.sub(r"^https?://", "", raw).split("/")[0].split(":")[0]
             clean_bare = clean.replace("www.", "")
             query = """
                 SELECT * FROM scans 
-                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ?)
+                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ? OR target = ?)
                 ORDER BY CASE WHEN status IN ('completed', 'partially_completed') THEN 0 ELSE 1 END,
                          (SELECT COUNT(*) FROM scan_findings WHERE scan_id = scans.id) DESC,
                          created_at DESC 
                 LIMIT 1
             """
-            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%")
+            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%", raw)
         else:
             query = """
                 SELECT * FROM scans 

@@ -65,10 +65,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ health, onNavigate
     return () => window.removeEventListener('drishti_target_updated', handleTargetUpdated);
   }, [targetDomain]);
 
+  const sanitizeTarget = (val: string) => {
+    return val.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/:\d+$/, '').toLowerCase();
+  };
+
   const handleTargetChange = (val: string) => {
-    setTargetDomain(val);
-    localStorage.setItem('drishti_target_domain', val);
-    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val }));
+    const cleaned = sanitizeTarget(val);
+    setTargetDomain(cleaned || val);
+    localStorage.setItem('drishti_target_domain', cleaned || val);
+    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: cleaned || val }));
   };
 
   const handleRunRecon = () => {

@@ -844,10 +844,11 @@ export const ReconView: React.FC<ReconViewProps> = ({ onNavigate, showToast }) =
                   type="text"
                   value={target}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    setTarget(val);
-                    localStorage.setItem('drishti_target_domain', val);
-                    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val }));
+                    const raw = e.target.value;
+                    const val = raw.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/:\d+$/, '').toLowerCase();
+                    setTarget(val || raw);
+                    localStorage.setItem('drishti_target_domain', val || raw);
+                    window.dispatchEvent(new CustomEvent('drishti_target_updated', { detail: val || raw }));
                   }}
                   placeholder="e.g. targetcompany.com or scanme.nmap.org"
                   className="w-full px-3 py-2 bg-pureWhite border border-hairline text-xs text-ink focus:border-signalGreen outline-none font-mono"

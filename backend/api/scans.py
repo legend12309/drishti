@@ -7,6 +7,7 @@ and Server-Sent Events (SSE) progress streaming with reconnect support.
 import asyncio
 from datetime import datetime, timezone
 import json
+import re
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
@@ -93,14 +94,15 @@ async def list_scans(
     """Lists recent scans in chronological order with optional target domain filtering."""
     async with get_db() as db:
         if target and target.strip():
-            clean = target.strip().lower()
+            raw = target.strip().lower()
+            clean = re.sub(r"^https?://", "", raw).split("/")[0].split(":")[0]
             clean_bare = clean.replace("www.", "")
             query = """
                 SELECT * FROM scans 
-                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ?)
+                WHERE (target = ? OR target = ? OR target = ? OR target LIKE ? OR target = ?)
                 ORDER BY created_at DESC LIMIT ?
             """
-            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%", limit)
+            params = (clean, clean_bare, f"www.{clean_bare}", f"%{clean_bare}%", raw, limit)
             async with db.execute(query, params) as cursor:
                 rows = await cursor.fetchall()
                 return {"status": "success", "scans": [dict(r) for r in rows]}
